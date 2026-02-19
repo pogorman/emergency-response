@@ -10,8 +10,8 @@
 ## Phased Build Plan
 | Phase | Scope | Status |
 |-------|-------|--------|
-| 1 | Solution setup + data model + project scaffolding + documentation | **IN PROGRESS** |
-| 2 | Security model + roles | Pending |
+| 1 | Solution setup + data model + project scaffolding + documentation | **COMPLETE** |
+| 2 | Security model + roles | **COMPLETE** |
 | 3 | Power Automate flows | Pending |
 | 4 | Canvas app (mobile responder) | Pending |
 | 5 | Model-driven app (dispatch/supervisor) | Pending |

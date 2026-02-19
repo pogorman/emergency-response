@@ -22,3 +22,26 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Created `solution/` directory with solution.xml, environment variables, connection references
 - Designed 20+ entity data model covering all six operational domains
 - Documented complete data dictionary and Mermaid ERD in TECHNICAL.md
+
+## 2026-02-18 — Session 2: Phase 2 — Security Model + Roles
+
+**Prompt Summary:** Implement Phase 2 security model. Create 8 security role definitions, PHI field security profile, business unit structure, team definitions, privilege matrix, and update all documentation. Add session duration tracking to SESSION-MEMORY.md.
+
+**Actions Taken:**
+- Created `security/roles/` directory with 8 role definition JSON files:
+  - `seo_system-admin.json` — Organization-scope full CRUD
+  - `seo_dispatch-supervisor.json` — BU-scope incident lifecycle management
+  - `seo_dispatcher.json` — BU-scope call intake and unit dispatch
+  - `seo_incident-commander.json` — BU-scope ICS command structure
+  - `seo_responder.json` — User-scope with team sharing for incidents
+  - `seo_ems-provider.json` — User-scope with PHI access via field security
+  - `seo_station-officer.json` — BU-scope station management
+  - `seo_read-only-analyst.json` — BU-scope read-only for reporting
+- Created `security/field-security/seo_phi-profile.json` — column-level security for 7 PHI fields on PatientRecord
+- Created `security/business-units.json` — BU hierarchy and provisioning process
+- Created `security/teams.json` — owner teams per agency, cross-BU mutual aid team, access team pattern
+- Created `security/privilege-matrix.md` — complete role × table × privilege grid (22 tables × 8 roles × 8 privileges)
+- Updated `docs/TECHNICAL.md` — added Security Model section covering BU strategy, roles, column security, team sharing, RLS patterns, GCC compliance
+- Updated `docs/RELEASE-NOTES.md` — added v0.2.0 entry
+- Updated `docs/SESSION-MEMORY.md` — updated project state, added session duration tracking
+- Updated `CLAUDE.md` — Phase 1 → COMPLETE, Phase 2 → COMPLETE

@@ -1,0 +1,85 @@
+{
+  "description": "Team definitions for incident-level sharing and role-based grouping. Each agency BU gets a set of owner teams. Access teams are created per-incident for cross-BU mutual aid scenarios.",
+  "ownerTeams": {
+    "description": "Static teams created within each agency Business Unit. Members are assigned based on their security role. These teams are used to share incident records with groups of users.",
+    "perAgencyTemplates": [
+      {
+        "nameTemplate": "{Agency} Dispatchers",
+        "description": "Dispatch center personnel for this agency",
+        "memberRoles": ["seo_Dispatcher", "seo_DispatchSupervisor"],
+        "purpose": "Share incidents and calls with all dispatch staff. Ensures dispatchers can see all incidents within their agency regardless of who created them.",
+        "example": "Metro City Fire Department Dispatchers"
+      },
+      {
+        "nameTemplate": "{Agency} Responders",
+        "description": "Field responders and station officers for this agency",
+        "memberRoles": ["seo_Responder", "seo_StationOfficer"],
+        "purpose": "Share assigned incidents with field crews. When a unit is dispatched, the incident is shared with this team so all responders in the BU can see it.",
+        "example": "Metro City Fire Department Responders"
+      },
+      {
+        "nameTemplate": "{Agency} EMS",
+        "description": "EMS providers for this agency",
+        "memberRoles": ["seo_EMSProvider"],
+        "purpose": "Share incidents with EMS crews for patient care documentation. PHI access is controlled separately by the field security profile.",
+        "example": "Metro City Fire Department EMS"
+      },
+      {
+        "nameTemplate": "{Agency} Command",
+        "description": "Incident commanders for this agency",
+        "memberRoles": ["seo_IncidentCommander"],
+        "purpose": "Share incidents with command staff for ICS management. ICs need visibility into all active incidents they may be assigned to.",
+        "example": "Metro City Fire Department Command"
+      }
+    ],
+    "provisioningProcess": {
+      "phase2": "Manual — admin creates teams when setting up a new agency BU",
+      "phase3": "Automated — Power Automate flow creates teams as part of agency onboarding"
+    }
+  },
+  "crossBUTeam": {
+    "name": "Mutual Aid Partners",
+    "description": "Organization-scoped team for cross-BU incident sharing during mutual aid events. Members from any agency can be temporarily added to facilitate shared incident visibility.",
+    "businessUnit": "State Emergency Operations (root BU)",
+    "membershipPolicy": "Dynamic — members are added when a mutual aid request is approved and removed when the request status changes to Returned or Cancelled.",
+    "sharedPrivileges": {
+      "seo_Incident": "Read",
+      "seo_IncidentAssignment": "Read, Write",
+      "seo_IncidentNote": "Read, Create",
+      "seo_UnitStatusLog": "Read, Create",
+      "seo_ResourceRequest": "Read",
+      "seo_IncidentCommand": "Read",
+      "seo_Division": "Read"
+    },
+    "phiProtection": "Mutual Aid Partners team does NOT grant PHI access. Cross-BU EMS providers must be individually added to the EMS team or have the seo_PHIAccess field security profile assigned directly.",
+    "provisioningProcess": {
+      "phase2": "Manual — admin manages membership",
+      "phase3": "Automated — Power Automate flow adds/removes members on MutualAidRequest status changes"
+    }
+  },
+  "accessTeams": {
+    "description": "Pattern for incident-specific access teams. These provide granular, per-incident cross-BU access without permanently modifying owner team membership.",
+    "pattern": {
+      "nameTemplate": "Incident {seo_incidentNumber} — Access Team",
+      "trigger": "Created when a mutual aid request is approved for an incident",
+      "membership": "Users from the providing agency who are assigned to the incident",
+      "sharedRecords": [
+        "The specific seo_Incident record",
+        "Related seo_IncidentAssignment records",
+        "Related seo_IncidentNote records",
+        "Related seo_IncidentCommand records (read-only)",
+        "Related seo_Division records (read-only)"
+      ],
+      "lifecycle": "Team is deactivated (not deleted) when all mutual aid units return. Preserved for audit trail.",
+      "phiProtection": "Access teams never grant PHI access. Cross-agency EMS providers needing PHI access must have the seo_PHIAccess field security profile assigned individually by a System Admin.",
+      "example": {
+        "scenario": "Metro City FD requests mutual aid from County EMS Authority for INC-20260218-00042",
+        "teamName": "Incident INC-20260218-00042 — Access Team",
+        "members": "County EMS Authority personnel assigned to the incident",
+        "access": "Read on the incident, Create on notes and status logs"
+      }
+    },
+    "implementationPhase": "Phase 3 (Power Automate) — automated creation and membership management"
+  },
+  "gccNotes": "Teams in GCC Dataverse support the same owner/access team patterns as commercial. No limitations on team types or membership in GCC."
+}

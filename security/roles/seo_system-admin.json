@@ -1,0 +1,244 @@
+{
+  "roleName": "seo_SystemAdmin",
+  "displayName": "System Administrator",
+  "description": "Full CRUD on all tables at Organization scope. Manages security roles, business units, imports, and system configuration. Intended for IT staff and solution admins.",
+  "scope": "Organization",
+  "isCustomizable": true,
+  "inheritFrom": "Dataverse System Administrator (base)",
+  "tablePrivileges": {
+    "seo_Agency": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Jurisdiction": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Facility": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Station": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Apparatus": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Unit": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Personnel": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Call": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Incident": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_IncidentAssignment": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_UnitStatusLog": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_IncidentNote": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_IncidentCommand": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Division": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_ResourceRequest": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_PatientRecord": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization",
+      "note": "Full PHI access via seo_PHIAccess field security profile"
+    },
+    "seo_MutualAidAgreement": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_MutualAidRequest": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_PrePlan": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Hazard": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_Hydrant": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    },
+    "seo_AfterActionReport": {
+      "create": "Organization",
+      "read": "Organization",
+      "write": "Organization",
+      "delete": "Organization",
+      "append": "Organization",
+      "appendTo": "Organization",
+      "assign": "Organization",
+      "share": "Organization"
+    }
+  },
+  "miscellaneousPrivileges": {
+    "bulkDelete": true,
+    "exportToExcel": true,
+    "importData": true,
+    "publishCustomizations": true,
+    "manageSecurityRoles": true,
+    "manageBusinessUnits": true,
+    "manageUsers": true,
+    "manageTeams": true,
+    "manageFieldSecurity": true,
+    "auditLogAccess": true,
+    "goOffline": false
+  }
+}

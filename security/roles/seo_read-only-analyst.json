@@ -1,0 +1,243 @@
+{
+  "roleName": "seo_ReadOnlyAnalyst",
+  "displayName": "Read-Only Analyst",
+  "description": "Read-only access to all tables at Business Unit scope for reporting and analysis. No create, update, or delete on any table. PHI columns on PatientRecord are restricted via field security profile. Intended for data analysts, QA reviewers, and accreditation staff.",
+  "scope": "BusinessUnit",
+  "isCustomizable": true,
+  "tablePrivileges": {
+    "seo_Agency": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Jurisdiction": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Facility": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Station": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Apparatus": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Unit": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Personnel": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Call": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Incident": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_IncidentAssignment": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_UnitStatusLog": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_IncidentNote": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_IncidentCommand": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Division": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_ResourceRequest": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PatientRecord": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None",
+      "note": "Read non-PHI columns only (triage, transport status, facility). PHI columns blocked via field security profile. Analyst can report on patient counts and outcomes without seeing identifying information."
+    },
+    "seo_MutualAidAgreement": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_MutualAidRequest": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PrePlan": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Hazard": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Hydrant": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_AfterActionReport": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    }
+  },
+  "miscellaneousPrivileges": {
+    "bulkDelete": false,
+    "exportToExcel": true,
+    "importData": false,
+    "publishCustomizations": false,
+    "manageSecurityRoles": false,
+    "manageBusinessUnits": false,
+    "manageUsers": false,
+    "manageTeams": false,
+    "manageFieldSecurity": false,
+    "auditLogAccess": true,
+    "goOffline": false
+  }
+}

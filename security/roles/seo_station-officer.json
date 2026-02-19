@@ -1,0 +1,248 @@
+{
+  "roleName": "seo_StationOfficer",
+  "displayName": "Station Officer",
+  "description": "Company officer (Lieutenant, Captain) managing units and personnel at their station. BU-level read on incidents, can create after-action reports and update pre-plans. No PHI access.",
+  "scope": "BusinessUnit",
+  "isCustomizable": true,
+  "tablePrivileges": {
+    "seo_Agency": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Jurisdiction": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Facility": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Station": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Apparatus": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Unit": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None",
+      "note": "Write for managing unit status, personnel assignments at station level"
+    },
+    "seo_Personnel": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None",
+      "note": "Write for updating personnel certifications, unit assignments"
+    },
+    "seo_Call": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Incident": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None",
+      "note": "Read-only on incidents. Append needed for creating child AAR records."
+    },
+    "seo_IncidentAssignment": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_UnitStatusLog": {
+      "create": "BusinessUnit",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None",
+      "note": "Append-only: no Update or Delete (immutable audit trail)"
+    },
+    "seo_IncidentNote": {
+      "create": "BusinessUnit",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_IncidentCommand": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Division": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_ResourceRequest": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PatientRecord": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None",
+      "note": "Read non-PHI columns only (triage, transport status). No PHI access via field security profile."
+    },
+    "seo_MutualAidAgreement": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_MutualAidRequest": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PrePlan": {
+      "create": "BusinessUnit",
+      "read": "Organization",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None",
+      "note": "Station officers maintain pre-plans for their response area"
+    },
+    "seo_Hazard": {
+      "create": "BusinessUnit",
+      "read": "Organization",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Hydrant": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_AfterActionReport": {
+      "create": "BusinessUnit",
+      "read": "BusinessUnit",
+      "write": "BusinessUnit",
+      "delete": "None",
+      "append": "BusinessUnit",
+      "appendTo": "BusinessUnit",
+      "assign": "BusinessUnit",
+      "share": "BusinessUnit"
+    }
+  },
+  "miscellaneousPrivileges": {
+    "bulkDelete": false,
+    "exportToExcel": true,
+    "importData": false,
+    "publishCustomizations": false,
+    "manageSecurityRoles": false,
+    "manageBusinessUnits": false,
+    "manageUsers": false,
+    "manageTeams": false,
+    "manageFieldSecurity": false,
+    "auditLogAccess": false,
+    "goOffline": true
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "roleName": "seo_EMSProvider",
+  "displayName": "EMS Provider",
+  "description": "EMS personnel (EMT, Paramedic). Full CRUD on PatientRecord including PHI columns via field security profile. Can update transport status, look up facilities, and create incident notes. Access to specific incidents is granted via team sharing.",
+  "scope": "User",
+  "sharingModel": "Incident-level access granted via owner teams. When assigned to an incident, the incident is shared with the BU EMS team. PHI access granted via seo_PHIAccess field security profile.",
+  "isCustomizable": true,
+  "tablePrivileges": {
+    "seo_Agency": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Jurisdiction": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Facility": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None",
+      "note": "Org-wide read for destination facility lookup during transport"
+    },
+    "seo_Station": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Apparatus": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Unit": {
+      "create": "None",
+      "read": "User",
+      "write": "User",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None",
+      "note": "Write limited to updating own unit status (Transporting, At Hospital, etc.)"
+    },
+    "seo_Personnel": {
+      "create": "None",
+      "read": "BusinessUnit",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "BusinessUnit",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Call": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Incident": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "User",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None",
+      "note": "Read via team share. Append needed to create child patient records."
+    },
+    "seo_IncidentAssignment": {
+      "create": "None",
+      "read": "User",
+      "write": "User",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_UnitStatusLog": {
+      "create": "User",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "User",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None",
+      "note": "Append-only: no Update or Delete (immutable audit trail)"
+    },
+    "seo_IncidentNote": {
+      "create": "User",
+      "read": "User",
+      "write": "User",
+      "delete": "None",
+      "append": "User",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_IncidentCommand": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Division": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_ResourceRequest": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PatientRecord": {
+      "create": "User",
+      "read": "User",
+      "write": "User",
+      "delete": "None",
+      "append": "User",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None",
+      "note": "Full PHI column access granted via seo_PHIAccess field security profile. No delete — patient records are immutable for HIPAA compliance."
+    },
+    "seo_MutualAidAgreement": {
+      "create": "None",
+      "read": "None",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "None",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_MutualAidRequest": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_PrePlan": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Hazard": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_Hydrant": {
+      "create": "None",
+      "read": "Organization",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "Organization",
+      "assign": "None",
+      "share": "None"
+    },
+    "seo_AfterActionReport": {
+      "create": "None",
+      "read": "User",
+      "write": "None",
+      "delete": "None",
+      "append": "None",
+      "appendTo": "User",
+      "assign": "None",
+      "share": "None"
+    }
+  },
+  "miscellaneousPrivileges": {
+    "bulkDelete": false,
+    "exportToExcel": false,
+    "importData": false,
+    "publishCustomizations": false,
+    "manageSecurityRoles": false,
+    "manageBusinessUnits": false,
+    "manageUsers": false,
+    "manageTeams": false,
+    "manageFieldSecurity": false,
+    "auditLogAccess": false,
+    "goOffline": true
+  }
+}

@@ -13,7 +13,8 @@
 3. [Data Model — Entity Relationship Diagram](#data-model--entity-relationship-diagram)
 4. [Data Dictionary](#data-dictionary)
 5. [Global Choice (Option Set) Definitions](#global-choice-option-set-definitions)
-6. [ALM & Deployment](#alm--deployment)
+6. [Security Model](#security-model)
+7. [ALM & Deployment](#alm--deployment)
 
 ---
 
@@ -756,6 +757,104 @@ Note: Audit disabled — reference data bulk-imported from GIS.
 | seo_HazardType | Hazard | Chemical, Biological, Radiological, Explosive, Structural Collapse, Electrical, Natural Gas, Flammable Liquid, Confined Space, Other |
 | seo_FacilityType | Facility | Hospital, Trauma Center, Burn Center, Pediatric Center, Stroke Center, STEMI Center, Urgent Care, Helipad/LZ, Staging Area, Shelter, Other |
 | seo_HydrantStatus | Hydrant | In Service, Out of Service, Needs Inspection, Buried/Inaccessible |
+
+---
+
+## Security Model
+
+### Business Unit Strategy
+
+The solution uses a **multi-agency shared environment** where each agency maps to a Dataverse Business Unit. This provides automatic row-level data isolation — records created by users in Agency A's BU are only visible to other users in Agency A's BU (unless explicitly shared).
+
+```
+State Emergency Operations (Root BU)
+├── Metro City Fire Department (BU)
+├── County EMS Authority (BU)
+├── Westside Volunteer Fire Company (BU)
+└── ... (one BU per onboarded agency)
+```
+
+**BU Provisioning:** Manual in Phase 2 (admin creates BU when onboarding agency). Automated via Power Automate in Phase 3.
+
+**User Assignment:** Personnel.seo_agencyId determines which BU a user belongs to. The seo_Personnel.seo_systemUserId field links the Dataverse user to their personnel record.
+
+### Security Roles (8 Custom Roles)
+
+| Role | Scope | Description |
+|------|-------|-------------|
+| **seo_SystemAdmin** | Organization | Full CRUD on all tables. Manages security, BUs, imports. |
+| **seo_DispatchSupervisor** | Business Unit | Full incident lifecycle, all units/personnel in BU, mutual aid. No PHI. |
+| **seo_Dispatcher** | Business Unit | Call intake, incident create/update, unit dispatch. No delete, no PHI. |
+| **seo_IncidentCommander** | Business Unit | ICS command structure, divisions, resource requests, assignments. No PHI. |
+| **seo_Responder** | User + Team Share | Read assigned incidents, update own unit status, create notes. No PHI. |
+| **seo_EMSProvider** | User + Team Share | PatientRecord CRUD with PHI access, transport, facility lookup. |
+| **seo_StationOfficer** | Business Unit | Manage station units/personnel, pre-plans, create AARs. No PHI. |
+| **seo_ReadOnlyAnalyst** | Business Unit | Read-only on all tables. No PHI columns. For reporting/analysis. |
+
+**Key Design Decisions:**
+- **Responder and EMSProvider** use User-level scope with incident access granted via team sharing. This follows the principle of least privilege — they only see incidents they're assigned to.
+- **UnitStatusLog** is append-only for all roles except SystemAdmin. No role can update or delete status log entries (immutable audit trail per ADR-003).
+- **PatientRecord** delete is restricted to SystemAdmin only (HIPAA retention compliance).
+- **Reference tables** (Agency, Jurisdiction, Facility, PrePlan, Hazard, Hydrant) have Organization-wide Read for all roles to ensure responders can access pre-plans and hazard info regardless of agency.
+
+See [`security/privilege-matrix.md`](../security/privilege-matrix.md) for the complete role × table × privilege grid.
+
+### Column-Level Security (PHI Protection)
+
+**Profile:** `seo_PHIAccess` (EMS PHI Access)
+
+Applies to 7 columns on `seo_PatientRecord`:
+
+| Secured Column | PHI Category |
+|----------------|--------------|
+| seo_patientFirstName | Demographic — Name |
+| seo_patientLastName | Demographic — Name |
+| seo_patientAge | Demographic — Age |
+| seo_patientGender | Demographic — Gender |
+| seo_chiefComplaint | Clinical — Presenting Condition |
+| seo_assessmentNotes | Clinical — Assessment |
+| seo_treatmentNotes | Clinical — Treatment |
+
+**Access:**
+- **Read + Write:** seo_EMSProvider, seo_SystemAdmin
+- **Blocked:** All other roles (Dispatcher, DispatchSupervisor, IC, Responder, StationOfficer, ReadOnlyAnalyst)
+
+Non-PHI columns on PatientRecord (triageCategory, isTransported, refusedCare, destinationFacilityId, transport timestamps, attendingPersonnelId) remain accessible per table-level privileges.
+
+### Team-Based Sharing
+
+**Owner Teams (per agency BU):**
+
+| Team | Members | Purpose |
+|------|---------|---------|
+| {Agency} Dispatchers | Dispatcher, DispatchSupervisor | Share incidents/calls with dispatch staff |
+| {Agency} Responders | Responder, StationOfficer | Share assigned incidents with field crews |
+| {Agency} EMS | EMSProvider | Share incidents for patient care documentation |
+| {Agency} Command | IncidentCommander | Share incidents for ICS management |
+
+**Cross-BU Sharing (Mutual Aid):**
+- **Mutual Aid Partners** team (org-scoped): Dynamic membership for cross-agency incident access
+- **Per-incident access teams**: Created when mutual aid is approved, deactivated (not deleted) when units return
+- **PHI protection**: Cross-BU sharing never grants PHI access. Cross-agency EMS providers must have the field security profile individually assigned.
+
+### Row-Level Security Patterns
+
+| Pattern | Mechanism |
+|---------|-----------|
+| **Agency data isolation** | BU ownership — records inherit creator's BU |
+| **Incident-level access** | Team sharing — incidents shared with agency teams when units are dispatched |
+| **Cross-agency mutual aid** | Access teams + Mutual Aid Partners team |
+| **Reference data visibility** | Organization-scope Read on reference tables |
+| **Append-only audit** | UnitStatusLog: Create-only for non-admin roles |
+| **PHI restriction** | Field security profile blocks PHI columns |
+
+### GCC Security Compliance
+
+- **FedRAMP High:** All data at rest encrypted per GCC requirements. PHI columns additionally protected by field security profiles.
+- **Audit logging:** Enabled on all tables with sensitive data. UnitStatusLog is self-auditing (it IS the audit trail).
+- **Data residency:** All data stored within US Government cloud boundaries.
+- **Authentication:** Azure AD (Entra ID) via GCC tenant. No external identity providers.
+- **No custom connectors:** Only FedRAMP-authorized connectors permitted.
 
 ---
 

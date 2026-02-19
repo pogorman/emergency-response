@@ -1,0 +1,152 @@
+{
+  "profileName": "seo_PHIAccess",
+  "displayName": "EMS PHI Access",
+  "description": "Column-level security profile for Protected Health Information on seo_PatientRecord. Restricts 7 PHI columns to authorized EMS personnel and System Administrators only. All other roles see masked/empty values for these columns. Non-PHI columns on PatientRecord (triageCategory, isTransported, destinationFacility, etc.) are not covered by this profile and remain accessible per table-level privileges.",
+  "table": "seo_PatientRecord",
+  "hipaaCompliance": "This profile enforces the minimum necessary standard under HIPAA. Only personnel with a direct patient care need (EMS Providers) and system administrators have access to individually identifiable health information.",
+  "securedColumns": [
+    {
+      "schemaName": "seo_patientFirstName",
+      "displayName": "Patient First Name",
+      "type": "String",
+      "phiCategory": "Demographic — Name"
+    },
+    {
+      "schemaName": "seo_patientLastName",
+      "displayName": "Patient Last Name",
+      "type": "String",
+      "phiCategory": "Demographic — Name"
+    },
+    {
+      "schemaName": "seo_patientAge",
+      "displayName": "Patient Age",
+      "type": "WholeNumber",
+      "phiCategory": "Demographic — Age"
+    },
+    {
+      "schemaName": "seo_patientGender",
+      "displayName": "Patient Gender",
+      "type": "Choice",
+      "phiCategory": "Demographic — Gender"
+    },
+    {
+      "schemaName": "seo_chiefComplaint",
+      "displayName": "Chief Complaint",
+      "type": "String",
+      "phiCategory": "Clinical — Presenting Condition"
+    },
+    {
+      "schemaName": "seo_assessmentNotes",
+      "displayName": "Assessment Notes",
+      "type": "Memo",
+      "phiCategory": "Clinical — Assessment"
+    },
+    {
+      "schemaName": "seo_treatmentNotes",
+      "displayName": "Treatment Notes",
+      "type": "Memo",
+      "phiCategory": "Clinical — Treatment"
+    }
+  ],
+  "rolePermissions": [
+    {
+      "roleName": "seo_EMSProvider",
+      "canRead": true,
+      "canUpdate": true,
+      "canCreate": true,
+      "rationale": "Direct patient care responsibility. Needs to record and view PHI during treatment and transport."
+    },
+    {
+      "roleName": "seo_SystemAdmin",
+      "canRead": true,
+      "canUpdate": true,
+      "canCreate": true,
+      "rationale": "System administration, data migration, and compliance audit. Admin access required for data management and HIPAA breach investigation."
+    },
+    {
+      "roleName": "seo_DispatchSupervisor",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "No clinical need. Can see non-PHI patient data (triage category, transport status)."
+    },
+    {
+      "roleName": "seo_Dispatcher",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "No clinical need. Dispatch operations do not require PHI."
+    },
+    {
+      "roleName": "seo_IncidentCommander",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "No clinical need. IC can see patient counts and triage categories for MCI management without PHI."
+    },
+    {
+      "roleName": "seo_Responder",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "No clinical need. Non-EMS responders do not require access to patient health information."
+    },
+    {
+      "roleName": "seo_StationOfficer",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "No clinical need. Station officers can review triage/transport data for operational awareness."
+    },
+    {
+      "roleName": "seo_ReadOnlyAnalyst",
+      "canRead": false,
+      "canUpdate": false,
+      "canCreate": false,
+      "rationale": "Analysis and reporting role. Can report on de-identified patient data (triage counts, transport rates) without accessing PHI."
+    }
+  ],
+  "nonSecuredColumns": [
+    {
+      "schemaName": "seo_patientIdentifier",
+      "note": "System-generated ID, not real-world PII"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "note": "Lookup relationship, not PHI"
+    },
+    {
+      "schemaName": "seo_triageCategory",
+      "note": "Operational triage status, needed by IC for MCI management"
+    },
+    {
+      "schemaName": "seo_isTransported",
+      "note": "Transport status flag, operational data"
+    },
+    {
+      "schemaName": "seo_refusedCare",
+      "note": "AMA flag, operational data"
+    },
+    {
+      "schemaName": "seo_transportUnitId",
+      "note": "Lookup relationship, not PHI"
+    },
+    {
+      "schemaName": "seo_destinationFacilityId",
+      "note": "Lookup relationship, not PHI"
+    },
+    {
+      "schemaName": "seo_transportStartedOn",
+      "note": "Operational timestamp"
+    },
+    {
+      "schemaName": "seo_arrivedAtFacilityOn",
+      "note": "Operational timestamp"
+    },
+    {
+      "schemaName": "seo_attendingPersonnelId",
+      "note": "Lookup relationship, not PHI"
+    }
+  ],
+  "gccNotes": "Field security profiles are supported in GCC Dataverse. The profile is deployed as part of the managed solution. In GCC environments, PHI data at rest is encrypted per FedRAMP High requirements. Audit logging on these columns is enabled to support HIPAA breach detection."
+}

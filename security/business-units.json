@@ -1,0 +1,54 @@
+{
+  "description": "Business Unit structure for multi-agency deployment. Each agency maps to a Dataverse Business Unit for automatic row-level data isolation. Personnel are assigned to BUs based on their agency.",
+  "strategy": "Agency-per-BU",
+  "rootBusinessUnit": {
+    "name": "State Emergency Operations",
+    "description": "Organization-level root BU. System Administrators and cross-agency roles (Read-Only Analyst) are homed here. This BU is auto-created when the Dataverse environment is provisioned.",
+    "isRoot": true
+  },
+  "childBusinessUnits": {
+    "description": "One child BU per agency. Created when an Agency record is added to the system. The BU name should match the agency name for clarity.",
+    "namingConvention": "{Agency.seo_name}",
+    "examples": [
+      {
+        "name": "Metro City Fire Department",
+        "agencyCode": "MCFD",
+        "note": "All MCFD personnel, units, and incidents are owned by this BU"
+      },
+      {
+        "name": "County EMS Authority",
+        "agencyCode": "CEMS",
+        "note": "All CEMS personnel, units, and incidents are owned by this BU"
+      },
+      {
+        "name": "Westside Volunteer Fire Company",
+        "agencyCode": "WVFC",
+        "note": "Volunteer agencies get their own BU for data isolation"
+      }
+    ]
+  },
+  "provisioningProcess": {
+    "phase2": "Manual — admin creates BU in Dataverse Admin Center when onboarding a new agency",
+    "phase3": "Automated — Power Automate flow triggers on seo_Agency create, provisions BU and default teams",
+    "steps": [
+      "1. Admin creates seo_Agency record",
+      "2. Admin creates matching Business Unit in Dataverse Admin Center",
+      "3. Admin creates owner teams within the new BU (see teams.json)",
+      "4. Admin assigns agency personnel users to the new BU",
+      "5. Admin assigns appropriate security roles to users within the BU"
+    ]
+  },
+  "mappingRule": {
+    "description": "User BU assignment is based on their personnel record's agency",
+    "field": "seo_Personnel.seo_agencyId",
+    "rule": "Personnel.seo_agencyId → Agency.seo_name → matching Business Unit",
+    "enforcement": "Manual in Phase 2. When a user's agency changes, their BU must be updated by a System Admin.",
+    "note": "Dataverse user BU is set in the Admin Center or via API. The seo_Personnel.seo_systemUserId links the Dataverse user to the personnel record."
+  },
+  "rowOwnership": {
+    "description": "Records are owned by the user who creates them. The user's BU determines which BU the record belongs to for security scoping.",
+    "incidentOwnership": "Incidents are owned by the dispatcher who creates them (BU = dispatcher's agency). During mutual aid, the incident is shared with partner agency teams.",
+    "referenceDataOwnership": "Reference data (Jurisdiction, Facility, Hydrant, PrePlan) is owned by the root BU or the relevant agency BU. Org-wide read ensures all users can access reference data."
+  },
+  "gccNotes": "Business Units in GCC Dataverse work identically to commercial. BU hierarchy is limited to a single level of nesting (root + children) for this solution to keep the security model simple and maintainable."
+}
