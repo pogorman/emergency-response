@@ -1,0 +1,104 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_AfterActionReportMainForm",
+      "displayName": "After Action Report Main Form",
+      "entity": "seo_AfterActionReport",
+      "description": "Main form for post-incident after action reports including timeline, outcomes, and lessons learned.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_reportStatus" },
+        { "name": "seo_outcome" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "report_tab",
+            "label": "Report",
+            "sections": [
+              {
+                "name": "report_info_section",
+                "label": "Report Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_reportTitle", "isRequired": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_authorId", "isRequired": true },
+                  { "name": "seo_reportStatus", "isRequired": true },
+                  { "name": "seo_completedOn" },
+                  { "name": "seo_outcome" }
+                ]
+              },
+              {
+                "name": "summary_section",
+                "label": "Summary",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_incidentSummary", "isRequired": true }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "details_tab",
+            "label": "Details",
+            "sections": [
+              {
+                "name": "timeline_section",
+                "label": "Timeline",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_timelineOfEvents" }
+                ]
+              },
+              {
+                "name": "outcomes_section",
+                "label": "Outcomes",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_civilianInjuries" },
+                  { "name": "seo_civilianFatalities" },
+                  { "name": "seo_responderInjuries" },
+                  { "name": "seo_responderFatalities" },
+                  { "name": "seo_estimatedPropertyLoss" },
+                  { "name": "seo_estimatedContentLoss" }
+                ]
+              },
+              {
+                "name": "fire_investigation_section",
+                "label": "Fire Investigation",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_areaOfOrigin" },
+                  { "name": "seo_causeOfFire" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "lessons_learned_tab",
+            "label": "Lessons Learned",
+            "sections": [
+              {
+                "name": "lessons_section",
+                "label": "Lessons",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_lessonsLearned" }
+                ]
+              },
+              {
+                "name": "improvements_section",
+                "label": "Improvements",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_improvementActions" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

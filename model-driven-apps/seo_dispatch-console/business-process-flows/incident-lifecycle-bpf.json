@@ -1,0 +1,75 @@
+{
+  "schemaName": "seo_IncidentLifecycle",
+  "displayName": "Incident Lifecycle",
+  "description": "Business process flow guiding dispatchers through the 6-stage incident lifecycle: Reported → Dispatched → On Scene → Under Control → Cleared → Closed. Stage gates prevent advancing without required data.",
+  "entity": "seo_Incident",
+  "isActive": true,
+  "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_IncidentCommander", "seo_SystemAdmin"],
+  "stages": [
+    {
+      "name": "stage_reported",
+      "displayName": "Reported",
+      "description": "Initial incident report. Capture type, priority, and location.",
+      "fields": [
+        { "name": "seo_incidentType", "isRequired": true, "label": "Incident Type" },
+        { "name": "seo_priority", "isRequired": true, "label": "Priority" },
+        { "name": "seo_address", "isRequired": true, "label": "Address" },
+        { "name": "seo_primaryAgencyId", "isRequired": true, "label": "Primary Agency" }
+      ],
+      "gate": null
+    },
+    {
+      "name": "stage_dispatched",
+      "displayName": "Dispatched",
+      "description": "Units dispatched to the incident. At least one unit must be assigned.",
+      "fields": [
+        { "name": "seo_dispatchedOn", "isRequired": true, "label": "Dispatched On" },
+        { "name": "seo_alarmLevel", "isRequired": false, "label": "Alarm Level" }
+      ],
+      "gate": {
+        "description": "At least one IncidentAssignment must exist for this incident before advancing past Dispatched.",
+        "condition": "COUNT(seo_IncidentAssignment WHERE seo_incidentId = currentRecord.id) >= 1"
+      }
+    },
+    {
+      "name": "stage_on_scene",
+      "displayName": "On Scene",
+      "description": "First unit has arrived on scene.",
+      "fields": [
+        { "name": "seo_firstUnitOnSceneOn", "isRequired": true, "label": "First Unit On Scene" }
+      ],
+      "gate": null
+    },
+    {
+      "name": "stage_under_control",
+      "displayName": "Under Control",
+      "description": "Incident declared under control by IC or dispatcher.",
+      "fields": [
+        { "name": "seo_underControlOn", "isRequired": true, "label": "Under Control On" }
+      ],
+      "gate": null
+    },
+    {
+      "name": "stage_cleared",
+      "displayName": "Cleared",
+      "description": "All units have cleared the scene. All assignments must have clearedOn timestamps.",
+      "fields": [
+        { "name": "seo_clearedOn", "isRequired": true, "label": "Cleared On" }
+      ],
+      "gate": {
+        "description": "All IncidentAssignments for this incident must have a clearedOn timestamp before the incident can advance past Cleared.",
+        "condition": "COUNT(seo_IncidentAssignment WHERE seo_incidentId = currentRecord.id AND seo_clearedOn IS NULL) = 0"
+      }
+    },
+    {
+      "name": "stage_closed",
+      "displayName": "Closed",
+      "description": "Incident closed with narrative documentation complete.",
+      "fields": [
+        { "name": "seo_closedOn", "isRequired": true, "label": "Closed On" },
+        { "name": "seo_narrativeSummary", "isRequired": true, "label": "Incident Narrative" }
+      ],
+      "gate": null
+    }
+  ]
+}

@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Model-Driven App Definition Schema",
+  "description": "JSON Schema for EmergencyResponseCoordination model-driven app specifications. Covers sitemap, views, forms, dashboards, business process flows, and command bar customizations.",
+  "definitions": {
+    "sitemapArea": {
+      "type": "object",
+      "required": ["id", "title", "groups"],
+      "properties": {
+        "id": { "type": "string", "description": "Unique area identifier (e.g., 'area_dispatch')" },
+        "title": { "type": "string", "description": "Display name shown in navigation" },
+        "icon": { "type": "string", "description": "Icon name from Dynamics 365 icon library" },
+        "groups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sitemapGroup" }
+        }
+      }
+    },
+    "sitemapGroup": {
+      "type": "object",
+      "required": ["id", "title", "subAreas"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subAreas": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sitemapSubArea" }
+        }
+      }
+    },
+    "sitemapSubArea": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "enum": ["Entity", "URL", "Dashboard"] },
+        "entity": { "type": "string", "description": "Dataverse table logical name" },
+        "title": { "type": "string", "description": "Override display name" },
+        "defaultView": { "type": "string", "description": "Schema name of the default view" },
+        "url": { "type": "string" },
+        "dashboardId": { "type": "string" },
+        "icon": { "type": "string" },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security roles that can see this sub-area"
+        }
+      }
+    },
+    "viewDefinition": {
+      "type": "object",
+      "required": ["schemaName", "displayName", "entity", "viewType", "columns", "sortOrder"],
+      "properties": {
+        "schemaName": { "type": "string", "description": "Unique view identifier" },
+        "displayName": { "type": "string" },
+        "entity": { "type": "string", "description": "Dataverse table logical name (e.g., seo_Incident)" },
+        "description": { "type": "string" },
+        "viewType": { "enum": ["Public", "Personal", "QuickFind", "Associated", "Lookup"] },
+        "isDefault": { "type": "boolean", "default": false },
+        "columns": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/viewColumn" }
+        },
+        "filter": { "$ref": "#/definitions/viewFilter" },
+        "sortOrder": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["column", "direction"],
+            "properties": {
+              "column": { "type": "string" },
+              "direction": { "enum": ["Ascending", "Descending"] }
+            }
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security roles that can see this view"
+        }
+      }
+    },
+    "viewColumn": {
+      "type": "object",
+      "required": ["name", "width"],
+      "properties": {
+        "name": { "type": "string", "description": "Column logical name (e.g., seo_incidentNumber)" },
+        "width": { "type": "integer", "description": "Column width in pixels" },
+        "label": { "type": "string", "description": "Override column header label" },
+        "isHidden": { "type": "boolean", "default": false }
+      }
+    },
+    "viewFilter": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["and", "or"], "default": "and" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/filterCondition" }
+        },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/viewFilter" },
+          "description": "Nested filter groups"
+        }
+      }
+    },
+    "filterCondition": {
+      "type": "object",
+      "required": ["column", "operator"],
+      "properties": {
+        "column": { "type": "string" },
+        "operator": {
+          "enum": ["eq", "ne", "gt", "ge", "lt", "le", "like", "not-like", "in", "not-in", "null", "not-null", "between", "not-between", "last-x-days", "today", "this-week", "this-month", "this-year", "on-or-after", "on-or-before"]
+        },
+        "value": {},
+        "values": { "type": "array" }
+      }
+    },
+    "formDefinition": {
+      "type": "object",
+      "required": ["schemaName", "displayName", "entity", "formType", "layout"],
+      "properties": {
+        "schemaName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "entity": { "type": "string" },
+        "description": { "type": "string" },
+        "formType": { "enum": ["Main", "QuickCreate", "QuickView", "Card"] },
+        "layout": {
+          "oneOf": [
+            { "$ref": "#/definitions/mainFormLayout" },
+            { "$ref": "#/definitions/quickCreateFormLayout" }
+          ]
+        },
+        "header": { "$ref": "#/definitions/formHeader" },
+        "businessRules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/businessRule" }
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "formHeader": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/formField" },
+          "maxItems": 4,
+          "description": "Up to 4 fields displayed in the form header"
+        }
+      }
+    },
+    "mainFormLayout": {
+      "type": "object",
+      "required": ["tabs"],
+      "properties": {
+        "tabs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/formTab" }
+        }
+      }
+    },
+    "quickCreateFormLayout": {
+      "type": "object",
+      "required": ["sections"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/formSection" }
+        }
+      }
+    },
+    "formTab": {
+      "type": "object",
+      "required": ["name", "label", "sections"],
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "isVisible": { "type": "boolean", "default": true },
+        "expanded": { "type": "boolean", "default": true },
+        "visibilityRule": { "type": "string", "description": "Condition expression for conditional tab visibility" },
+        "sections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/formSection" }
+        }
+      }
+    },
+    "formSection": {
+      "type": "object",
+      "required": ["name", "label", "columns"],
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "isVisible": { "type": "boolean", "default": true },
+        "columns": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "default": 2,
+          "description": "Number of columns in section layout"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/formField" }
+        },
+        "subgrids": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/subgrid" }
+        }
+      }
+    },
+    "formField": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Column logical name" },
+        "label": { "type": "string", "description": "Override display label" },
+        "isRequired": { "type": "boolean" },
+        "isReadOnly": { "type": "boolean" },
+        "isVisible": { "type": "boolean", "default": true },
+        "colspan": { "type": "integer", "description": "Number of section columns this field spans" },
+        "isPHI": { "type": "boolean", "description": "True if this is a PHI field protected by field security" },
+        "visibilityRule": { "type": "string" }
+      }
+    },
+    "subgrid": {
+      "type": "object",
+      "required": ["name", "entity", "viewName"],
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "entity": { "type": "string" },
+        "relationship": { "type": "string", "description": "Relationship name for filtering" },
+        "viewName": { "type": "string", "description": "View to display in the subgrid" },
+        "allowCreate": { "type": "boolean", "default": true },
+        "allowDelete": { "type": "boolean", "default": false },
+        "maxRows": { "type": "integer", "default": 5 }
+      }
+    },
+    "businessRule": {
+      "type": "object",
+      "required": ["name", "description", "condition", "actions"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "scope": { "enum": ["Entity", "Form"], "default": "Form" },
+        "condition": { "type": "string", "description": "Pseudo-code condition expression" },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["SetVisibility", "SetRequired", "SetValue", "ShowError", "Lock", "Unlock"] },
+              "field": { "type": "string" },
+              "value": {}
+            }
+          }
+        }
+      }
+    },
+    "dashboardDefinition": {
+      "type": "object",
+      "required": ["schemaName", "displayName", "dashboardType", "columns", "widgets"],
+      "properties": {
+        "schemaName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "dashboardType": { "enum": ["System", "Interactive", "PowerBI"] },
+        "columns": {
+          "type": "integer",
+          "description": "Number of columns in the dashboard grid (typically 2 or 3)"
+        },
+        "widgets": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dashboardWidget" }
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "dashboardWidget": {
+      "type": "object",
+      "required": ["name", "type", "position"],
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "enum": ["List", "Chart", "Stream", "IFrame", "WebResource"] },
+        "entity": { "type": "string" },
+        "viewName": { "type": "string" },
+        "chartType": { "enum": ["Pie", "Bar", "Column", "Line", "Funnel", "Area", "Stacked Bar", "Stacked Column"] },
+        "chartGroupBy": { "type": "string", "description": "Column to group by for chart" },
+        "chartAggregate": { "type": "string", "description": "Aggregation: Count, Sum, Avg, Min, Max" },
+        "position": {
+          "type": "object",
+          "required": ["row", "column"],
+          "properties": {
+            "row": { "type": "integer" },
+            "column": { "type": "integer" },
+            "rowSpan": { "type": "integer", "default": 1 },
+            "colSpan": { "type": "integer", "default": 1 }
+          }
+        },
+        "maxRecords": { "type": "integer" }
+      }
+    },
+    "bpfDefinition": {
+      "type": "object",
+      "required": ["schemaName", "displayName", "entity", "stages"],
+      "properties": {
+        "schemaName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "entity": { "type": "string" },
+        "description": { "type": "string" },
+        "isActive": { "type": "boolean", "default": true },
+        "stages": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/bpfStage" }
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "bpfStage": {
+      "type": "object",
+      "required": ["name", "displayName", "fields"],
+      "properties": {
+        "name": { "type": "string" },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "entity": { "type": "string", "description": "Entity for this stage (if cross-entity BPF)" },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "isRequired": { "type": "boolean", "default": false },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "gate": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "condition": { "type": "string", "description": "Pseudo-code gate condition that must be met to advance" }
+          }
+        }
+      }
+    },
+    "commandBarDefinition": {
+      "type": "object",
+      "required": ["entity", "commands"],
+      "properties": {
+        "entity": { "type": "string" },
+        "description": { "type": "string" },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/commandButton" }
+        }
+      }
+    },
+    "commandButton": {
+      "type": "object",
+      "required": ["id", "label", "action"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "tooltip": { "type": "string" },
+        "order": { "type": "integer" },
+        "visibility": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": { "enum": ["FieldValue", "SecurityRole", "FormState"] },
+                  "field": { "type": "string" },
+                  "operator": { "type": "string" },
+                  "value": {},
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "action": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["SetFieldValue", "NavigateTo", "CallFlow", "JavaScript", "Dialog"] },
+            "field": { "type": "string" },
+            "value": {},
+            "url": { "type": "string" },
+            "confirmationMessage": { "type": "string" }
+          }
+        }
+      }
+    },
+    "appDefinition": {
+      "type": "object",
+      "required": ["schemaName", "displayName", "appType", "description"],
+      "properties": {
+        "schemaName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "appType": { "enum": ["ModelDriven"] },
+        "publisher": { "type": "string" },
+        "version": { "type": "string" },
+        "securityRoles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles that can access this app"
+        },
+        "features": {
+          "type": "object",
+          "properties": {
+            "offlineEnabled": { "type": "boolean" },
+            "mobileEnabled": { "type": "boolean" },
+            "unifiedInterface": { "type": "boolean" }
+          }
+        },
+        "defaultDashboard": { "type": "string" },
+        "sitemapRef": { "type": "string", "description": "Path to sitemap definition file" },
+        "environmentVariables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Environment variables consumed by this app"
+        }
+      }
+    }
+  }
+}

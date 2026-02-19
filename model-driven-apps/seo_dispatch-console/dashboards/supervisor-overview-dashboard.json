@@ -1,0 +1,50 @@
+{
+  "schemaName": "seo_SupervisorOverviewDashboard",
+  "displayName": "Supervisor Overview",
+  "description": "Dashboard for dispatch supervisors providing a high-level view of MCI incidents, mutual aid requests, agency unit counts, and alarm level distribution.",
+  "dashboardType": "System",
+  "columns": 2,
+  "roles": ["seo_DispatchSupervisor", "seo_SystemAdmin"],
+  "widgets": [
+    {
+      "name": "wgt_MCIIncidents",
+      "label": "MCI Incidents",
+      "type": "List",
+      "entity": "seo_Incident",
+      "viewName": "seo_MCIIncidents",
+      "position": { "row": 1, "column": 1, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_MutualAidRequests",
+      "label": "Active Mutual Aid Requests",
+      "type": "List",
+      "entity": "seo_MutualAidRequest",
+      "viewName": "seo_ActiveMutualAidRequests",
+      "position": { "row": 1, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_AgencyUnitCounts",
+      "label": "Units by Agency",
+      "type": "Chart",
+      "entity": "seo_Unit",
+      "viewName": "seo_AllUnitsByStatus",
+      "chartType": "Bar",
+      "chartGroupBy": "seo_agencyId",
+      "chartAggregate": "Count",
+      "position": { "row": 2, "column": 1, "rowSpan": 1, "colSpan": 1 }
+    },
+    {
+      "name": "wgt_AlarmLevelDistribution",
+      "label": "Alarm Level Distribution",
+      "type": "Chart",
+      "entity": "seo_Incident",
+      "viewName": "seo_ActiveIncidents",
+      "chartType": "Column",
+      "chartGroupBy": "seo_alarmLevel",
+      "chartAggregate": "Count",
+      "position": { "row": 2, "column": 2, "rowSpan": 1, "colSpan": 1 }
+    }
+  ]
+}

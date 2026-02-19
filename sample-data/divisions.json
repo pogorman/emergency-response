@@ -1,0 +1,40 @@
+{
+  "entity": "seo_Division",
+  "description": "ICS divisions and groups within an incident command structure, tracking geographic divisions and functional groups with supervisors and tactical objectives.",
+  "records": [
+    {
+      "@id": "div-sf-alpha",
+      "seo_name": "Division Alpha",
+      "seo_IncidentCommand": "@ref:cmd-structure-fire",
+      "seo_DivisionType": "Geographic Division",
+      "seo_supervisor": "@ref:personnel-capt-williams",
+      "seo_radioChannel": "TAC-1A",
+      "seo_objectives": "Primary search and rescue on floors 1-2. Assist with resident evacuation."
+    },
+    {
+      "@id": "div-sf-bravo",
+      "seo_name": "Division Bravo",
+      "seo_IncidentCommand": "@ref:cmd-structure-fire",
+      "seo_DivisionType": "Geographic Division",
+      "seo_supervisor": "@ref:personnel-lt-davis",
+      "seo_radioChannel": "TAC-1B",
+      "seo_objectives": "Exposure protection on floors 2-3. Ladder operations for ventilation."
+    },
+    {
+      "@id": "div-hazmat-hot",
+      "seo_name": "Hot Zone",
+      "seo_IncidentCommand": "@ref:cmd-hazmat",
+      "seo_DivisionType": "Functional Group",
+      "seo_radioChannel": "TAC-2H",
+      "seo_objectives": "Source control and atmospheric monitoring. Level A protection required."
+    },
+    {
+      "@id": "div-hazmat-decon",
+      "seo_name": "Decon Corridor",
+      "seo_IncidentCommand": "@ref:cmd-hazmat",
+      "seo_DivisionType": "Functional Group",
+      "seo_radioChannel": "TAC-2D",
+      "seo_objectives": "Establish and operate decontamination corridor for personnel exiting hot zone."
+    }
+  ]
+}

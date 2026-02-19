@@ -1,0 +1,34 @@
+{
+  "entity": "seo_IncidentCommand",
+  "views": [
+    {
+      "schemaName": "seo_ActiveCommands",
+      "displayName": "Active Commands",
+      "entity": "seo_IncidentCommand",
+      "description": "Incident commands that have not been terminated.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_commandName", "width": 200 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_incidentCommanderId", "width": 150 },
+        { "name": "seo_commandEstablishedOn", "width": 160 },
+        { "name": "seo_strategyMode", "width": 120 },
+        { "name": "seo_radioChannel", "width": 120 },
+        { "name": "seo_isUnifiedCommand", "width": 80 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_commandTerminatedOn",
+            "operator": "null"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_commandEstablishedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

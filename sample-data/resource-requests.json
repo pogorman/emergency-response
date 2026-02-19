@@ -1,0 +1,44 @@
+{
+  "entity": "seo_ResourceRequest",
+  "description": "Resource requests submitted during active incidents, tracking request lifecycle from initial request through dispatch and fulfillment.",
+  "records": [
+    {
+      "@id": "rr-sf-water",
+      "seo_name": "Additional Water Supply",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_requestedBy": "@ref:personnel-bc-johnson",
+      "seo_requestedOn": "2026-02-18T08:35:00Z",
+      "seo_Status": "Dispatched",
+      "seo_resourceType": "Tanker/Water Tender",
+      "seo_quantity": 1,
+      "seo_Urgency": "Urgent",
+      "seo_justification": "3rd alarm fire. Hydrant supply insufficient for defensive operations. Need additional water shuttle."
+    },
+    {
+      "@id": "rr-mci-ambulances",
+      "seo_name": "Additional Ambulances",
+      "seo_Incident": "@ref:incident-mci-mva",
+      "seo_requestedBy": "@ref:personnel-capt-anderson",
+      "seo_requestedOn": "2026-02-18T09:52:00Z",
+      "seo_Status": "Requested",
+      "seo_resourceType": "ALS Ambulance",
+      "seo_quantity": 3,
+      "seo_Urgency": "Emergency",
+      "seo_justification": "7 patients confirmed. Need additional ALS transport for triage category Red and Yellow patients."
+    },
+    {
+      "@id": "rr-hazmat-decon",
+      "seo_name": "Decontamination Unit",
+      "seo_Incident": "@ref:incident-hazmat",
+      "seo_requestedBy": "@ref:personnel-capt-williams",
+      "seo_requestedOn": "2026-02-18T07:50:00Z",
+      "seo_Status": "On Scene",
+      "seo_resourceType": "Hazmat Decon Trailer",
+      "seo_quantity": 1,
+      "seo_Urgency": "Urgent",
+      "seo_justification": "Chlorine exposure requires gross decon and technical decon corridors.",
+      "seo_fulfilledBy": "@ref:personnel-capt-harris",
+      "seo_fulfilledOn": "2026-02-18T08:15:00Z"
+    }
+  ]
+}

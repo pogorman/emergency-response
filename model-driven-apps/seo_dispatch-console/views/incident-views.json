@@ -1,0 +1,149 @@
+{
+  "entity": "seo_Incident",
+  "views": [
+    {
+      "schemaName": "seo_ActiveIncidents",
+      "displayName": "Active Incidents",
+      "entity": "seo_Incident",
+      "description": "All incidents that are not Closed or Cancelled, sorted by priority and dispatch time.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_incidentNumber", "width": 120 },
+        { "name": "seo_incidentType", "width": 150 },
+        { "name": "seo_priority", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_address", "width": 250 },
+        { "name": "seo_alarmLevel", "width": 80 },
+        { "name": "seo_isMCI", "width": 70 },
+        { "name": "seo_patientCount", "width": 80 },
+        { "name": "seo_primaryAgencyId", "width": 150 },
+        { "name": "seo_responseTimeMinutes", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_status",
+            "operator": "not-in",
+            "values": ["Closed", "Cancelled"]
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_priority", "direction": "Ascending" },
+        { "column": "seo_dispatchedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_MyAgencyIncidents",
+      "displayName": "My Agency Incidents",
+      "entity": "seo_Incident",
+      "description": "Incidents belonging to the current user's business unit (agency).",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_incidentNumber", "width": 120 },
+        { "name": "seo_incidentType", "width": 150 },
+        { "name": "seo_priority", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_address", "width": 250 },
+        { "name": "seo_alarmLevel", "width": 80 },
+        { "name": "seo_isMCI", "width": 70 },
+        { "name": "seo_patientCount", "width": 80 },
+        { "name": "seo_primaryAgencyId", "width": 150 },
+        { "name": "seo_responseTimeMinutes", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_primaryAgencyId",
+            "operator": "eq-businessid",
+            "value": "current-user-business-unit"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_dispatchedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_MCIIncidents",
+      "displayName": "MCI Incidents",
+      "entity": "seo_Incident",
+      "description": "Active mass-casualty incidents, sorted by alarm level descending.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_incidentNumber", "width": 120 },
+        { "name": "seo_incidentType", "width": 150 },
+        { "name": "seo_priority", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_address", "width": 250 },
+        { "name": "seo_alarmLevel", "width": 100 },
+        { "name": "seo_patientCount", "width": 100 },
+        { "name": "seo_isMCI", "width": 70 },
+        { "name": "seo_primaryAgencyId", "width": 150 },
+        { "name": "seo_responseTimeMinutes", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isMCI",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "column": "seo_status",
+            "operator": "not-in",
+            "values": ["Closed", "Cancelled"]
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_alarmLevel", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_ClosedIncidentsLast30d",
+      "displayName": "Closed Incidents (Last 30 Days)",
+      "entity": "seo_Incident",
+      "description": "Incidents closed within the last 30 days.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_incidentNumber", "width": 120 },
+        { "name": "seo_incidentType", "width": 150 },
+        { "name": "seo_priority", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_address", "width": 250 },
+        { "name": "seo_alarmLevel", "width": 80 },
+        { "name": "seo_isMCI", "width": 70 },
+        { "name": "seo_patientCount", "width": 80 },
+        { "name": "seo_primaryAgencyId", "width": 150 },
+        { "name": "seo_closedOn", "width": 160 },
+        { "name": "seo_responseTimeMinutes", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_status",
+            "operator": "eq",
+            "value": "Closed"
+          },
+          {
+            "column": "seo_closedOn",
+            "operator": "last-x-days",
+            "value": 30
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_closedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

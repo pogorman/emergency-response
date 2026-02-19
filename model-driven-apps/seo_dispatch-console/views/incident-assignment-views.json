@@ -1,0 +1,59 @@
+{
+  "entity": "seo_IncidentAssignment",
+  "views": [
+    {
+      "schemaName": "seo_AssignmentsByIncident",
+      "displayName": "Assignments by Incident",
+      "entity": "seo_IncidentAssignment",
+      "description": "All assignments for a given incident (used as associated view).",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_unitId", "width": 120 },
+        { "name": "seo_personnelId", "width": 150 },
+        { "name": "seo_icsRole", "width": 150 },
+        { "name": "seo_assignedOn", "width": 160 },
+        { "name": "seo_enRouteOn", "width": 160 },
+        { "name": "seo_onSceneOn", "width": 160 },
+        { "name": "seo_clearedOn", "width": 160 },
+        { "name": "seo_isMutualAid", "width": 80 }
+      ],
+      "filter": null,
+      "sortOrder": [
+        { "column": "seo_assignedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_ActiveAssignments",
+      "displayName": "Active Assignments",
+      "entity": "seo_IncidentAssignment",
+      "description": "Assignments that have not yet been cleared.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_unitId", "width": 120 },
+        { "name": "seo_personnelId", "width": 150 },
+        { "name": "seo_icsRole", "width": 150 },
+        { "name": "seo_assignedOn", "width": 160 },
+        { "name": "seo_enRouteOn", "width": 160 },
+        { "name": "seo_onSceneOn", "width": 160 },
+        { "name": "seo_clearedOn", "width": 160 },
+        { "name": "seo_isMutualAid", "width": 80 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_clearedOn",
+            "operator": "null"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_assignedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

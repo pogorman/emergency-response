@@ -1,0 +1,81 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_PersonnelMainForm",
+      "displayName": "Personnel Main Form",
+      "entity": "seo_Personnel",
+      "description": "Main form for personnel records including identity, contact info, current assignment, and incident assignment history.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_rank" },
+        { "name": "seo_isActive" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "personnel_info_tab",
+            "label": "Personnel Info",
+            "sections": [
+              {
+                "name": "identity_section",
+                "label": "Identity",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_fullName", "isRequired": true },
+                  { "name": "seo_badgeNumber" },
+                  { "name": "seo_rank", "isRequired": true },
+                  { "name": "seo_agencyId", "isRequired": true },
+                  { "name": "seo_isParamedic" },
+                  { "name": "seo_isActive" }
+                ]
+              },
+              {
+                "name": "contact_section",
+                "label": "Contact",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_email" },
+                  { "name": "seo_phone" }
+                ]
+              },
+              {
+                "name": "assignment_section",
+                "label": "Assignment",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_currentUnitId" },
+                  { "name": "seo_certifications" },
+                  { "name": "seo_systemUserId" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "history_tab",
+            "label": "History",
+            "sections": [
+              {
+                "name": "assignments_section",
+                "label": "Assignments",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "incident_assignments_subgrid",
+                    "label": "Incident Assignments",
+                    "entity": "seo_IncidentAssignment",
+                    "relationship": "seo_Personnel_IncidentAssignment",
+                    "viewName": "seo_AssignmentsByIncident",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

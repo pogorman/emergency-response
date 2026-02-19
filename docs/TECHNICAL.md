@@ -1041,6 +1041,125 @@ Patient Triage (scrPatientTriage) is the **only** screen accessing PHI columns. 
 **Decision:** Phone layout (portrait) rather than tablet layout.
 **Rationale:** Field responders carry phones, not tablets, on their person during incidents. The app is designed for one-hand use in turnout gear with gloves — all interactive controls have a minimum 44px touch target. The high-contrast dark theme improves visibility in both bright daylight and nighttime conditions. A phone layout also encourages focused, single-task interactions (check status, change status, add note) rather than multi-pane views that require more attention. The model-driven app (Phase 5) will serve the tablet/desktop use case for dispatch and supervision.
 
+### ADR-016: Model-Driven App for Dispatch, Canvas App for Field
+**Decision:** Use a model-driven app (Dispatch Console) for dispatch center operations and a canvas app (Responder Mobile) for field responders.
+**Rationale:** Model-driven apps provide built-in views, forms, dashboards, business process flows, and command bar customization — ideal for data-heavy dispatch operations on desktop/tablet. They require minimal custom code and leverage Dataverse's native UI framework. Canvas apps provide pixel-perfect control for the field-optimized mobile experience but require more design effort. Splitting by audience (desktop dispatch vs. mobile field) lets each app excel at its form factor. The model-driven app serves Dispatchers, Supervisors, ICs, Station Officers, and Analysts. The canvas app serves Responders and EMS Providers.
+
+### ADR-017: Business Process Flow for Incident Lifecycle
+**Decision:** Implement a 6-stage BPF (Reported → Dispatched → On Scene → Under Control → Cleared → Closed) on seo_Incident.
+**Rationale:** The BPF provides visual guidance for dispatchers through the incident lifecycle, reducing training time and ensuring consistent data capture at each stage. Stage gates enforce data quality — e.g., can't advance to Dispatched without at least one IncidentAssignment, can't advance to Cleared without all assignments having clearedOn timestamps. The BPF complements (doesn't replace) the IncidentStatusProgression flow — the flow handles automated status advancement from timestamp population, while the BPF provides the visual stage indicator and field prompts. Both mechanisms coexist: the flow advances status when timestamps are set, and the BPF visual updates to match.
+
+### ADR-018: Sample Data Strategy
+**Decision:** Provide 22 sample data files with ~178 records across 5 incident scenarios using symbolic FK references.
+**Rationale:** Realistic sample data is critical for demos, testing, and user acceptance. The 5 scenarios (structure fire, MCI, hazmat, medical, brush fire) exercise different lifecycle stages, ICS structures, mutual aid patterns, and EMS workflows. Symbolic references (`@ref:entity-id`) avoid hardcoding GUIDs — importers resolve references to actual Dataverse GUIDs at import time. The import order document ensures FK dependencies are satisfied. PHI fields are included in patient records for EMS workflow testing but are clearly marked as fictional.
+
+---
+
+## Model-Driven App — Dispatch Console
+
+### App Overview
+
+**seo_DispatchConsole** is a Unified Interface model-driven app for dispatch center operators, supervisors, incident commanders, and station officers. It provides incident lifecycle management, ICS command structure, mutual aid coordination, pre-planning, and administrative functions.
+
+- **Form factor:** Desktop / Tablet
+- **Target roles:** seo_Dispatcher, seo_DispatchSupervisor, seo_IncidentCommander, seo_StationOfficer, seo_ReadOnlyAnalyst, seo_SystemAdmin
+- **Spec location:** `/model-driven-apps/seo_dispatch-console/`
+
+### Sitemap (4 Areas)
+
+| Area | Purpose | Key Tables |
+|------|---------|------------|
+| **Dispatch Operations** | Primary dispatch workflow | Incident, Call, Unit, IncidentAssignment, UnitStatusLog |
+| **ICS Command** | On-scene leadership | IncidentCommand, Division, ResourceRequest, IncidentNote, PatientRecord |
+| **Planning** | Pre/post-incident planning | PrePlan, Hazard, Hydrant, Facility, MutualAidAgreement, MutualAidRequest, AfterActionReport |
+| **Administration** | Setup and reference data | Agency, Jurisdiction, Personnel, Station, Apparatus |
+
+### Security Role → Area Mapping
+
+| Role | Dispatch Ops | ICS Command | Planning | Administration |
+|------|-------------|-------------|----------|----------------|
+| Dispatcher | Full CRUD | Read | Read | Read (own BU) |
+| DispatchSupervisor | Full CRUD + MCI button | Full CRUD | Full CRUD | Full CRUD (own BU) |
+| IncidentCommander | Read incidents | Full CRUD | Read pre-plans | Read |
+| StationOfficer | Read | Read | CRUD pre-plans + AARs | CRUD personnel (own BU) |
+| ReadOnlyAnalyst | Read | Read | Read | Read |
+
+### View Inventory (27 Views)
+
+| Table | Views | Notes |
+|-------|-------|-------|
+| seo_Incident | Active Incidents, My Agency Incidents, MCI Incidents, Closed Incidents (last 30d) | MCI view highlights alarm level and patient count |
+| seo_Call | Open Calls, Today's Calls, Unassigned Calls | Unassigned = no linked incident |
+| seo_Unit | All Units by Status, Available Units, Out of Service Units | Default sorts by status |
+| seo_IncidentAssignment | Assignments by Incident, Active Assignments | Active = no clearedOn |
+| seo_UnitStatusLog | Status Log by Unit, Status Log by Incident | Append-only audit trail |
+| seo_IncidentCommand | Active Commands | Active = no terminatedOn |
+| seo_IncidentNote | Notes by Incident, Priority Notes | Priority notes flagged for urgency |
+| seo_PatientRecord | Patients by Incident, Transport Tracking | **No PHI columns in views** |
+| seo_PrePlan | All Pre-Plans, Pre-Plans with Hazards | Hazard filter for safety review |
+| seo_MutualAidAgreement | Active Agreements, Expiring Soon | Expiring = within 90 days |
+| seo_MutualAidRequest | Active Requests | Excludes returned/denied/cancelled |
+| seo_AfterActionReport | Draft AARs, Completed AARs | Completed = Approved or Final status |
+| seo_Personnel | Agency Personnel, By Rank | Active only |
+
+### Form Inventory (19 Forms)
+
+| Table | Forms | PHI | Notes |
+|-------|-------|-----|-------|
+| seo_Incident | Main (5 tabs), Quick Create | No | BPF-driven, MCI visual alert, locked when closed |
+| seo_Call | Main (3 tabs), Quick Create | No | Duplicate detection with link to existing incident |
+| seo_Unit | Main (2 tabs) | No | GPS and status read-only (updated by mobile/flows) |
+| seo_IncidentAssignment | Main, Quick Create | No | Auto-named by flow |
+| seo_IncidentCommand | Main (2 tabs) | No | Divisions subgrid |
+| seo_Division | Quick Create | No | Created from command form |
+| seo_ResourceRequest | Main, Quick Create | No | Urgency-driven layout |
+| seo_IncidentNote | Quick Create | No | Inline note creation |
+| seo_PatientRecord | Main (3 tabs) | **Yes — Tab 2** | PHI tab visible to EMSProvider + SystemAdmin only |
+| seo_MutualAidAgreement | Main (3 tabs) | No | Cost sharing conditional visibility |
+| seo_MutualAidRequest | Main (3 tabs), Quick Create | No | Cost tracking tab |
+| seo_AfterActionReport | Main (3 tabs) | No | Lessons learned and improvement actions |
+| seo_PrePlan | Main (4 tabs) | No | Hazard subgrid, linked incidents |
+| seo_Personnel | Main (2 tabs) | No | Assignment history |
+
+### Dashboards (4)
+
+| Dashboard | Target Role | Widgets |
+|-----------|------------|---------|
+| **Dispatch Operations** | Dispatcher, DispatchSupervisor | Active Incidents list, Unit Status pie chart, Open Calls list, Recent Status Changes stream |
+| **Supervisor Overview** | DispatchSupervisor | MCI Incidents list, Mutual Aid Requests list, Units by Agency bar chart, Alarm Level distribution chart |
+| **ICS Command** | IncidentCommander | Active Commands list, Active Assignments list, Resource Requests list, Incident Notes stream |
+| **Station Dashboard** | StationOfficer | Station Units list, Personnel Roster list, Draft AARs list, Pre-Plans list |
+
+### Business Process Flow
+
+**seo_IncidentLifecycle** — 6 stages on seo_Incident:
+
+| Stage | Key Fields | Gate |
+|-------|-----------|------|
+| Reported | incidentType, priority, address, primaryAgencyId | — |
+| Dispatched | dispatchedOn, alarmLevel | ≥1 IncidentAssignment |
+| On Scene | firstUnitOnSceneOn | — |
+| Under Control | underControlOn | — |
+| Cleared | clearedOn | All assignments cleared |
+| Closed | closedOn, narrativeSummary | — |
+
+### Command Bar Customization
+
+**Declare MCI** button on seo_Incident:
+- Sets `seo_isMCI = true` with confirmation dialog
+- Visible when: `isMCI = false` AND status ∉ {Closed, Cancelled}
+- Requires: seo_DispatchSupervisor or seo_SystemAdmin role
+- Triggers: seo_NotifyMCIAlarm flow (supervisor email alert)
+- One-directional: once set to true, can only be reset by SystemAdmin
+
+### PHI Containment in MDA
+
+PatientRecord form uses a dedicated "Patient Info (PHI)" tab for the 7 PHI columns. This tab is protected by the `seo_PHIAccess` field security profile — non-EMS roles see masked values ("***"). Additionally, PatientRecord views deliberately exclude all PHI columns, showing only triage category, transport status, and operational fields.
+
+### Sample Data
+
+22 sample data files with ~178 records across 5 incident scenarios. Located in `/sample-data/`. See `sample-data/README.md` for import order, scenario descriptions, and symbolic reference resolution.
+
 ---
 
 ## ALM & Deployment
@@ -1067,6 +1186,7 @@ Patient Triage (scrPatientTriage) is the **only** screen accessing PHI columns. 
 | seo_ServiceAccountUserId | String | "" | GUID of the service account for elevated flows (Phase 3) |
 | seo_GPSUpdateIntervalSeconds | String | "30" | How often the mobile app updates unit GPS (Phase 4) |
 | seo_OfflineSyncIntervalMinutes | String | "5" | Offline cache sync interval for mobile app (Phase 4) |
+| seo_DefaultDashboardId | String | "" | GUID of default dashboard for MDA landing page (Phase 5) |
 
 ### Connection References
 | Reference | Connector | Description |

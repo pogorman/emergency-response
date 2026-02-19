@@ -1,0 +1,48 @@
+{
+  "schemaName": "seo_DispatchOperationsDashboard",
+  "displayName": "Dispatch Operations",
+  "description": "Primary dashboard for dispatchers and dispatch supervisors. Shows active incidents, unit status distribution, open calls, and recent status changes.",
+  "dashboardType": "System",
+  "columns": 2,
+  "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_SystemAdmin"],
+  "widgets": [
+    {
+      "name": "wgt_ActiveIncidents",
+      "label": "Active Incidents",
+      "type": "List",
+      "entity": "seo_Incident",
+      "viewName": "seo_ActiveIncidents",
+      "position": { "row": 1, "column": 1, "rowSpan": 2, "colSpan": 1 },
+      "maxRecords": 15
+    },
+    {
+      "name": "wgt_UnitStatusChart",
+      "label": "Unit Status Distribution",
+      "type": "Chart",
+      "entity": "seo_Unit",
+      "viewName": "seo_AllUnitsByStatus",
+      "chartType": "Pie",
+      "chartGroupBy": "seo_currentStatus",
+      "chartAggregate": "Count",
+      "position": { "row": 1, "column": 2, "rowSpan": 1, "colSpan": 1 }
+    },
+    {
+      "name": "wgt_OpenCalls",
+      "label": "Open Calls",
+      "type": "List",
+      "entity": "seo_Call",
+      "viewName": "seo_OpenCalls",
+      "position": { "row": 2, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_RecentStatusChanges",
+      "label": "Recent Status Changes",
+      "type": "Stream",
+      "entity": "seo_UnitStatusLog",
+      "viewName": "seo_StatusLogByUnit",
+      "position": { "row": 3, "column": 1, "rowSpan": 1, "colSpan": 2 },
+      "maxRecords": 20
+    }
+  ]
+}

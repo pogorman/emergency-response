@@ -1,0 +1,144 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_CallMainForm",
+      "displayName": "Call Main Form",
+      "entity": "seo_Call",
+      "description": "Primary intake dispatcher form for logging and managing incoming calls.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_reportedPriority" },
+        { "name": "seo_callSource" },
+        { "name": "seo_isDuplicate" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_caller_info",
+            "label": "Caller Info",
+            "sections": [
+              {
+                "name": "section_caller",
+                "label": "Caller",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_callNumber", "isReadOnly": true },
+                  { "name": "seo_receivedOn", "isRequired": true },
+                  { "name": "seo_callSource", "isRequired": true },
+                  { "name": "seo_callerName" },
+                  { "name": "seo_callerPhone" },
+                  { "name": "seo_callerAddress" }
+                ]
+              },
+              {
+                "name": "section_dispatcher",
+                "label": "Dispatcher",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_dispatcherId" },
+                  { "name": "seo_jurisdictionId" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_nature_location",
+            "label": "Nature / Location",
+            "sections": [
+              {
+                "name": "section_incident_details",
+                "label": "Incident Details",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_reportedIncidentType", "isRequired": true },
+                  { "name": "seo_reportedPriority", "isRequired": true },
+                  { "name": "seo_incidentAddress", "isRequired": true },
+                  { "name": "seo_latitude" },
+                  { "name": "seo_longitude" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_disposition",
+            "label": "Disposition",
+            "sections": [
+              {
+                "name": "section_duplicate_check",
+                "label": "Duplicate Check",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_isDuplicate" },
+                  { "name": "seo_duplicateOfIncidentId" }
+                ]
+              },
+              {
+                "name": "section_notes",
+                "label": "Notes",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_narrativeNotes" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "businessRules": [
+        {
+          "name": "seo_ShowDuplicateLink",
+          "description": "Show Duplicate Link - When isDuplicate is true, show and require the duplicate incident lookup; otherwise hide it.",
+          "condition": {
+            "field": "seo_isDuplicate",
+            "operator": "eq",
+            "value": true
+          },
+          "trueAction": {
+            "type": "setVisibility",
+            "field": "seo_duplicateOfIncidentId",
+            "visible": true,
+            "isRequired": true
+          },
+          "falseAction": {
+            "type": "setVisibility",
+            "field": "seo_duplicateOfIncidentId",
+            "visible": false,
+            "isRequired": false
+          }
+        }
+      ]
+    },
+    {
+      "schemaName": "seo_CallQuickCreate",
+      "displayName": "Call Quick Create",
+      "entity": "seo_Call",
+      "description": "Quick-create form for rapidly logging a new incoming call.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "section_call_info",
+            "label": "Call Info",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_receivedOn", "isRequired": true },
+              { "name": "seo_callSource", "isRequired": true },
+              { "name": "seo_callerName" },
+              { "name": "seo_callerPhone" }
+            ]
+          },
+          {
+            "name": "section_nature",
+            "label": "Nature",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_reportedIncidentType", "isRequired": true },
+              { "name": "seo_reportedPriority", "isRequired": true },
+              { "name": "seo_incidentAddress", "isRequired": true }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

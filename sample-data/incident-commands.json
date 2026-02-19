@@ -1,0 +1,45 @@
+{
+  "entity": "seo_IncidentCommand",
+  "description": "Incident Command Posts established for active incidents, tracking IC assignment, strategy, and command post location.",
+  "records": [
+    {
+      "@id": "cmd-structure-fire",
+      "seo_name": "Elm St Command",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_incidentCommander": "@ref:personnel-bc-johnson",
+      "seo_establishedOn": "2026-02-18T08:25:00Z",
+      "seo_Strategy": "Defensive",
+      "seo_radioChannel": "TAC-1",
+      "seo_isUnifiedCommand": false,
+      "seo_commandPostAddress": "Corner of Elm St and 5th Ave",
+      "seo_latitude": 38.9075,
+      "seo_longitude": -77.0370
+    },
+    {
+      "@id": "cmd-mci-mva",
+      "seo_name": "Highway 50 Command",
+      "seo_Incident": "@ref:incident-mci-mva",
+      "seo_incidentCommander": "@ref:personnel-capt-anderson",
+      "seo_establishedOn": "2026-02-18T09:50:00Z",
+      "seo_Strategy": "Offensive",
+      "seo_radioChannel": "TAC-3",
+      "seo_isUnifiedCommand": true,
+      "seo_commandPostAddress": "Highway 50 shoulder, eastbound",
+      "seo_latitude": 38.9120,
+      "seo_longitude": -77.0450
+    },
+    {
+      "@id": "cmd-hazmat",
+      "seo_name": "Industrial Blvd Command",
+      "seo_Incident": "@ref:incident-hazmat",
+      "seo_incidentCommander": "@ref:personnel-capt-williams",
+      "seo_establishedOn": "2026-02-18T07:45:00Z",
+      "seo_Strategy": "Defensive",
+      "seo_radioChannel": "TAC-2",
+      "seo_isUnifiedCommand": false,
+      "seo_commandPostAddress": "800 Industrial Blvd, Parking Lot A",
+      "seo_latitude": 38.9050,
+      "seo_longitude": -77.0380
+    }
+  ]
+}

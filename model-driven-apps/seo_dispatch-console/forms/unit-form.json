@@ -1,0 +1,92 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_UnitMainForm",
+      "displayName": "Unit Main Form",
+      "entity": "seo_Unit",
+      "description": "Main form for managing unit identity, current status, location, and historical records.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_currentStatus" },
+        { "name": "seo_isALS" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_unit_info",
+            "label": "Unit Info",
+            "sections": [
+              {
+                "name": "section_identity",
+                "label": "Identity",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isRequired": true },
+                  { "name": "seo_currentStatus", "isRequired": true },
+                  { "name": "seo_agencyId", "isRequired": true },
+                  { "name": "seo_stationId", "isRequired": true },
+                  { "name": "seo_apparatusId" },
+                  { "name": "seo_personnelCount" },
+                  { "name": "seo_isALS" }
+                ]
+              },
+              {
+                "name": "section_location",
+                "label": "Location",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_latitude", "isReadOnly": true },
+                  { "name": "seo_longitude", "isReadOnly": true },
+                  { "name": "seo_lastStatusChangeOn", "isReadOnly": true },
+                  { "name": "seo_currentIncidentId", "isReadOnly": true }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_history",
+            "label": "History",
+            "sections": [
+              {
+                "name": "section_status_history",
+                "label": "Status History",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_status_log",
+                    "label": "Status History",
+                    "entity": "seo_UnitStatusLog",
+                    "relationship": "seo_Unit_UnitStatusLog",
+                    "viewName": "seo_StatusLogByUnit",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 15
+                  }
+                ]
+              },
+              {
+                "name": "section_assignment_history",
+                "label": "Assignment History",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_assignment_history",
+                    "label": "Assignment History",
+                    "entity": "seo_IncidentAssignment",
+                    "relationship": "seo_Unit_IncidentAssignment",
+                    "viewName": "seo_AssignmentsByIncident",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

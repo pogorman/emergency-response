@@ -1,0 +1,83 @@
+{
+  "entity": "seo_MutualAidAgreement",
+  "views": [
+    {
+      "schemaName": "seo_ActiveAgreements",
+      "displayName": "Active Agreements",
+      "entity": "seo_MutualAidAgreement",
+      "description": "All active mutual aid agreements, sorted by expiration date ascending.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_requestingAgencyId", "width": 150 },
+        { "name": "seo_providingAgencyId", "width": 150 },
+        { "name": "seo_agreementType", "width": 120 },
+        { "name": "seo_effectiveDate", "width": 120 },
+        { "name": "seo_expirationDate", "width": 120 },
+        { "name": "seo_hasCostSharing", "width": 80 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isActive",
+            "operator": "eq",
+            "value": true
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_expirationDate", "direction": "Ascending" }
+      ]
+    },
+    {
+      "schemaName": "seo_ExpiringSoon",
+      "displayName": "Expiring Soon (Next 90 Days)",
+      "entity": "seo_MutualAidAgreement",
+      "description": "Active mutual aid agreements expiring within the next 90 days.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_requestingAgencyId", "width": 150 },
+        { "name": "seo_providingAgencyId", "width": 150 },
+        { "name": "seo_agreementType", "width": 120 },
+        { "name": "seo_effectiveDate", "width": 120 },
+        { "name": "seo_expirationDate", "width": 120 },
+        { "name": "seo_hasCostSharing", "width": 80 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isActive",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "column": "seo_expirationDate",
+            "operator": "on-or-before",
+            "value": {
+              "type": "relative",
+              "unit": "days",
+              "offset": 90
+            }
+          },
+          {
+            "column": "seo_expirationDate",
+            "operator": "on-or-after",
+            "value": {
+              "type": "relative",
+              "unit": "days",
+              "offset": 0
+            }
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_expirationDate", "direction": "Ascending" }
+      ]
+    }
+  ]
+}

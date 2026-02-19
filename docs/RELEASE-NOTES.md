@@ -1,5 +1,76 @@
 # Release Notes
 
+## v0.5.0 — Phase 5: Model-Driven App — Dispatch Console & Supervisor Dashboard (2026-02-18)
+
+### Summary
+Complete model-driven app specification for the Dispatch Console & Supervisor Dashboard. 4-area sitemap, 27 views, 19 forms, 4 dashboards, 1 business process flow (incident lifecycle), 1 command bar customization (Declare MCI), 22 sample data files with 5 realistic incident scenarios (~178 records), and a JSON schema for MDA specs. Desktop/tablet complement to the Responder Mobile canvas app.
+
+### What's Included
+- **MDA definition schema** (`model-driven-apps/_schema/mda-definition-schema.json`):
+  - JSON Schema for sitemap, views, forms, dashboards, BPF, and command bar definitions
+- **MDA README** (`model-driven-apps/README.md`):
+  - Spec format, translation guide to Power Apps maker portal
+- **App definition** (`model-driven-apps/seo_dispatch-console/app-definition.json`):
+  - 6 security roles mapped, Unified Interface, role-area mapping
+- **Sitemap** (`model-driven-apps/seo_dispatch-console/sitemap.json`):
+  - 4 areas: Dispatch Operations, ICS Command, Planning, Administration
+- **27 views** across 13 files (`views/`):
+  - Incident (4), Call (3), Unit (3), Assignment (2), Status Log (2), Command (1), Note (2), Patient (2, no PHI), Pre-Plan (2), Mutual Aid Agreement (2), Mutual Aid Request (1), AAR (2), Personnel (2)
+- **19 forms** across 14 files (`forms/`):
+  - Main forms with tabs, sections, subgrids, business rules
+  - Quick Create forms for rapid data entry
+  - PatientRecord form with PHI-restricted tab (EMSProvider + SystemAdmin only)
+  - Incident form with 5 tabs, MCI alert business rule, locked-when-closed rule
+- **4 dashboards** (`dashboards/`):
+  - Dispatch Operations (dispatcher), Supervisor Overview (supervisor), ICS Command (IC), Station (station officer)
+- **Business Process Flow** (`business-process-flows/incident-lifecycle-bpf.json`):
+  - 6 stages: Reported → Dispatched → On Scene → Under Control → Cleared → Closed
+  - Stage gates: ≥1 assignment for Dispatched, all assignments cleared for Cleared
+- **Command bar** (`command-bar/incident-command-bar.json`):
+  - "Declare MCI" button with role/field visibility rules and confirmation dialog
+- **22 sample data files** (`sample-data/`):
+  - 3 agencies, 3 jurisdictions, 6 stations, 12 apparatus, 18 personnel, 8 units
+  - 8 facilities, 4 pre-plans, 6 hazards, 15 hydrants
+  - 5 incidents, 5 calls, 15 assignments, 3 commands, 4 divisions, 3 resource requests
+  - 12 notes, 8 patients (with PHI), 2 mutual aid agreements, 2 requests, 2 AARs, ~40 status logs
+- **Sample data README** (`sample-data/README.md`):
+  - Import order (FK dependency chain), scenario descriptions, symbolic reference format
+- **1 new environment variable** (`solution/environment-variables.json`):
+  - `seo_DefaultDashboardId` (default: "")
+- **3 new ADRs** in TECHNICAL.md:
+  - ADR-016: Model-Driven App for Dispatch, Canvas App for Field
+  - ADR-017: Business Process Flow for Incident Lifecycle
+  - ADR-018: Sample Data Strategy
+- **TECHNICAL.md updated** with Model-Driven App section
+- **USER-GUIDE.md updated** with For Dispatchers, For Supervisors / ICs, For Administrators sections
+
+### 5 Sample Data Scenarios
+1. **Structure Fire (On Scene)** — 3-alarm, 4 units, ICS with 2 divisions, mutual aid, pre-plan linked
+2. **MCI / MVA (Dispatched)** — 7 patients, mutual aid requested, unified command
+3. **Hazmat Spill (Under Control)** — chlorine release, hot/decon zones, resource request
+4. **Medical Emergency (Cleared)** — single ALS unit, STEMI patient transported
+5. **Brush Fire (Closed)** — full lifecycle, completed AAR with lessons learned
+
+### Key Design Decisions
+- MDA for dispatch (data-heavy desktop), Canvas for field (mobile-optimized) — ADR-016
+- 4-area sitemap mirrors operational workflow: dispatch → ICS → planning → admin
+- BPF guides dispatchers through 6-stage incident lifecycle with stage gates — ADR-017
+- PHI contained: PatientRecord views exclude PHI columns; form PHI tab restricted by field security
+- "Declare MCI" command button gives supervisors manual override before patient threshold
+- Sample data uses symbolic FK references for import flexibility — ADR-018
+- ~178 records across all 22 tables ensures comprehensive demo coverage
+
+### Breaking Changes
+None (additive — new app specs, sample data, and environment variable).
+
+### Dependencies
+- v0.4.0 (canvas app specs for complete app ecosystem)
+- v0.3.0 (flows — BPF coexists with IncidentStatusProgression flow)
+- v0.2.0 (security roles — MDA roles must be configured)
+- v0.1.0 (data model — all 22 tables must be deployed)
+
+---
+
 ## v0.4.0 — Phase 4: Canvas App — Responder Mobile (2026-02-18)
 
 ### Summary

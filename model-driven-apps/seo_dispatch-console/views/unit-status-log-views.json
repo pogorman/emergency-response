@@ -1,0 +1,57 @@
+{
+  "entity": "seo_UnitStatusLog",
+  "views": [
+    {
+      "schemaName": "seo_StatusLogByUnit",
+      "displayName": "Status Log by Unit",
+      "entity": "seo_UnitStatusLog",
+      "description": "Full status history for a given unit (used as associated view).",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_unitId", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_previousStatus", "width": 130 },
+        { "name": "seo_changedOn", "width": 160 },
+        { "name": "seo_changedById", "width": 150 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_source", "width": 100 }
+      ],
+      "filter": null,
+      "sortOrder": [
+        { "column": "seo_changedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_StatusLogByIncident",
+      "displayName": "Status Log by Incident",
+      "entity": "seo_UnitStatusLog",
+      "description": "Status changes associated with a specific incident (used as associated view).",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_unitId", "width": 120 },
+        { "name": "seo_status", "width": 130 },
+        { "name": "seo_previousStatus", "width": 130 },
+        { "name": "seo_changedOn", "width": 160 },
+        { "name": "seo_changedById", "width": 150 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_source", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_incidentId",
+            "operator": "not-null"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_changedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

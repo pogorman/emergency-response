@@ -1,0 +1,106 @@
+{
+  "entity": "seo_Call",
+  "views": [
+    {
+      "schemaName": "seo_OpenCalls",
+      "displayName": "Open Calls",
+      "entity": "seo_Call",
+      "description": "Calls with no linked incident or where the linked incident status is Reported.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_callNumber", "width": 120 },
+        { "name": "seo_receivedOn", "width": 160 },
+        { "name": "seo_callerName", "width": 150 },
+        { "name": "seo_callerPhone", "width": 120 },
+        { "name": "seo_callSource", "width": 120 },
+        { "name": "seo_reportedIncidentType", "width": 150 },
+        { "name": "seo_reportedPriority", "width": 120 },
+        { "name": "seo_incidentAddress", "width": 250 }
+      ],
+      "filter": {
+        "type": "or",
+        "conditions": [
+          {
+            "column": "seo_incidentId",
+            "operator": "null"
+          },
+          {
+            "column": "seo_incidentId.seo_status",
+            "operator": "eq",
+            "value": "Reported"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_receivedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_TodaysCalls",
+      "displayName": "Today's Calls",
+      "entity": "seo_Call",
+      "description": "All calls received today.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_callNumber", "width": 120 },
+        { "name": "seo_receivedOn", "width": 160 },
+        { "name": "seo_callerName", "width": 150 },
+        { "name": "seo_callerPhone", "width": 120 },
+        { "name": "seo_callSource", "width": 120 },
+        { "name": "seo_reportedIncidentType", "width": 150 },
+        { "name": "seo_reportedPriority", "width": 120 },
+        { "name": "seo_incidentAddress", "width": 250 },
+        { "name": "seo_dispatcherId", "width": 150 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_receivedOn",
+            "operator": "today"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_receivedOn", "direction": "Descending" }
+      ]
+    },
+    {
+      "schemaName": "seo_UnassignedCalls",
+      "displayName": "Unassigned Calls",
+      "entity": "seo_Call",
+      "description": "Calls with no linked incident and not marked as duplicate, sorted oldest first.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_callNumber", "width": 120 },
+        { "name": "seo_receivedOn", "width": 160 },
+        { "name": "seo_callerName", "width": 150 },
+        { "name": "seo_callerPhone", "width": 120 },
+        { "name": "seo_callSource", "width": 120 },
+        { "name": "seo_reportedIncidentType", "width": 150 },
+        { "name": "seo_reportedPriority", "width": 120 },
+        { "name": "seo_incidentAddress", "width": 250 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_incidentId",
+            "operator": "null"
+          },
+          {
+            "column": "seo_isDuplicate",
+            "operator": "eq",
+            "value": false
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_receivedOn", "direction": "Ascending" }
+      ]
+    }
+  ]
+}

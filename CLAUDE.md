@@ -14,7 +14,7 @@
 | 2 | Security model + roles | **COMPLETE** |
 | 3 | Power Automate flows | **COMPLETE** |
 | 4 | Canvas app (mobile responder) | **COMPLETE** |
-| 5 | Model-driven app (dispatch/supervisor) | Pending |
+| 5 | Model-driven app (dispatch/supervisor) | **COMPLETE** |
 | 6 | Reporting / Power BI layer | Pending |
 | 7 | Deployment + GCC auth scripts | Pending |
 

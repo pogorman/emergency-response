@@ -1,0 +1,81 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_IncidentAssignmentMainForm",
+      "displayName": "Incident Assignment Main Form",
+      "entity": "seo_IncidentAssignment",
+      "description": "Main form for managing unit/personnel assignments to incidents including ICS role and timestamps.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_icsRole" },
+        { "name": "seo_isMutualAid" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_assignment",
+            "label": "Assignment",
+            "sections": [
+              {
+                "name": "section_assignment_info",
+                "label": "Assignment Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isReadOnly": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_unitId" },
+                  { "name": "seo_personnelId" },
+                  { "name": "seo_icsRole" },
+                  { "name": "seo_divisionId" },
+                  { "name": "seo_isMutualAid" }
+                ]
+              },
+              {
+                "name": "section_timestamps",
+                "label": "Timestamps",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_assignedOn", "isRequired": true },
+                  { "name": "seo_enRouteOn" },
+                  { "name": "seo_onSceneOn" },
+                  { "name": "seo_clearedOn" }
+                ]
+              },
+              {
+                "name": "section_notes",
+                "label": "Notes",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_assignmentNotes" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schemaName": "seo_IncidentAssignmentQuickCreate",
+      "displayName": "Incident Assignment Quick Create",
+      "entity": "seo_IncidentAssignment",
+      "description": "Quick-create form for rapidly assigning a unit or personnel to an incident.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "section_assign",
+            "label": "Assign",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_incidentId", "isRequired": true },
+              { "name": "seo_unitId" },
+              { "name": "seo_personnelId" },
+              { "name": "seo_icsRole" },
+              { "name": "seo_assignedOn", "isRequired": true }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

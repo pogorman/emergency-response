@@ -1,0 +1,33 @@
+{
+  "entity": "seo_MutualAidRequest",
+  "description": "Operational mutual aid requests tied to specific incidents, tracking resource deployment status and cost tracking under existing agreements.",
+  "records": [
+    {
+      "@id": "mar-structure-fire",
+      "seo_name": "Structure Fire Mutual Aid - E11",
+      "seo_incident": "@ref:incident-structure-fire",
+      "seo_agreement": "@ref:agreement-metro-county",
+      "seo_requestingAgency": "@ref:agency-metro-fire",
+      "seo_providingAgency": "@ref:agency-county-fire",
+      "seo_status": "Deployed",
+      "seo_resourcesRequested": "1 Engine company for RIT/FAST team assignment",
+      "seo_resourcesProvided": "Engine 11 with 4 personnel",
+      "seo_requestedOn": "2026-02-18T08:25:00Z",
+      "seo_deployedOn": "2026-02-18T08:26:00Z",
+      "seo_estimatedCost": 450.00,
+      "seo_costNotes": "Estimated 3 hours deployment at $150/hr after 2-hour grace period."
+    },
+    {
+      "@id": "mar-mci-mva",
+      "seo_name": "MCI Additional Transport Units",
+      "seo_incident": "@ref:incident-mci-mva",
+      "seo_requestingAgency": "@ref:agency-metro-fire",
+      "seo_providingAgency": "@ref:agency-city-ems",
+      "seo_status": "Requested",
+      "seo_resourcesRequested": "2 additional ALS ambulance units for MCI transport",
+      "seo_requestedOn": "2026-02-18T09:52:00Z",
+      "seo_estimatedCost": 0,
+      "seo_costNotes": "No cost — automatic aid agreement."
+    }
+  ]
+}

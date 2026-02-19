@@ -1,0 +1,73 @@
+{
+  "entity": "seo_Station",
+  "description": "Sample station records for EmergencyResponseCoordination",
+  "generatedOn": "2026-02-18",
+  "records": [
+    {
+      "@id": "station-1",
+      "seo_name": "Station 1",
+      "seo_stationNumber": "1",
+      "seo_agencyId": "@ref:agency-metro-fire",
+      "seo_address": "101 Main St, Metro City, DC 20001",
+      "seo_latitude": 38.9101,
+      "seo_longitude": -77.0365,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0101"
+    },
+    {
+      "@id": "station-2",
+      "seo_name": "Station 2",
+      "seo_stationNumber": "2",
+      "seo_agencyId": "@ref:agency-metro-fire",
+      "seo_address": "502 Oak Ave, Metro City, DC 20001",
+      "seo_latitude": 38.9145,
+      "seo_longitude": -77.0412,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0102"
+    },
+    {
+      "@id": "station-3",
+      "seo_name": "Station 3",
+      "seo_stationNumber": "3",
+      "seo_agencyId": "@ref:agency-metro-fire",
+      "seo_address": "789 Industrial Blvd, Metro City, DC 20002",
+      "seo_latitude": 38.9078,
+      "seo_longitude": -77.0488,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0103"
+    },
+    {
+      "@id": "station-11",
+      "seo_name": "Station 11",
+      "seo_stationNumber": "11",
+      "seo_agencyId": "@ref:agency-county-fire",
+      "seo_address": "1100 County Rd, Metro County, DC 20002",
+      "seo_latitude": 38.9200,
+      "seo_longitude": -77.0335,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0211"
+    },
+    {
+      "@id": "station-12",
+      "seo_name": "Station 12",
+      "seo_stationNumber": "12",
+      "seo_agencyId": "@ref:agency-county-fire",
+      "seo_address": "2200 Rural Hwy, Metro County, DC 20003",
+      "seo_latitude": 38.9185,
+      "seo_longitude": -77.0502,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0212"
+    },
+    {
+      "@id": "station-medic-1",
+      "seo_name": "Medic Station 1",
+      "seo_stationNumber": "M1",
+      "seo_agencyId": "@ref:agency-city-ems",
+      "seo_address": "300 Hospital Dr, Metro City, DC 20003",
+      "seo_latitude": 38.9120,
+      "seo_longitude": -77.0378,
+      "seo_isActive": true,
+      "seo_phone": "202-555-0301"
+    }
+  ]
+}

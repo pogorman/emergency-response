@@ -1,0 +1,35 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_IncidentNoteQuickCreate",
+      "displayName": "Incident Note Quick Create",
+      "entity": "seo_IncidentNote",
+      "description": "Quick create form for adding incident notes inline from the incident timeline.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "note_section",
+            "label": "Note",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_incidentId", "isRequired": true },
+              { "name": "seo_noteType", "isRequired": true },
+              { "name": "seo_isPriority" },
+              { "name": "seo_authorId" },
+              { "name": "seo_createdOnOverride", "isRequired": true }
+            ]
+          },
+          {
+            "name": "content_section",
+            "label": "Content",
+            "columns": 1,
+            "fields": [
+              { "name": "seo_noteBody", "isRequired": true }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

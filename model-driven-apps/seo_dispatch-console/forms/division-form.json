@@ -1,0 +1,35 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_DivisionQuickCreate",
+      "displayName": "Division Quick Create",
+      "entity": "seo_Division",
+      "description": "Quick-create form for rapidly adding a division or group to an incident command structure.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "section_division_info",
+            "label": "Division Info",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_name", "isRequired": true },
+              { "name": "seo_incidentCommandId", "isRequired": true },
+              { "name": "seo_divisionType", "isRequired": true },
+              { "name": "seo_supervisorId" },
+              { "name": "seo_radioChannel" }
+            ]
+          },
+          {
+            "name": "section_objectives",
+            "label": "Objectives",
+            "columns": 1,
+            "fields": [
+              { "name": "seo_objectives" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

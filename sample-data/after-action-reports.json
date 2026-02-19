@@ -1,0 +1,39 @@
+{
+  "entity": "seo_AfterActionReport",
+  "description": "After-action reports documenting incident outcomes, timelines, lessons learned, and improvement actions for completed incidents.",
+  "records": [
+    {
+      "@id": "aar-brush-fire",
+      "seo_reportTitle": "After-Action Report: County Road 15 Brush Fire",
+      "seo_incident": "@ref:incident-brush-fire",
+      "seo_author": "@ref:personnel-lt-walker",
+      "seo_reportStatus": "Final",
+      "seo_completedOn": "2026-02-18T10:00:00Z",
+      "seo_outcome": "Resolved — Minimal Loss",
+      "seo_incidentSummary": "2.5-acre brush fire along County Road 15. Two engine companies responded with mutual aid from Metro Fire initially declined (not needed). Fire contained within 2.5 hours using defensive perimeter strategy. No structures damaged. No injuries.",
+      "seo_timelineOfEvents": "13:55 - 911 call received from hiker\n14:00 - E11 and brush crew dispatched\n14:15 - E11 on scene, fire estimated 1 acre\n14:20 - Brush crew on scene, defensive perimeter established\n15:00 - Fire growth stopped at 2 acres\n16:30 - Fire under control, 2.5 acres total\n17:45 - Brush crew cleared\n18:00 - E11 cleared, scene released",
+      "seo_civilianInjuries": 0,
+      "seo_civilianFatalities": 0,
+      "seo_responderInjuries": 0,
+      "seo_responderFatalities": 0,
+      "seo_estimatedPropertyLoss": 0,
+      "seo_estimatedContentLoss": 0,
+      "seo_causeOfFire": "Under Investigation",
+      "seo_lessonsLearned": "1. Early dispatch of brush-type apparatus was effective for wildland terrain.\n2. Wind shift at 15:00 nearly outflanked containment line — need earlier weather monitoring.\n3. Radio communications on TAC channel were clear throughout.",
+      "seo_improvementActions": "1. Implement automatic weather alerts for wildland incidents.\n2. Update pre-plan for County Road corridor with access point map.\n3. Schedule brush clearing along road shoulders before fire season."
+    },
+    {
+      "@id": "aar-medical-draft",
+      "seo_reportTitle": "After-Action Report: Park Ave Medical Emergency",
+      "seo_incident": "@ref:incident-medical",
+      "seo_author": "@ref:personnel-medic-garcia",
+      "seo_reportStatus": "Draft",
+      "seo_outcome": "Resolved — No Loss",
+      "seo_incidentSummary": "Single-patient cardiac emergency. ALS response with STEMI identification and rapid transport to Metro General Hospital. Patient transferred to cardiac catheterization lab within 45 minutes of 911 call.",
+      "seo_civilianInjuries": 0,
+      "seo_civilianFatalities": 0,
+      "seo_responderInjuries": 0,
+      "seo_lessonsLearned": "STEMI protocol worked as designed. Door-to-cath-lab time under target."
+    }
+  ]
+}

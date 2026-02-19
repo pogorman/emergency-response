@@ -1,0 +1,46 @@
+{
+  "schemaName": "seo_ICSCommandDashboard",
+  "displayName": "ICS Command",
+  "description": "Dashboard for incident commanders showing their active incident detail, assigned units, resource requests, and incident notes stream.",
+  "dashboardType": "System",
+  "columns": 2,
+  "roles": ["seo_IncidentCommander", "seo_DispatchSupervisor", "seo_SystemAdmin"],
+  "widgets": [
+    {
+      "name": "wgt_ActiveCommands",
+      "label": "Active Commands",
+      "type": "List",
+      "entity": "seo_IncidentCommand",
+      "viewName": "seo_ActiveCommands",
+      "position": { "row": 1, "column": 1, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 5
+    },
+    {
+      "name": "wgt_AssignedUnits",
+      "label": "Active Assignments",
+      "type": "List",
+      "entity": "seo_IncidentAssignment",
+      "viewName": "seo_ActiveAssignments",
+      "position": { "row": 1, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 15
+    },
+    {
+      "name": "wgt_ResourceRequests",
+      "label": "Resource Requests",
+      "type": "List",
+      "entity": "seo_ResourceRequest",
+      "viewName": "seo_ActiveResourceRequests",
+      "position": { "row": 2, "column": 1, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_IncidentNotesStream",
+      "label": "Incident Notes",
+      "type": "Stream",
+      "entity": "seo_IncidentNote",
+      "viewName": "seo_NotesByIncident",
+      "position": { "row": 2, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 20
+    }
+  ]
+}

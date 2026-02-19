@@ -1,0 +1,280 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_IncidentMainForm",
+      "displayName": "Incident Main Form",
+      "entity": "seo_Incident",
+      "description": "Primary dispatcher form for managing incidents, assignments, ICS structure, patients, and timeline.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_status" },
+        { "name": "seo_priority" },
+        { "name": "seo_alarmLevel" },
+        { "name": "seo_isMCI" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_details",
+            "label": "Details",
+            "sections": [
+              {
+                "name": "section_incident_info",
+                "label": "Incident Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_incidentNumber", "isReadOnly": true },
+                  { "name": "seo_incidentType", "isRequired": true },
+                  { "name": "seo_priority", "isRequired": true },
+                  { "name": "seo_status", "isReadOnly": true },
+                  { "name": "seo_address", "isRequired": true },
+                  { "name": "seo_crossStreet" },
+                  { "name": "seo_apartment" },
+                  { "name": "seo_latitude" },
+                  { "name": "seo_longitude" }
+                ]
+              },
+              {
+                "name": "section_classification",
+                "label": "Classification",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_alarmLevel" },
+                  { "name": "seo_isMCI", "isReadOnly": true },
+                  { "name": "seo_patientCount", "isReadOnly": true },
+                  { "name": "seo_nfirsCode" },
+                  { "name": "seo_prePlanId" },
+                  { "name": "seo_callId" }
+                ]
+              },
+              {
+                "name": "section_agency",
+                "label": "Agency",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_primaryAgencyId", "isRequired": true },
+                  { "name": "seo_jurisdictionId" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_dispatch",
+            "label": "Dispatch",
+            "sections": [
+              {
+                "name": "section_timestamps",
+                "label": "Timestamps",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_dispatchedOn" },
+                  { "name": "seo_firstUnitEnRouteOn" },
+                  { "name": "seo_firstUnitOnSceneOn" },
+                  { "name": "seo_underControlOn" },
+                  { "name": "seo_clearedOn" },
+                  { "name": "seo_closedOn" }
+                ]
+              },
+              {
+                "name": "section_metrics",
+                "label": "Metrics",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_responseTimeMinutes", "isReadOnly": true },
+                  { "name": "seo_totalDurationMinutes", "isReadOnly": true }
+                ]
+              },
+              {
+                "name": "section_assigned_units",
+                "label": "Assigned Units",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_assignments",
+                    "label": "Assigned Units",
+                    "entity": "seo_IncidentAssignment",
+                    "relationship": "seo_Incident_IncidentAssignment",
+                    "viewName": "seo_AssignmentsByIncident",
+                    "allowCreate": true,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_ics",
+            "label": "ICS",
+            "sections": [
+              {
+                "name": "section_command",
+                "label": "Command",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_commands",
+                    "label": "Incident Command",
+                    "entity": "seo_IncidentCommand",
+                    "relationship": "seo_Incident_IncidentCommand",
+                    "viewName": "seo_ActiveCommands",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 3
+                  }
+                ]
+              },
+              {
+                "name": "section_resource_requests",
+                "label": "Resource Requests",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_resource_requests",
+                    "label": "Resource Requests",
+                    "entity": "seo_ResourceRequest",
+                    "relationship": "seo_Incident_ResourceRequest",
+                    "viewName": "seo_ActiveResourceRequests",
+                    "allowCreate": true,
+                    "allowDelete": false,
+                    "maxRows": 5
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_patients",
+            "label": "Patients",
+            "sections": [
+              {
+                "name": "section_patient_records",
+                "label": "Patient Records",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_patients",
+                    "label": "Patient Records",
+                    "entity": "seo_PatientRecord",
+                    "relationship": "seo_Incident_PatientRecord",
+                    "viewName": "seo_PatientsByIncident",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_timeline",
+            "label": "Timeline",
+            "sections": [
+              {
+                "name": "section_narrative",
+                "label": "Narrative",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_narrativeSummary" },
+                  { "name": "seo_hazardsOnScene" }
+                ]
+              },
+              {
+                "name": "section_incident_notes",
+                "label": "Incident Notes",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_notes",
+                    "label": "Incident Notes",
+                    "entity": "seo_IncidentNote",
+                    "relationship": "seo_Incident_IncidentNote",
+                    "viewName": "seo_NotesByIncident",
+                    "allowCreate": true,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "businessRules": [
+        {
+          "name": "seo_MCIVisualAlert",
+          "description": "MCI Visual Alert - Show error notification when incident is flagged as MCI",
+          "condition": {
+            "field": "seo_isMCI",
+            "operator": "eq",
+            "value": true
+          },
+          "action": {
+            "type": "showMessage",
+            "field": "seo_isMCI",
+            "messageType": "error",
+            "message": "THIS IS A MASS CASUALTY INCIDENT"
+          }
+        },
+        {
+          "name": "seo_LockClosedIncident",
+          "description": "Lock Closed Incident - Make all fields read-only except narrative when incident is closed",
+          "condition": {
+            "field": "seo_status",
+            "operator": "eq",
+            "value": "Closed"
+          },
+          "action": {
+            "type": "lockAllFields",
+            "exceptions": ["seo_narrativeSummary"]
+          }
+        }
+      ]
+    },
+    {
+      "schemaName": "seo_IncidentQuickCreate",
+      "displayName": "Incident Quick Create",
+      "entity": "seo_Incident",
+      "description": "Quick-create form for rapidly logging a new incident with essential details.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "section_essential",
+            "label": "Essential",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_incidentType", "isRequired": true },
+              { "name": "seo_priority", "isRequired": true },
+              { "name": "seo_address", "isRequired": true },
+              { "name": "seo_primaryAgencyId", "isRequired": true }
+            ]
+          },
+          {
+            "name": "section_location",
+            "label": "Location",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_crossStreet" },
+              { "name": "seo_latitude" },
+              { "name": "seo_longitude" }
+            ]
+          },
+          {
+            "name": "section_source",
+            "label": "Source",
+            "columns": 1,
+            "fields": [
+              { "name": "seo_callId" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

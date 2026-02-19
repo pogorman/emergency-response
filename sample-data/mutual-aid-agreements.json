@@ -1,0 +1,31 @@
+{
+  "entity": "seo_MutualAidAgreement",
+  "description": "Mutual aid and automatic aid agreements between fire/EMS agencies defining resource sharing terms and cost arrangements.",
+  "records": [
+    {
+      "@id": "agreement-metro-county",
+      "seo_name": "Metro-County Mutual Aid Agreement",
+      "seo_requestingAgency": "@ref:agency-metro-fire",
+      "seo_providingAgency": "@ref:agency-county-fire",
+      "seo_agreementType": "Mutual Aid",
+      "seo_effectiveDate": "2025-01-01",
+      "seo_expirationDate": "2026-12-31",
+      "seo_hasCostSharing": true,
+      "seo_costSharingTerms": "Requesting agency reimburses at $150/hour per apparatus after first 2 hours. Personnel costs covered by providing agency.",
+      "seo_terms": "Each agency agrees to provide up to 2 apparatus and associated personnel when requested. Maximum deployment duration 24 hours per request. Requesting agency provides fuel for deployed apparatus.",
+      "seo_isActive": true
+    },
+    {
+      "@id": "agreement-metro-ems",
+      "seo_name": "Metro Fire-City EMS Cooperative Agreement",
+      "seo_requestingAgency": "@ref:agency-metro-fire",
+      "seo_providingAgency": "@ref:agency-city-ems",
+      "seo_agreementType": "Automatic Aid",
+      "seo_effectiveDate": "2025-06-01",
+      "seo_expirationDate": "2027-05-31",
+      "seo_hasCostSharing": false,
+      "seo_terms": "City EMS provides automatic ALS transport for all Metro Fire incidents requiring EMS. Metro Fire provides first responder BLS until EMS arrival. No cost recovery — funded through shared county tax levy.",
+      "seo_isActive": true
+    }
+  ]
+}

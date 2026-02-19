@@ -1,0 +1,70 @@
+{
+  "entity": "seo_Personnel",
+  "views": [
+    {
+      "schemaName": "seo_AgencyPersonnel",
+      "displayName": "Agency Personnel",
+      "entity": "seo_Personnel",
+      "description": "Active personnel sorted by rank and full name.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_fullName", "width": 180 },
+        { "name": "seo_badgeNumber", "width": 100 },
+        { "name": "seo_rank", "width": 130 },
+        { "name": "seo_agencyId", "width": 150 },
+        { "name": "seo_currentUnitId", "width": 120 },
+        { "name": "seo_isParamedic", "width": 80 },
+        { "name": "seo_email", "width": 180 },
+        { "name": "seo_phone", "width": 120 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isActive",
+            "operator": "eq",
+            "value": true
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_rank", "direction": "Ascending" },
+        { "column": "seo_fullName", "direction": "Ascending" }
+      ]
+    },
+    {
+      "schemaName": "seo_PersonnelByRank",
+      "displayName": "Personnel by Rank",
+      "entity": "seo_Personnel",
+      "description": "Active personnel sorted by rank, agency, and full name.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_fullName", "width": 180 },
+        { "name": "seo_badgeNumber", "width": 100 },
+        { "name": "seo_rank", "width": 130 },
+        { "name": "seo_agencyId", "width": 150 },
+        { "name": "seo_currentUnitId", "width": 120 },
+        { "name": "seo_isParamedic", "width": 80 },
+        { "name": "seo_email", "width": 180 },
+        { "name": "seo_phone", "width": 120 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isActive",
+            "operator": "eq",
+            "value": true
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_rank", "direction": "Ascending" },
+        { "column": "seo_agencyId", "direction": "Ascending" },
+        { "column": "seo_fullName", "direction": "Ascending" }
+      ]
+    }
+  ]
+}

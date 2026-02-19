@@ -1,0 +1,89 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_ResourceRequestMainForm",
+      "displayName": "Resource Request Main Form",
+      "entity": "seo_ResourceRequest",
+      "description": "Main form for managing resource requests including type, urgency, fulfillment tracking, and justification.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_status" },
+        { "name": "seo_urgency" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_request",
+            "label": "Request",
+            "sections": [
+              {
+                "name": "section_request_info",
+                "label": "Request Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isRequired": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_resourceType", "isRequired": true },
+                  { "name": "seo_quantity", "isRequired": true },
+                  { "name": "seo_urgency", "isRequired": true },
+                  { "name": "seo_status", "isRequired": true },
+                  { "name": "seo_requestedById", "isRequired": true },
+                  { "name": "seo_requestedOn", "isRequired": true }
+                ]
+              },
+              {
+                "name": "section_fulfillment",
+                "label": "Fulfillment",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_fulfilledById" },
+                  { "name": "seo_fulfilledOn" },
+                  { "name": "seo_assignedUnitId" }
+                ]
+              },
+              {
+                "name": "section_justification",
+                "label": "Justification",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_justification" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schemaName": "seo_ResourceRequestQuickCreate",
+      "displayName": "Resource Request Quick Create",
+      "entity": "seo_ResourceRequest",
+      "description": "Quick-create form for rapidly submitting a new resource request from the field or dispatch.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "section_request",
+            "label": "Request",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_incidentId", "isRequired": true },
+              { "name": "seo_resourceType", "isRequired": true },
+              { "name": "seo_quantity", "isRequired": true },
+              { "name": "seo_urgency", "isRequired": true },
+              { "name": "seo_requestedById", "isRequired": true }
+            ]
+          },
+          {
+            "name": "section_details",
+            "label": "Details",
+            "columns": 1,
+            "fields": [
+              { "name": "seo_justification" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

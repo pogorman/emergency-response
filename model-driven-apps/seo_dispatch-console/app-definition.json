@@ -1,0 +1,73 @@
+{
+  "schemaName": "seo_DispatchConsole",
+  "displayName": "Dispatch Console & Supervisor Dashboard",
+  "description": "Model-driven app for dispatch center operators, supervisors, incident commanders, and station officers. Provides incident lifecycle management, ICS command structure, mutual aid coordination, pre-planning, and administrative functions. Desktop/tablet complement to the Responder Mobile canvas app.",
+  "appType": "ModelDriven",
+  "publisher": "StateEmergencyOps",
+  "version": "0.5.0",
+  "securityRoles": [
+    "seo_SystemAdmin",
+    "seo_DispatchSupervisor",
+    "seo_Dispatcher",
+    "seo_IncidentCommander",
+    "seo_StationOfficer",
+    "seo_ReadOnlyAnalyst"
+  ],
+  "features": {
+    "unifiedInterface": true,
+    "mobileEnabled": true,
+    "offlineEnabled": false
+  },
+  "defaultDashboard": "seo_DispatchOperationsDashboard",
+  "sitemapRef": "./sitemap.json",
+  "environmentVariables": [
+    "seo_DefaultAgencyId",
+    "seo_DefaultJurisdictionId",
+    "seo_MCIPatientThreshold",
+    "seo_DefaultDashboardId"
+  ],
+  "gccConstraints": [
+    {
+      "constraint": "FedRAMP High baseline required",
+      "mitigation": "All components are native Dataverse — no custom connectors or external web resources"
+    },
+    {
+      "constraint": "Unified Interface mandatory in GCC",
+      "mitigation": "App designed exclusively for Unified Interface (no legacy web client)"
+    }
+  ],
+  "roleAreaMapping": {
+    "description": "Maps security roles to sitemap areas they can access",
+    "mapping": [
+      {
+        "role": "seo_Dispatcher",
+        "areas": ["area_dispatch"],
+        "readOnlyAreas": ["area_ics", "area_planning", "area_admin"]
+      },
+      {
+        "role": "seo_DispatchSupervisor",
+        "areas": ["area_dispatch", "area_ics", "area_planning", "area_admin"],
+        "notes": "Full access including MCI button"
+      },
+      {
+        "role": "seo_IncidentCommander",
+        "areas": ["area_ics"],
+        "readOnlyAreas": ["area_dispatch", "area_planning", "area_admin"]
+      },
+      {
+        "role": "seo_StationOfficer",
+        "areas": ["area_planning", "area_admin"],
+        "readOnlyAreas": ["area_dispatch", "area_ics"]
+      },
+      {
+        "role": "seo_ReadOnlyAnalyst",
+        "readOnlyAreas": ["area_dispatch", "area_ics", "area_planning", "area_admin"]
+      },
+      {
+        "role": "seo_SystemAdmin",
+        "areas": ["area_dispatch", "area_ics", "area_planning", "area_admin"],
+        "notes": "Full CRUD on everything"
+      }
+    ]
+  }
+}

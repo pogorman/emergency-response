@@ -1,0 +1,40 @@
+{
+  "entity": "seo_PatientRecord",
+  "description": "Transport-specific view of patient records. This file is a convenience subset — the actual transport data lives on the PatientRecord entity. These 3 records are the transported patients from patient-records.json with transport details highlighted.",
+  "note": "This file does NOT represent a separate entity. It provides a transport-focused reference to the 3 patients who were transported. Import patient-records.json — transport fields are included there.",
+  "transportSummary": [
+    {
+      "patientRef": "@ref:patient-mci-1",
+      "incident": "@ref:incident-mci-mva",
+      "triageCategory": "Red (Immediate)",
+      "transportUnit": "@ref:unit-medic-1",
+      "destination": "@ref:facility-metro-general",
+      "transportStartedOn": "2026-02-18T10:05:00Z",
+      "arrivedAtFacilityOn": null,
+      "attendingPersonnel": "@ref:personnel-medic-garcia",
+      "notes": "STEMI protocol not applicable. Trauma alert called. Estimated 8-minute transport."
+    },
+    {
+      "patientRef": "@ref:patient-mci-2",
+      "incident": "@ref:incident-mci-mva",
+      "triageCategory": "Red (Immediate)",
+      "transportUnit": "@ref:unit-medic-2",
+      "destination": "@ref:facility-metro-general",
+      "transportStartedOn": "2026-02-18T10:10:00Z",
+      "arrivedAtFacilityOn": null,
+      "attendingPersonnel": "@ref:personnel-medic-martinez",
+      "notes": "Chest trauma with respiratory compromise. BVM assist en route. Trauma alert called."
+    },
+    {
+      "patientRef": "@ref:patient-medical-1",
+      "incident": "@ref:incident-medical",
+      "triageCategory": "Yellow (Delayed)",
+      "transportUnit": "@ref:unit-medic-1",
+      "destination": "@ref:facility-metro-general",
+      "transportStartedOn": "2026-02-18T06:20:00Z",
+      "arrivedAtFacilityOn": "2026-02-18T06:35:00Z",
+      "attendingPersonnel": "@ref:personnel-medic-garcia",
+      "notes": "STEMI alert activated. Door-to-cath-lab target met. Patient transferred to cardiac cath lab on arrival."
+    }
+  ]
+}

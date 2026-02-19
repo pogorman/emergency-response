@@ -1,0 +1,34 @@
+{
+  "entity": "seo_Jurisdiction",
+  "description": "Sample jurisdiction records for EmergencyResponseCoordination",
+  "generatedOn": "2026-02-18",
+  "records": [
+    {
+      "@id": "jurisdiction-metro-county",
+      "seo_name": "Metro County",
+      "seo_jurisdictionLevel": "County",
+      "seo_parentJurisdictionId": null,
+      "seo_fipsCode": "36061",
+      "seo_boundaryGeoJSON": null,
+      "seo_isActive": true
+    },
+    {
+      "@id": "jurisdiction-metro-city",
+      "seo_name": "Metro City",
+      "seo_jurisdictionLevel": "City",
+      "seo_parentJurisdictionId": "@ref:jurisdiction-metro-county",
+      "seo_fipsCode": "3606101",
+      "seo_boundaryGeoJSON": null,
+      "seo_isActive": true
+    },
+    {
+      "@id": "jurisdiction-westside-district",
+      "seo_name": "Westside District",
+      "seo_jurisdictionLevel": "Fire Protection District",
+      "seo_parentJurisdictionId": "@ref:jurisdiction-metro-county",
+      "seo_fipsCode": "3606102",
+      "seo_boundaryGeoJSON": null,
+      "seo_isActive": true
+    }
+  ]
+}

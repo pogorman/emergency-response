@@ -1,0 +1,56 @@
+{
+  "entity": "seo_PatientRecord",
+  "views": [
+    {
+      "schemaName": "seo_PatientsByIncident",
+      "displayName": "Patients by Incident",
+      "entity": "seo_PatientRecord",
+      "description": "All patient records associated with an incident, sorted by triage category (Red first). No PHI columns exposed.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_patientIdentifier", "width": 120 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_triageCategory", "width": 130 },
+        { "name": "seo_isTransported", "width": 80 },
+        { "name": "seo_destinationFacilityId", "width": 180 },
+        { "name": "seo_transportStartedOn", "width": 160 },
+        { "name": "seo_attendingPersonnelId", "width": 150 }
+      ],
+      "filter": null,
+      "sortOrder": [
+        { "column": "seo_triageCategory", "direction": "Ascending" }
+      ]
+    },
+    {
+      "schemaName": "seo_TransportTracking",
+      "displayName": "Transport Tracking",
+      "entity": "seo_PatientRecord",
+      "description": "Patients that have been transported, sorted by transport start time descending. No PHI columns exposed.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_patientIdentifier", "width": 120 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_triageCategory", "width": 130 },
+        { "name": "seo_transportUnitId", "width": 120 },
+        { "name": "seo_destinationFacilityId", "width": 180 },
+        { "name": "seo_transportStartedOn", "width": 160 },
+        { "name": "seo_arrivedAtFacilityOn", "width": 160 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_isTransported",
+            "operator": "eq",
+            "value": true
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_transportStartedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

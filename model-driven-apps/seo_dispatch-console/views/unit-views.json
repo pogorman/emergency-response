@@ -1,0 +1,90 @@
+{
+  "entity": "seo_Unit",
+  "views": [
+    {
+      "schemaName": "seo_AllUnitsByStatus",
+      "displayName": "All Units by Status",
+      "entity": "seo_Unit",
+      "description": "All units sorted by current status and name.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_name", "width": 100 },
+        { "name": "seo_currentStatus", "width": 130 },
+        { "name": "seo_stationId", "width": 120 },
+        { "name": "seo_agencyId", "width": 150 },
+        { "name": "seo_personnelCount", "width": 80 },
+        { "name": "seo_isALS", "width": 70 },
+        { "name": "seo_currentIncidentId", "width": 150 },
+        { "name": "seo_lastStatusChangeOn", "width": 160 }
+      ],
+      "filter": null,
+      "sortOrder": [
+        { "column": "seo_currentStatus", "direction": "Ascending" },
+        { "column": "seo_name", "direction": "Ascending" }
+      ]
+    },
+    {
+      "schemaName": "seo_AvailableUnits",
+      "displayName": "Available Units",
+      "entity": "seo_Unit",
+      "description": "Units with a current status of Available.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_name", "width": 100 },
+        { "name": "seo_currentStatus", "width": 130 },
+        { "name": "seo_stationId", "width": 120 },
+        { "name": "seo_agencyId", "width": 150 },
+        { "name": "seo_personnelCount", "width": 80 },
+        { "name": "seo_isALS", "width": 70 },
+        { "name": "seo_currentIncidentId", "width": 150 },
+        { "name": "seo_lastStatusChangeOn", "width": 160 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_currentStatus",
+            "operator": "eq",
+            "value": "Available"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_name", "direction": "Ascending" }
+      ]
+    },
+    {
+      "schemaName": "seo_OutOfServiceUnits",
+      "displayName": "Out of Service Units",
+      "entity": "seo_Unit",
+      "description": "Units currently out of service, sorted by most recent status change.",
+      "viewType": "Public",
+      "isDefault": false,
+      "columns": [
+        { "name": "seo_name", "width": 100 },
+        { "name": "seo_currentStatus", "width": 130 },
+        { "name": "seo_stationId", "width": 120 },
+        { "name": "seo_agencyId", "width": 150 },
+        { "name": "seo_personnelCount", "width": 80 },
+        { "name": "seo_isALS", "width": 70 },
+        { "name": "seo_currentIncidentId", "width": 150 },
+        { "name": "seo_lastStatusChangeOn", "width": 160 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_currentStatus",
+            "operator": "eq",
+            "value": "Out of Service"
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_lastStatusChangeOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}

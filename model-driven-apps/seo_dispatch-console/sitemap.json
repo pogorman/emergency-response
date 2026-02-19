@@ -1,0 +1,322 @@
+{
+  "schemaName": "seo_DispatchConsoleSitemap",
+  "displayName": "Dispatch Console Sitemap",
+  "description": "4-area sitemap mirroring the operational workflow: Dispatch Operations (primary), ICS Command (on-scene leadership), Planning (pre/post-incident), Administration (setup/reference).",
+  "areas": [
+    {
+      "id": "area_dispatch",
+      "title": "Dispatch Operations",
+      "icon": "Icon_Phone",
+      "groups": [
+        {
+          "id": "grp_active_dispatch",
+          "title": "Active Dispatch",
+          "subAreas": [
+            {
+              "id": "sub_incidents",
+              "type": "Entity",
+              "entity": "seo_Incident",
+              "title": "Incidents",
+              "defaultView": "seo_ActiveIncidents",
+              "icon": "Icon_Warning",
+              "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_IncidentCommander", "seo_StationOfficer", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_dashboard_dispatch",
+              "type": "Dashboard",
+              "dashboardId": "seo_DispatchOperationsDashboard",
+              "title": "Dispatch Dashboard",
+              "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_call_mgmt",
+          "title": "Call Management",
+          "subAreas": [
+            {
+              "id": "sub_calls",
+              "type": "Entity",
+              "entity": "seo_Call",
+              "title": "Calls",
+              "defaultView": "seo_OpenCalls",
+              "icon": "Icon_Phone",
+              "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_units",
+          "title": "Units",
+          "subAreas": [
+            {
+              "id": "sub_units",
+              "type": "Entity",
+              "entity": "seo_Unit",
+              "title": "Units",
+              "defaultView": "seo_AllUnitsByStatus",
+              "icon": "Icon_Car",
+              "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_IncidentCommander", "seo_StationOfficer", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_assignments",
+              "type": "Entity",
+              "entity": "seo_IncidentAssignment",
+              "title": "Assignments",
+              "defaultView": "seo_ActiveAssignments",
+              "roles": ["seo_Dispatcher", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_status_log",
+              "type": "Entity",
+              "entity": "seo_UnitStatusLog",
+              "title": "Status Log",
+              "defaultView": "seo_StatusLogByUnit",
+              "roles": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "area_ics",
+      "title": "ICS Command",
+      "icon": "Icon_People",
+      "groups": [
+        {
+          "id": "grp_command",
+          "title": "Command",
+          "subAreas": [
+            {
+              "id": "sub_commands",
+              "type": "Entity",
+              "entity": "seo_IncidentCommand",
+              "title": "Commands",
+              "defaultView": "seo_ActiveCommands",
+              "icon": "Icon_Shield",
+              "roles": ["seo_IncidentCommander", "seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_dashboard_ics",
+              "type": "Dashboard",
+              "dashboardId": "seo_ICSCommandDashboard",
+              "title": "ICS Dashboard",
+              "roles": ["seo_IncidentCommander", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_resources",
+          "title": "Resources",
+          "subAreas": [
+            {
+              "id": "sub_resource_requests",
+              "type": "Entity",
+              "entity": "seo_ResourceRequest",
+              "title": "Resource Requests",
+              "defaultView": "seo_ActiveResourceRequests",
+              "roles": ["seo_IncidentCommander", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_notes",
+          "title": "Notes",
+          "subAreas": [
+            {
+              "id": "sub_notes",
+              "type": "Entity",
+              "entity": "seo_IncidentNote",
+              "title": "Incident Notes",
+              "defaultView": "seo_NotesByIncident",
+              "roles": ["seo_IncidentCommander", "seo_DispatchSupervisor", "seo_Dispatcher", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_patients",
+          "title": "Patients",
+          "subAreas": [
+            {
+              "id": "sub_patients",
+              "type": "Entity",
+              "entity": "seo_PatientRecord",
+              "title": "Patient Records",
+              "defaultView": "seo_PatientsByIncident",
+              "icon": "Icon_Heart",
+              "roles": ["seo_DispatchSupervisor", "seo_SystemAdmin"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "area_planning",
+      "title": "Planning",
+      "icon": "Icon_Documentation",
+      "groups": [
+        {
+          "id": "grp_preplans",
+          "title": "Pre-Plans",
+          "subAreas": [
+            {
+              "id": "sub_preplans",
+              "type": "Entity",
+              "entity": "seo_PrePlan",
+              "title": "Pre-Plans",
+              "defaultView": "seo_AllPrePlans",
+              "icon": "Icon_Documentation",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_IncidentCommander", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_hazards",
+              "type": "Entity",
+              "entity": "seo_Hazard",
+              "title": "Hazards",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_hydrants",
+              "type": "Entity",
+              "entity": "seo_Hydrant",
+              "title": "Hydrants",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_facilities",
+          "title": "Facilities",
+          "subAreas": [
+            {
+              "id": "sub_facilities",
+              "type": "Entity",
+              "entity": "seo_Facility",
+              "title": "Facilities",
+              "defaultView": "seo_AllFacilities",
+              "roles": ["seo_DispatchSupervisor", "seo_StationOfficer", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_mutual_aid",
+          "title": "Mutual Aid",
+          "subAreas": [
+            {
+              "id": "sub_agreements",
+              "type": "Entity",
+              "entity": "seo_MutualAidAgreement",
+              "title": "Agreements",
+              "defaultView": "seo_ActiveAgreements",
+              "roles": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_mutual_aid_requests",
+              "type": "Entity",
+              "entity": "seo_MutualAidRequest",
+              "title": "Mutual Aid Requests",
+              "defaultView": "seo_ActiveMutualAidRequests",
+              "roles": ["seo_DispatchSupervisor", "seo_IncidentCommander", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_aars",
+          "title": "After-Action Reports",
+          "subAreas": [
+            {
+              "id": "sub_aars",
+              "type": "Entity",
+              "entity": "seo_AfterActionReport",
+              "title": "AARs",
+              "defaultView": "seo_DraftAARs",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_IncidentCommander", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "area_admin",
+      "title": "Administration",
+      "icon": "Icon_Settings",
+      "groups": [
+        {
+          "id": "grp_agencies",
+          "title": "Agencies",
+          "subAreas": [
+            {
+              "id": "sub_agencies",
+              "type": "Entity",
+              "entity": "seo_Agency",
+              "title": "Agencies",
+              "roles": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_jurisdictions",
+              "type": "Entity",
+              "entity": "seo_Jurisdiction",
+              "title": "Jurisdictions",
+              "roles": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_personnel",
+          "title": "Personnel",
+          "subAreas": [
+            {
+              "id": "sub_personnel",
+              "type": "Entity",
+              "entity": "seo_Personnel",
+              "title": "Personnel",
+              "defaultView": "seo_AgencyPersonnel",
+              "icon": "Icon_People",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_stations",
+          "title": "Stations & Equipment",
+          "subAreas": [
+            {
+              "id": "sub_stations",
+              "type": "Entity",
+              "entity": "seo_Station",
+              "title": "Stations",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_apparatus",
+              "type": "Entity",
+              "entity": "seo_Apparatus",
+              "title": "Apparatus",
+              "roles": ["seo_StationOfficer", "seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"]
+            }
+          ]
+        },
+        {
+          "id": "grp_settings",
+          "title": "Settings",
+          "subAreas": [
+            {
+              "id": "sub_dashboard_supervisor",
+              "type": "Dashboard",
+              "dashboardId": "seo_SupervisorOverviewDashboard",
+              "title": "Supervisor Dashboard",
+              "roles": ["seo_DispatchSupervisor", "seo_SystemAdmin"]
+            },
+            {
+              "id": "sub_dashboard_station",
+              "type": "Dashboard",
+              "dashboardId": "seo_StationDashboard",
+              "title": "Station Dashboard",
+              "roles": ["seo_StationOfficer", "seo_SystemAdmin"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

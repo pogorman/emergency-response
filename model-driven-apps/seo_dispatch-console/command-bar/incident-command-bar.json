@@ -1,0 +1,50 @@
+{
+  "entity": "seo_Incident",
+  "description": "Custom command bar buttons for the Incident entity in the Dispatch Console model-driven app.",
+  "commands": [
+    {
+      "id": "cmd_DeclareMCI",
+      "label": "Declare MCI",
+      "icon": "Icon_Warning",
+      "tooltip": "Manually declare this incident as a Mass Casualty Incident. Sets isMCI to true and triggers supervisor notification.",
+      "order": 100,
+      "visibility": {
+        "rules": [
+          {
+            "type": "FieldValue",
+            "field": "seo_isMCI",
+            "operator": "eq",
+            "value": false,
+            "description": "Only visible when the incident is NOT already flagged as MCI"
+          },
+          {
+            "type": "FieldValue",
+            "field": "seo_status",
+            "operator": "ne",
+            "value": "Closed",
+            "description": "Not visible on closed incidents"
+          },
+          {
+            "type": "FieldValue",
+            "field": "seo_status",
+            "operator": "ne",
+            "value": "Cancelled",
+            "description": "Not visible on cancelled incidents"
+          },
+          {
+            "type": "SecurityRole",
+            "role": "seo_DispatchSupervisor",
+            "description": "Requires DispatchSupervisor or higher role"
+          }
+        ]
+      },
+      "action": {
+        "type": "SetFieldValue",
+        "field": "seo_isMCI",
+        "value": true,
+        "confirmationMessage": "Are you sure you want to declare this incident as a Mass Casualty Incident (MCI)? This will trigger supervisor notifications and cannot be undone from the UI."
+      },
+      "notes": "This is separate from the PatientCountSync flow auto-detection. It gives supervisors a manual override to declare MCI based on dispatch information before patient records are created. Once set to true, isMCI is intentionally one-directional (never auto-cleared). A SystemAdmin can manually reset it if needed."
+    }
+  ]
+}

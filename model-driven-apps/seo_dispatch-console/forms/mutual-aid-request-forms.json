@@ -1,0 +1,116 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_MutualAidRequestMainForm",
+      "displayName": "Mutual Aid Request Main Form",
+      "entity": "seo_MutualAidRequest",
+      "description": "Main form for mutual aid requests including resource details, deployment tracking, and cost information.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_status" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "request_tab",
+            "label": "Request",
+            "sections": [
+              {
+                "name": "request_info_section",
+                "label": "Request Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isRequired": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_requestingAgencyId", "isRequired": true },
+                  { "name": "seo_providingAgencyId", "isRequired": true },
+                  { "name": "seo_agreementId" },
+                  { "name": "seo_status", "isRequired": true },
+                  { "name": "seo_requestedOn", "isRequired": true }
+                ]
+              },
+              {
+                "name": "resources_section",
+                "label": "Resources",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_resourcesRequested", "isRequired": true },
+                  { "name": "seo_resourcesProvided" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "deployment_tab",
+            "label": "Deployment",
+            "sections": [
+              {
+                "name": "deployment_info_section",
+                "label": "Deployment Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_deployedOn" },
+                  { "name": "seo_returnedOn" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "costs_tab",
+            "label": "Costs",
+            "sections": [
+              {
+                "name": "cost_tracking_section",
+                "label": "Cost Tracking",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_estimatedCost" },
+                  { "name": "seo_actualCost" }
+                ]
+              },
+              {
+                "name": "notes_section",
+                "label": "Notes",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_costNotes" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schemaName": "seo_MutualAidRequestQuickCreate",
+      "displayName": "Mutual Aid Request Quick Create",
+      "entity": "seo_MutualAidRequest",
+      "description": "Quick create form for rapidly submitting mutual aid requests from an incident.",
+      "formType": "QuickCreate",
+      "layout": {
+        "sections": [
+          {
+            "name": "request_section",
+            "label": "Request",
+            "columns": 2,
+            "fields": [
+              { "name": "seo_incidentId", "isRequired": true },
+              { "name": "seo_requestingAgencyId", "isRequired": true },
+              { "name": "seo_providingAgencyId", "isRequired": true },
+              { "name": "seo_status", "isRequired": true },
+              { "name": "seo_requestedOn", "isRequired": true }
+            ]
+          },
+          {
+            "name": "resources_section",
+            "label": "Resources",
+            "columns": 1,
+            "fields": [
+              { "name": "seo_resourcesRequested", "isRequired": true }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

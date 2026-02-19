@@ -1,0 +1,43 @@
+{
+  "entity": "seo_Agency",
+  "description": "Sample agency records for EmergencyResponseCoordination",
+  "generatedOn": "2026-02-18",
+  "records": [
+    {
+      "@id": "agency-metro-fire",
+      "seo_name": "Metro City Fire Department",
+      "seo_code": "MCFD",
+      "seo_agencyType": "Combined Fire/EMS",
+      "seo_jurisdictionId": "@ref:jurisdiction-metro-city",
+      "seo_address": "100 Fire Station Way, Metro City, DC 20001",
+      "seo_phone": "202-555-0100",
+      "seo_email": "admin@metrocityfire.gov",
+      "seo_isActive": true,
+      "seo_fdid": "36001"
+    },
+    {
+      "@id": "agency-county-fire",
+      "seo_name": "County Fire Protection District",
+      "seo_code": "CFPD",
+      "seo_agencyType": "Fire Department",
+      "seo_jurisdictionId": "@ref:jurisdiction-metro-county",
+      "seo_address": "1050 County Center Dr, Metro County, DC 20002",
+      "seo_phone": "202-555-0200",
+      "seo_email": "admin@countyfpd.gov",
+      "seo_isActive": true,
+      "seo_fdid": "36002"
+    },
+    {
+      "@id": "agency-city-ems",
+      "seo_name": "City EMS Authority",
+      "seo_code": "CEMS",
+      "seo_agencyType": "EMS Agency",
+      "seo_jurisdictionId": "@ref:jurisdiction-metro-city",
+      "seo_address": "310 Hospital Dr, Metro City, DC 20003",
+      "seo_phone": "202-555-0300",
+      "seo_email": "admin@cityems.gov",
+      "seo_isActive": true,
+      "seo_fdid": "36003"
+    }
+  ]
+}

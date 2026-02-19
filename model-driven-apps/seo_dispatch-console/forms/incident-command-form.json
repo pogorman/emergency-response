@@ -1,0 +1,74 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_IncidentCommandMainForm",
+      "displayName": "Incident Command Main Form",
+      "entity": "seo_IncidentCommand",
+      "description": "Main form for managing incident command structure including commander, strategy, communications, and divisions.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_strategyMode" },
+        { "name": "seo_isUnifiedCommand" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "tab_command",
+            "label": "Command",
+            "sections": [
+              {
+                "name": "section_command_info",
+                "label": "Command Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_commandName", "isRequired": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_incidentCommanderId", "isRequired": true },
+                  { "name": "seo_commandEstablishedOn", "isRequired": true },
+                  { "name": "seo_commandTerminatedOn" },
+                  { "name": "seo_strategyMode" },
+                  { "name": "seo_isUnifiedCommand" }
+                ]
+              },
+              {
+                "name": "section_communications",
+                "label": "Communications",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_radioChannel" },
+                  { "name": "seo_commandPostAddress" },
+                  { "name": "seo_commandPostLatitude" },
+                  { "name": "seo_commandPostLongitude" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tab_divisions",
+            "label": "Divisions",
+            "sections": [
+              {
+                "name": "section_divisions",
+                "label": "Divisions",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "subgrid_divisions",
+                    "label": "Divisions",
+                    "entity": "seo_Division",
+                    "relationship": "seo_IncidentCommand_Division",
+                    "viewName": "seo_DivisionsByCommand",
+                    "allowCreate": true,
+                    "allowDelete": false,
+                    "maxRows": 8
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

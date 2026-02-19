@@ -34,7 +34,27 @@ EmergencyResponseCoordination is an integrated platform for fire and EMS agencie
 
 ## Getting Started
 
-> *Content will be added in Phase 4 (Canvas App) and Phase 5 (Model-Driven App).*
+### Two Apps, Two Audiences
+
+The solution includes two apps:
+
+| App | Form Factor | Audience | Purpose |
+|-----|------------|----------|---------|
+| **Dispatch Console** | Desktop / Tablet | Dispatchers, Supervisors, ICs, Station Officers, Analysts | Incident lifecycle, dispatch, ICS command, planning, administration |
+| **Responder Mobile** | Phone (portrait) | Field Responders, EMS Providers | Unit status, incident details, notes, patient triage, maps |
+
+### Accessing the Dispatch Console
+
+1. Open Power Apps from your browser (make.powerapps.com for GCC)
+2. Select the **Dispatch Console & Supervisor Dashboard** app
+3. Your default landing page is the **Dispatch Operations** dashboard
+4. Use the left navigation pane to switch between areas: Dispatch Operations, ICS Command, Planning, Administration
+
+### Accessing Responder Mobile
+
+1. Install the **Power Apps** mobile app on your phone
+2. Open the **Responder Mobile** app
+3. See the [For Responders](#for-responders) section below
 
 ---
 
@@ -95,7 +115,79 @@ Supervisors receive a daily email (7:00 AM ET) listing any mutual aid agreements
 
 ## For Dispatchers
 
-> *Content will be added in Phase 4-5.*
+The **Dispatch Console** model-driven app is your primary tool for call intake, incident management, and unit dispatch.
+
+### Call Intake
+
+1. Navigate to **Dispatch Operations → Call Management → Calls**
+2. Click **+ New** (or use Quick Create from the top bar)
+3. Fill in:
+   - **Received On** — auto-populated with current time
+   - **Call Source** — 911, Non-Emergency, Radio, etc.
+   - **Caller Name / Phone** — for callback
+   - **Reported Incident Type** and **Priority** — initial assessment
+   - **Incident Address** — location of the emergency
+4. Check for duplicates — if this call reports an already-known incident, toggle **Duplicate** and link the existing incident
+5. Save the call record
+
+### Creating an Incident
+
+1. From a call record, click **+ New Incident** (Quick Create)
+2. Or navigate to **Dispatch Operations → Active Dispatch → Incidents** → **+ New**
+3. Required fields: **Incident Type**, **Priority**, **Address**, **Primary Agency**
+4. The system auto-generates an incident number (INC-YYYYMMDD-XXXXX)
+5. Save — the incident starts in **Reported** status
+
+### Dispatching Units
+
+1. Open the incident record
+2. Go to the **Dispatch** tab
+3. In the **Assigned Units** subgrid, click **+ New Assignment**
+4. Select the **Unit** and set **Assigned On** timestamp
+5. Save — the system auto-names the assignment (e.g., "E1 - INC-20260218-00001")
+6. The incident status auto-advances to **Dispatched** when you set the Dispatched On timestamp
+
+### Incident Lifecycle (BPF)
+
+The blue process bar at the top of every incident guides you through 6 stages:
+
+| Stage | What to Do | What Advances It |
+|-------|------------|-----------------|
+| **Reported** | Capture type, priority, address | Fill required fields |
+| **Dispatched** | Assign units, set dispatch time | Set Dispatched On + at least 1 assignment |
+| **On Scene** | First unit arrives | Set First Unit On Scene timestamp |
+| **Under Control** | IC declares under control | Set Under Control On timestamp |
+| **Cleared** | All units cleared | Set Cleared On + all assignments have Cleared On |
+| **Closed** | Complete narrative | Set Closed On + write incident narrative |
+
+**Tip:** You don't need to manually change the status dropdown — just populate the timestamps and the system advances the status automatically.
+
+### Declaring an MCI
+
+If you're a **Dispatch Supervisor**, the incident command bar shows a **Declare MCI** button when an incident isn't already flagged as MCI. Clicking it:
+1. Asks for confirmation
+2. Sets `isMCI = true`
+3. Triggers a supervisor notification email
+4. Cannot be undone from the UI (SystemAdmin can reset if needed)
+
+The system also auto-declares MCI when the patient count reaches 5 (configurable threshold).
+
+### Key Views
+
+| View | What It Shows |
+|------|--------------|
+| **Active Incidents** | All incidents not Closed or Cancelled — your main working list |
+| **Open Calls** | Calls without a linked incident — need attention |
+| **Available Units** | Units ready for dispatch |
+| **All Units by Status** | Every unit with current status — the dispatch board |
+
+### Dashboard
+
+The **Dispatch Operations Dashboard** is your at-a-glance view:
+- **Active Incidents** — list of all open incidents sorted by priority
+- **Unit Status Distribution** — pie chart showing how many units are Available, On Scene, etc.
+- **Open Calls** — calls awaiting dispatch action
+- **Recent Status Changes** — stream of latest unit status updates
 
 ---
 
@@ -216,13 +308,158 @@ The orange warning icon in the header tells you you're offline. The Settings scr
 
 ## For Supervisors / ICs
 
-> *Content will be added in Phase 5.*
+### Dispatch Supervisor
+
+As a dispatch supervisor, you have full access to all four areas of the Dispatch Console.
+
+#### Supervisor Dashboard
+
+Navigate to **Administration → Settings → Supervisor Dashboard** for your overview:
+- **MCI Incidents** — any active mass casualty incidents requiring elevated coordination
+- **Active Mutual Aid Requests** — cross-agency resource requests in progress
+- **Units by Agency** — bar chart of unit counts across all agencies
+- **Alarm Level Distribution** — chart of active incidents by alarm level
+
+#### Managing MCIs
+
+When an MCI occurs:
+1. Use the **Declare MCI** button on the incident (or let the system auto-flag at 5+ patients)
+2. Monitor the **MCI Incidents** view for all active MCIs
+3. Coordinate mutual aid via **Planning → Mutual Aid → Mutual Aid Requests**
+4. Track patient status via **ICS Command → Patients → Patient Records**
+
+#### Mutual Aid
+
+1. Navigate to **Planning → Mutual Aid → Agreements** to view standing agreements
+2. The **Expiring Soon** view highlights agreements within 90 days of expiration
+3. To request mutual aid: open the incident → go to **Planning → Mutual Aid Requests** → **+ New**
+4. You'll receive email alerts when mutual aid request statuses change
+
+#### Email Alerts You'll Receive
+
+- **MCI declared or alarm level changed** — immediate email with incident details
+- **Mutual aid request lifecycle** — status changes (requested → approved → deployed → returned)
+- **Command established/transferred** — when ICS command changes
+- **Daily digest** — mutual aid agreements expiring within 30 days (7:00 AM ET)
+
+### Incident Commander
+
+The **ICS Command** area is your workspace. Use the **ICS Command Dashboard** for:
+- **Active Commands** — your established command posts
+- **Active Assignments** — all units/personnel assigned to incidents under your command
+- **Resource Requests** — pending and in-progress resource requests
+- **Incident Notes** — stream of operational notes from all personnel
+
+#### Establishing Command
+
+1. Navigate to **ICS Command → Command → Commands**
+2. Click **+ New** → fill in command name, incident, your name as IC, radio channel, strategy
+3. Add divisions from the **Divisions** tab (use Quick Create for speed)
+4. Assign personnel to ICS roles via **Incident Assignments** (select the person, set the ICS Role)
+
+#### Resource Requests
+
+1. Open the incident → **ICS** tab → **Resource Requests** subgrid → **+ New**
+2. Fill in resource type, quantity, urgency, justification
+3. The request flows through: Requested → Approved → Dispatched → On Scene → Released
+
+#### Strategy Mode
+
+Set the strategy on the IncidentCommand record:
+- **Offensive** — interior operations, active fire attack
+- **Defensive** — exterior operations only, surround and drown
+- **Transitional** — shifting between offensive and defensive
+- **Investigation** — cause/origin investigation phase
+
+### Station Officer
+
+#### Station Dashboard
+
+Navigate to **Administration → Settings → Station Dashboard** for:
+- **Station Units** — your station's units with current status
+- **Personnel Roster** — personnel assigned to your station
+- **Draft AARs** — after-action reports needing completion
+- **Pre-Plans** — facility pre-plans in your area
+
+#### Pre-Plans
+
+1. Navigate to **Planning → Pre-Plans → Pre-Plans**
+2. Create new pre-plans with building info, fire protection systems, hazards, tactical notes
+3. Link hazards to pre-plans from the **Fire Protection** tab
+4. Update the **Last Inspected** date after facility inspections
+
+#### After-Action Reports
+
+When an incident is closed, the system auto-creates a draft AAR. To complete it:
+1. Navigate to **Planning → After-Action Reports → AARs**
+2. Open the **Draft AARs** view
+3. Fill in: timeline of events, outcomes, injuries/fatalities, property loss, cause of fire
+4. Complete the **Lessons Learned** and **Improvement Actions** tabs
+5. Change status from Draft → Under Review → Approved → Final
 
 ---
 
 ## For Administrators
 
-> *Content will be added in Phase 2 (Security Model) and Phase 7 (Deployment).*
+### Agency Onboarding
+
+When a new agency joins the system:
+1. Create the agency record in **Administration → Agencies → Agencies**
+2. The system automatically provisions:
+   - A new Business Unit for the agency
+   - 4 owner teams: {Agency} Dispatchers, Responders, EMS, Command
+3. Assign users to the appropriate BU and security roles
+4. Assign personnel records to link Dataverse users to their operational identity
+
+### Security Roles
+
+| Role | Who Gets It | What They Can Do |
+|------|------------|-----------------|
+| **SystemAdmin** | IT/Platform admins | Full CRUD on everything, BU management |
+| **DispatchSupervisor** | Shift supervisors | Full incident lifecycle, MCI declaration, mutual aid |
+| **Dispatcher** | Call-takers, dispatchers | Call intake, incident creation, unit dispatch |
+| **IncidentCommander** | On-scene ICs | ICS command, divisions, resource requests |
+| **Responder** | Firefighters | Unit status (own unit), incident notes |
+| **EMSProvider** | Paramedics, EMTs | Patient records with PHI access |
+| **StationOfficer** | Station captains | Station management, pre-plans, AARs |
+| **ReadOnlyAnalyst** | Reporting staff | Read-only across all tables |
+
+### PHI Access
+
+Patient health information (names, age, clinical data) is restricted to EMSProvider and SystemAdmin roles:
+- Other roles see "***" in PHI fields
+- The PatientRecord form's "Patient Info (PHI)" tab is only visible to authorized roles
+- PatientRecord views intentionally exclude PHI columns
+
+To grant PHI access: assign the `seo_PHIAccess` field security profile to the user in the Dataverse admin center.
+
+### Environment Variables
+
+Key settings configurable per environment:
+
+| Variable | Default | What It Controls |
+|----------|---------|-----------------|
+| Default Agency ID | *(set per env)* | Pre-populated agency on new records |
+| MCI Patient Threshold | 5 | Patient count that auto-flags MCI |
+| Dispatch Supervisor Email | *(set per env)* | Recipient for supervisor alert emails |
+| GPS Update Interval | 30 seconds | How often mobile app sends GPS updates |
+| Offline Sync Interval | 5 minutes | How often mobile app syncs with server |
+| Default Dashboard ID | *(set per env)* | Landing page dashboard for Dispatch Console |
+
+Configure in Power Platform Admin Center → Environments → Environment Variables.
+
+### Managing Stations & Apparatus
+
+1. **Administration → Stations & Equipment → Stations** — add/edit fire/EMS stations
+2. **Administration → Stations & Equipment → Apparatus** — manage vehicles and their home stations
+3. Link apparatus to units for the current shift configuration
+
+### Managing Personnel
+
+1. **Administration → Personnel → Personnel** — add/edit staff records
+2. Set **Current Unit** to assign personnel to their shift unit
+3. Set **System User** to link the Dataverse login to the personnel record
+4. Manage certifications, rank, paramedic status
 
 ---
 

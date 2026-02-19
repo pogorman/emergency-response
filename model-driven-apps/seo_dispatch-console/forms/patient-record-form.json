@@ -1,0 +1,113 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_PatientRecordMainForm",
+      "displayName": "Patient Record Main Form",
+      "entity": "seo_PatientRecord",
+      "description": "Main form for EMS patient records with PHI-secured demographics and clinical tabs.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_triageCategory" },
+        { "name": "seo_isTransported" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "triage_tab",
+            "label": "Triage",
+            "sections": [
+              {
+                "name": "triage_info_section",
+                "label": "Triage Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_patientIdentifier", "isReadOnly": true },
+                  { "name": "seo_incidentId", "isRequired": true },
+                  { "name": "seo_triageCategory", "isRequired": true },
+                  { "name": "seo_isTransported" },
+                  { "name": "seo_refusedCare" },
+                  { "name": "seo_attendingPersonnelId" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "phi_tab",
+            "label": "Patient Info (PHI)",
+            "visibilityRule": "User has seo_PHIAccess field security profile (EMSProvider or SystemAdmin)",
+            "sections": [
+              {
+                "name": "demographics_section",
+                "label": "Demographics",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_patientFirstName", "isPHI": true },
+                  { "name": "seo_patientLastName", "isPHI": true },
+                  { "name": "seo_patientAge", "isPHI": true },
+                  { "name": "seo_patientGender", "isPHI": true }
+                ]
+              },
+              {
+                "name": "clinical_section",
+                "label": "Clinical",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_chiefComplaint", "isPHI": true },
+                  { "name": "seo_assessmentNotes", "isPHI": true },
+                  { "name": "seo_treatmentNotes", "isPHI": true }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "transport_tab",
+            "label": "Transport",
+            "sections": [
+              {
+                "name": "transport_info_section",
+                "label": "Transport Info",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_transportUnitId" },
+                  { "name": "seo_destinationFacilityId" },
+                  { "name": "seo_transportStartedOn" },
+                  { "name": "seo_arrivedAtFacilityOn" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "businessRules": [
+        {
+          "name": "Require Transport Details",
+          "description": "If seo_isTransported is true, make seo_transportUnitId and seo_destinationFacilityId required.",
+          "condition": {
+            "field": "seo_isTransported",
+            "operator": "eq",
+            "value": true
+          },
+          "actions": [
+            { "type": "setRequired", "field": "seo_transportUnitId", "value": true },
+            { "type": "setRequired", "field": "seo_destinationFacilityId", "value": true }
+          ]
+        },
+        {
+          "name": "Disable Fields on Refused Care",
+          "description": "If seo_refusedCare is true, lock transport-related fields.",
+          "condition": {
+            "field": "seo_refusedCare",
+            "operator": "eq",
+            "value": true
+          },
+          "actions": [
+            { "type": "setReadOnly", "field": "seo_isTransported", "value": true },
+            { "type": "setReadOnly", "field": "seo_transportUnitId", "value": true },
+            { "type": "setReadOnly", "field": "seo_destinationFacilityId", "value": true }
+          ]
+        }
+      ],
+      "roles": ["seo_EMSProvider", "seo_DispatchSupervisor", "seo_SystemAdmin"]
+    }
+  ]
+}

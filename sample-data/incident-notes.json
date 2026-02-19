@@ -1,0 +1,114 @@
+{
+  "entity": "seo_IncidentNote",
+  "description": "Chronological incident notes capturing dispatch updates, safety alerts, on-scene reports, EMS updates, resource updates, and command decisions across all active incidents.",
+  "records": [
+    {
+      "@id": "note-sf-1",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_NoteType": "Dispatch Update",
+      "seo_content": "All companies dispatched. 3rd alarm sounded at 08:25. Additional units responding.",
+      "seo_isPriority": true,
+      "seo_author": "@ref:personnel-bc-johnson",
+      "seo_createdOn": "2026-02-18T08:25:00Z"
+    },
+    {
+      "@id": "note-sf-2",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_NoteType": "Safety Alert",
+      "seo_content": "Lightweight truss roof construction confirmed. NO interior operations above 1st floor. Collapse zone established.",
+      "seo_isPriority": true,
+      "seo_author": "@ref:personnel-bc-johnson",
+      "seo_createdOn": "2026-02-18T08:30:00Z"
+    },
+    {
+      "@id": "note-sf-3",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_NoteType": "On-Scene Report",
+      "seo_content": "All 120 residents evacuated and accounted for. Search complete on floors 1-3. No injuries.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-capt-williams",
+      "seo_createdOn": "2026-02-18T08:45:00Z"
+    },
+    {
+      "@id": "note-sf-4",
+      "seo_Incident": "@ref:incident-structure-fire",
+      "seo_NoteType": "Command Decision",
+      "seo_content": "Transitioning to defensive operations. All personnel out of structure. Master streams in operation from Division Alpha and Bravo positions.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-bc-johnson",
+      "seo_createdOn": "2026-02-18T09:00:00Z"
+    },
+    {
+      "@id": "note-mci-1",
+      "seo_Incident": "@ref:incident-mci-mva",
+      "seo_NoteType": "Dispatch Update",
+      "seo_content": "MCI declared. 7 patients confirmed. Triage officer assigned. Additional ambulances requested.",
+      "seo_isPriority": true,
+      "seo_author": "@ref:personnel-capt-anderson",
+      "seo_createdOn": "2026-02-18T09:50:00Z"
+    },
+    {
+      "@id": "note-mci-2",
+      "seo_Incident": "@ref:incident-mci-mva",
+      "seo_NoteType": "EMS Update",
+      "seo_content": "Triage complete: 2 Red, 3 Yellow, 2 Green. 1 patient entrapped in vehicle 2. Extrication in progress.",
+      "seo_isPriority": true,
+      "seo_author": "@ref:personnel-medic-garcia",
+      "seo_createdOn": "2026-02-18T09:55:00Z"
+    },
+    {
+      "@id": "note-mci-3",
+      "seo_Incident": "@ref:incident-mci-mva",
+      "seo_NoteType": "Resource Update",
+      "seo_content": "County mutual aid requested. City EMS providing 2 additional medic units.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-capt-anderson",
+      "seo_createdOn": "2026-02-18T10:00:00Z"
+    },
+    {
+      "@id": "note-hz-1",
+      "seo_Incident": "@ref:incident-hazmat",
+      "seo_NoteType": "Safety Alert",
+      "seo_content": "Chlorine release confirmed. Hot zone 200m radius from loading dock. Warm zone 200-500m. All personnel in hot zone require Level A protection.",
+      "seo_isPriority": true,
+      "seo_author": "@ref:personnel-capt-williams",
+      "seo_createdOn": "2026-02-18T07:48:00Z"
+    },
+    {
+      "@id": "note-hz-2",
+      "seo_Incident": "@ref:incident-hazmat",
+      "seo_NoteType": "On-Scene Report",
+      "seo_content": "Source identified: 500 lb chlorine tank with mechanical failure on valve. Leak rate approximately 5 lbs/hour.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-capt-williams",
+      "seo_createdOn": "2026-02-18T08:30:00Z"
+    },
+    {
+      "@id": "note-hz-3",
+      "seo_Incident": "@ref:incident-hazmat",
+      "seo_NoteType": "Command Decision",
+      "seo_content": "Leak contained with emergency valve kit. Decon corridor operational. Beginning atmospheric monitoring for zone reduction.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-capt-williams",
+      "seo_createdOn": "2026-02-18T09:15:00Z"
+    },
+    {
+      "@id": "note-bf-1",
+      "seo_Incident": "@ref:incident-brush-fire",
+      "seo_NoteType": "On-Scene Report",
+      "seo_content": "Approximately 2 acres involved. Fire spreading northeast with wind. No structures threatened within 1/4 mile.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-capt-harris",
+      "seo_createdOn": "2026-02-17T14:20:00Z"
+    },
+    {
+      "@id": "note-bf-2",
+      "seo_Incident": "@ref:incident-brush-fire",
+      "seo_NoteType": "Command Decision",
+      "seo_content": "Fire contained at 2.5 acres. Perimeter secure. Mop-up operations beginning.",
+      "seo_isPriority": false,
+      "seo_author": "@ref:personnel-lt-walker",
+      "seo_createdOn": "2026-02-17T16:30:00Z"
+    }
+  ]
+}

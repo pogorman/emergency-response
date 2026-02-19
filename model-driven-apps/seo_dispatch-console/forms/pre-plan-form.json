@@ -1,0 +1,143 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_PrePlanMainForm",
+      "displayName": "Pre-Plan Main Form",
+      "entity": "seo_PrePlan",
+      "description": "Main form for building pre-plans including construction details, fire protection systems, tactical notes, and linked incident history.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_occupancyType" },
+        { "name": "seo_constructionType" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "building_tab",
+            "label": "Building",
+            "sections": [
+              {
+                "name": "identification_section",
+                "label": "Identification",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isRequired": true },
+                  { "name": "seo_address", "isRequired": true },
+                  { "name": "seo_latitude" },
+                  { "name": "seo_longitude" },
+                  { "name": "seo_agencyId" },
+                  { "name": "seo_jurisdictionId" }
+                ]
+              },
+              {
+                "name": "construction_section",
+                "label": "Construction",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_occupancyType", "isRequired": true },
+                  { "name": "seo_constructionType" },
+                  { "name": "seo_stories" },
+                  { "name": "seo_squareFootage" },
+                  { "name": "seo_hasBasement" },
+                  { "name": "seo_occupantCount" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "fire_protection_tab",
+            "label": "Fire Protection",
+            "sections": [
+              {
+                "name": "systems_section",
+                "label": "Systems",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_hasSprinklers" },
+                  { "name": "seo_hasFireAlarm" },
+                  { "name": "seo_hasStandpipe" },
+                  { "name": "seo_hasFDC" },
+                  { "name": "seo_fdcLocation" }
+                ]
+              },
+              {
+                "name": "hazards_section",
+                "label": "Hazards",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_knownHazards" }
+                ]
+              },
+              {
+                "name": "hazard_records_section",
+                "label": "Hazard Records",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "hazards_subgrid",
+                    "label": "Hazards",
+                    "entity": "seo_Hazard",
+                    "relationship": "seo_PrePlan_Hazard",
+                    "allowCreate": true,
+                    "allowDelete": true,
+                    "maxRows": 5
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tactical_tab",
+            "label": "Tactical",
+            "sections": [
+              {
+                "name": "notes_section",
+                "label": "Notes",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_tacticalNotes" },
+                  { "name": "seo_accessNotes" }
+                ]
+              },
+              {
+                "name": "contact_section",
+                "label": "Contact",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_emergencyContactName" },
+                  { "name": "seo_emergencyContactPhone" },
+                  { "name": "seo_lastInspectedOn" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "linked_incidents_tab",
+            "label": "Linked Incidents",
+            "sections": [
+              {
+                "name": "incidents_section",
+                "label": "Incidents",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "incidents_subgrid",
+                    "label": "Incidents",
+                    "entity": "seo_Incident",
+                    "relationship": "seo_PrePlan_Incident",
+                    "viewName": "seo_ClosedIncidentsLast30d",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 5
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

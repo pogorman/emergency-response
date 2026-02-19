@@ -1,0 +1,46 @@
+{
+  "schemaName": "seo_StationDashboard",
+  "displayName": "Station Dashboard",
+  "description": "Dashboard for station officers showing their station's units, personnel roster, draft AARs, and pre-plans.",
+  "dashboardType": "System",
+  "columns": 2,
+  "roles": ["seo_StationOfficer", "seo_SystemAdmin"],
+  "widgets": [
+    {
+      "name": "wgt_MyStationUnits",
+      "label": "Station Units",
+      "type": "List",
+      "entity": "seo_Unit",
+      "viewName": "seo_AllUnitsByStatus",
+      "position": { "row": 1, "column": 1, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_PersonnelRoster",
+      "label": "Personnel Roster",
+      "type": "List",
+      "entity": "seo_Personnel",
+      "viewName": "seo_AgencyPersonnel",
+      "position": { "row": 1, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 20
+    },
+    {
+      "name": "wgt_DraftAARs",
+      "label": "Draft After-Action Reports",
+      "type": "List",
+      "entity": "seo_AfterActionReport",
+      "viewName": "seo_DraftAARs",
+      "position": { "row": 2, "column": 1, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    },
+    {
+      "name": "wgt_PrePlans",
+      "label": "Pre-Plans",
+      "type": "List",
+      "entity": "seo_PrePlan",
+      "viewName": "seo_AllPrePlans",
+      "position": { "row": 2, "column": 2, "rowSpan": 1, "colSpan": 1 },
+      "maxRecords": 10
+    }
+  ]
+}

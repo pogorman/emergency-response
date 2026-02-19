@@ -113,3 +113,70 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/RELEASE-NOTES.md` — added v0.4.0 entry
 - Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
 - Updated `CLAUDE.md` — Phase 4 → COMPLETE
+
+## 2026-02-18 — Session 5: Phase 5 — Model-Driven App (Dispatch Console & Supervisor Dashboard)
+
+**Prompt Summary:** Implement Phase 5 — create model-driven app specification files (JSON blueprints) for the Dispatch Console & Supervisor Dashboard. 4-area sitemap, 27 views, 19 forms, 4 dashboards, 1 BPF (incident lifecycle), 1 command bar customization (Declare MCI), 22 sample data files with 5 incident scenarios (~178 records), 1 new environment variable, MDA definition schema, and full documentation updates.
+
+**Actions Taken:**
+- Created `model-driven-apps/_schema/mda-definition-schema.json` — JSON Schema for sitemap, views, forms, dashboards, BPF, and command bar specs
+- Created `model-driven-apps/README.md` — spec format explanation and translation guide to Power Apps maker portal
+- Created `model-driven-apps/seo_dispatch-console/app-definition.json` — app config, 6 security roles, feature flags, role-area mapping
+- Created `model-driven-apps/seo_dispatch-console/sitemap.json` — 4-area sitemap (Dispatch Operations, ICS Command, Planning, Administration)
+- Created 13 view definition files in `model-driven-apps/seo_dispatch-console/views/`:
+  - `incident-views.json` — 4 views (Active, My Agency, MCI, Closed last 30d)
+  - `call-views.json` — 3 views (Open, Today's, Unassigned)
+  - `unit-views.json` — 3 views (All by Status, Available, Out of Service)
+  - `incident-assignment-views.json` — 2 views (By Incident, Active)
+  - `unit-status-log-views.json` — 2 views (By Unit, By Incident)
+  - `incident-command-views.json` — 1 view (Active Commands)
+  - `incident-note-views.json` — 2 views (By Incident, Priority)
+  - `patient-record-views.json` — 2 views (By Incident, Transport Tracking) — NO PHI columns
+  - `pre-plan-views.json` — 2 views (All, With Hazards)
+  - `mutual-aid-agreement-views.json` — 2 views (Active, Expiring Soon)
+  - `mutual-aid-request-views.json` — 1 view (Active Requests)
+  - `after-action-report-views.json` — 2 views (Draft, Completed)
+  - `personnel-views.json` — 2 views (Agency Personnel, By Rank)
+- Created 14 form definition files in `model-driven-apps/seo_dispatch-console/forms/`:
+  - `incident-forms.json` — Main (5 tabs: Details, Dispatch, ICS, Patients, Timeline) + Quick Create
+  - `call-forms.json` — Main (3 tabs: Caller Info, Nature/Location, Disposition) + Quick Create
+  - `unit-form.json` — Main (2 tabs: Unit Info, History)
+  - `incident-assignment-forms.json` — Main + Quick Create
+  - `incident-command-form.json` — Main (2 tabs: Command, Divisions)
+  - `division-form.json` — Quick Create
+  - `resource-request-forms.json` — Main + Quick Create
+  - `incident-note-form.json` — Quick Create
+  - `patient-record-form.json` — Main (3 tabs: Triage, Patient Info PHI, Transport) — PHI tab restricted
+  - `mutual-aid-agreement-form.json` — Main (3 tabs: Agreement, Cost Sharing, Related Requests)
+  - `mutual-aid-request-forms.json` — Main (3 tabs) + Quick Create
+  - `after-action-report-form.json` — Main (3 tabs: Report, Details, Lessons Learned)
+  - `pre-plan-form.json` — Main (4 tabs: Building, Fire Protection, Tactical, Linked Incidents)
+  - `personnel-form.json` — Main (2 tabs: Personnel Info, History)
+- Created 4 dashboard definitions in `model-driven-apps/seo_dispatch-console/dashboards/`:
+  - `dispatch-operations-dashboard.json` — Active Incidents, Unit Status pie chart, Open Calls, Status Changes stream
+  - `supervisor-overview-dashboard.json` — MCI Incidents, Mutual Aid Requests, Agency Unit Counts bar chart, Alarm Level chart
+  - `ics-command-dashboard.json` — Active Commands, Assignments, Resource Requests, Notes stream
+  - `station-dashboard.json` — Station Units, Personnel Roster, Draft AARs, Pre-Plans
+- Created `model-driven-apps/seo_dispatch-console/business-process-flows/incident-lifecycle-bpf.json` — 6-stage BPF with gates
+- Created `model-driven-apps/seo_dispatch-console/command-bar/incident-command-bar.json` — Declare MCI button
+- Created 22 sample data files in `sample-data/`:
+  - `agencies.json` (3), `jurisdictions.json` (3), `facilities.json` (8), `stations.json` (6), `apparatus.json` (12)
+  - `personnel.json` (18), `units.json` (8), `pre-plans.json` (4), `hazards.json` (6), `hydrants.json` (15)
+  - `incidents.json` (5), `calls.json` (5), `incident-assignments.json` (15), `incident-commands.json` (3)
+  - `divisions.json` (4), `resource-requests.json` (3), `incident-notes.json` (12), `patient-records.json` (8)
+  - `transports.json` (3 reference), `mutual-aid-agreements.json` (2), `mutual-aid-requests.json` (2), `after-action-reports.json` (2)
+  - `unit-status-logs.json` (~40)
+- Created `sample-data/README.md` — import order, scenario descriptions, symbolic reference resolution, record counts
+- Added 1 new environment variable to `solution/environment-variables.json`: `seo_DefaultDashboardId`
+- Updated `docs/TECHNICAL.md`:
+  - Added Model-Driven App section (overview, sitemap, role mapping, view/form/dashboard inventories, BPF, command bar, PHI containment, sample data)
+  - Added ADR-016 (MDA vs Canvas split), ADR-017 (BPF for incident lifecycle), ADR-018 (sample data strategy)
+  - Updated environment variables table with new variable
+- Updated `docs/USER-GUIDE.md`:
+  - Updated Getting Started section with two-app overview and access instructions
+  - Populated "For Dispatchers" section (call intake, incident creation, dispatching, BPF walkthrough, MCI, views, dashboard)
+  - Populated "For Supervisors / ICs" section (supervisor dashboard, MCI management, mutual aid, email alerts, ICS command, resource requests, station officer workflows)
+  - Populated "For Administrators" section (agency onboarding, security roles, PHI access, env vars, station/apparatus/personnel management)
+- Updated `docs/RELEASE-NOTES.md` — added v0.5.0
+- Updated `docs/SESSION-MEMORY.md` — updated project state
+- Updated `CLAUDE.md` — Phase 5 → COMPLETE

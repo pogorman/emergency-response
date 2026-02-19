@@ -98,6 +98,13 @@
       "type": "String",
       "description": "How often the Responder Mobile app syncs its offline cache with Dataverse (in minutes). Lower values provide fresher data but increase network usage.",
       "defaultValue": "5"
+    },
+    {
+      "schemaName": "seo_DefaultDashboardId",
+      "displayName": "Default Dashboard ID",
+      "type": "String",
+      "description": "GUID of the default dashboard for the Dispatch Console model-driven app landing page. Set per environment after dashboard deployment.",
+      "defaultValue": ""
     }
   ]
 }

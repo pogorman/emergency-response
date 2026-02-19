@@ -1,0 +1,91 @@
+{
+  "entity": "seo_Hazard",
+  "description": "Sample hazard records for EmergencyResponseCoordination — linked to pre-plans or incidents",
+  "generatedOn": "2026-02-18",
+  "records": [
+    {
+      "@id": "hazard-chemical-storage",
+      "seo_name": "Chemical Storage Area",
+      "seo_hazardType": "Chemical",
+      "seo_prePlanId": "@ref:preplan-industrial-complex",
+      "seo_incidentId": null,
+      "seo_location": "Building C, northeast corner",
+      "seo_nfpa704Health": 3,
+      "seo_nfpa704Fire": 2,
+      "seo_nfpa704Reactivity": 1,
+      "seo_nfpa704Special": "W",
+      "seo_quantity": "Multiple 55-gallon drums",
+      "seo_mitigationNotes": "Do not use water on chemical storage. Foam or dry chemical only. SDS binder located in Building C supervisor office."
+    },
+    {
+      "@id": "hazard-confined-space",
+      "seo_name": "Underground Tank Farm",
+      "seo_hazardType": "Confined Space",
+      "seo_prePlanId": "@ref:preplan-industrial-complex",
+      "seo_incidentId": null,
+      "seo_location": "West side of property",
+      "seo_nfpa704Health": 1,
+      "seo_nfpa704Fire": 3,
+      "seo_nfpa704Reactivity": 0,
+      "seo_nfpa704Special": null,
+      "seo_quantity": "3 underground storage tanks (10,000 gal each)",
+      "seo_mitigationNotes": "Atmospheric monitoring required before entry. Confined space rescue team on standby. Ventilation fans staged at tank access hatches."
+    },
+    {
+      "@id": "hazard-natural-gas",
+      "seo_name": "Natural Gas Mains",
+      "seo_hazardType": "Natural Gas",
+      "seo_prePlanId": "@ref:preplan-metro-mall",
+      "seo_incidentId": null,
+      "seo_location": "Mechanical room, basement level",
+      "seo_nfpa704Health": 1,
+      "seo_nfpa704Fire": 4,
+      "seo_nfpa704Reactivity": 0,
+      "seo_nfpa704Special": null,
+      "seo_quantity": null,
+      "seo_mitigationNotes": "Gas shutoff valve on exterior east wall, marked yellow. Contact Metro Gas Utility at 202-555-9000 for main shutoff."
+    },
+    {
+      "@id": "hazard-hazmat-spill",
+      "seo_name": "Chlorine Tank Rupture",
+      "seo_hazardType": "Chemical",
+      "seo_prePlanId": null,
+      "seo_incidentId": "@ref:incident-hazmat",
+      "seo_location": "Loading dock area",
+      "seo_nfpa704Health": 3,
+      "seo_nfpa704Fire": 0,
+      "seo_nfpa704Reactivity": 1,
+      "seo_nfpa704Special": "OX",
+      "seo_quantity": "500 lb chlorine tank, partial release",
+      "seo_mitigationNotes": "Evacuate downwind 500m. Full SCBA and Level A protection required within hot zone. Decon corridor established upwind."
+    },
+    {
+      "@id": "hazard-electrical",
+      "seo_name": "High Voltage Substation",
+      "seo_hazardType": "Electrical",
+      "seo_prePlanId": "@ref:preplan-industrial-complex",
+      "seo_incidentId": null,
+      "seo_location": "Southeast corner of property",
+      "seo_nfpa704Health": 0,
+      "seo_nfpa704Fire": 0,
+      "seo_nfpa704Reactivity": 0,
+      "seo_nfpa704Special": null,
+      "seo_quantity": null,
+      "seo_mitigationNotes": "13.8kV lines. Minimum 35ft clearance. Utility must de-energize before approach. Contact Metro Power at 202-555-9100 for emergency disconnect."
+    },
+    {
+      "@id": "hazard-structural",
+      "seo_name": "Roof Collapse Risk",
+      "seo_hazardType": "Structural Collapse",
+      "seo_prePlanId": null,
+      "seo_incidentId": "@ref:incident-structure-fire",
+      "seo_location": "Main structure, lightweight truss roof",
+      "seo_nfpa704Health": null,
+      "seo_nfpa704Fire": null,
+      "seo_nfpa704Reactivity": null,
+      "seo_nfpa704Special": null,
+      "seo_quantity": null,
+      "seo_mitigationNotes": "Lightweight wood truss construction. No interior operations if fire involvement of truss space. Collapse zone 1.5x building height. Monitor with TIC for heat spread in truss void."
+    }
+  ]
+}

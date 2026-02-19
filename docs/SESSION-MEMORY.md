@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 4)
+## Last Updated: 2026-02-18 (Session 5)
 
 ## Session Log
 
@@ -15,6 +15,7 @@
 | 2 | 2026-02-18 | ~30 min | Phase 2 security model (8 roles, PHI profile, BU structure, teams, privilege matrix) |
 | 3 | 2026-02-18 | ~40 min | Phase 3 Power Automate flows (10 flow specs, schema, 5 env vars, full docs update) |
 | 4 | 2026-02-18 | ~50 min | Phase 4 Canvas app (8 screens, 3 components, schema, 2 env vars, full docs update) |
+| 5 | 2026-02-18 | ~60 min | Phase 5 Model-driven app (27 views, 19 forms, 4 dashboards, BPF, command bar, 22 sample data files, schema, 1 env var, full docs update) |
 
 ## Current Project State
 
@@ -49,9 +50,23 @@
   - 2 new environment variables (GPS interval, offline sync interval)
   - ADR-013 (offline-first), ADR-014 (GCC map fallback), ADR-015 (phone layout)
   - USER-GUIDE.md "For Responders" section populated
+- **Phase 5 COMPLETE:** Model-driven app (dispatch console / supervisor dashboard)
+  - MDA definition JSON Schema in `/model-driven-apps/_schema/`
+  - MDA README with translation guide in `/model-driven-apps/README.md`
+  - App definition in `/model-driven-apps/seo_dispatch-console/app-definition.json`
+  - 4-area sitemap in `/model-driven-apps/seo_dispatch-console/sitemap.json`
+  - 13 view files (27 views) in `/model-driven-apps/seo_dispatch-console/views/`
+  - 14 form files (19 forms) in `/model-driven-apps/seo_dispatch-console/forms/`
+  - 4 dashboards in `/model-driven-apps/seo_dispatch-console/dashboards/`
+  - 1 BPF (incident lifecycle, 6 stages) in `/model-driven-apps/seo_dispatch-console/business-process-flows/`
+  - 1 command bar (Declare MCI) in `/model-driven-apps/seo_dispatch-console/command-bar/`
+  - 22 sample data files (~178 records, 5 scenarios) in `/sample-data/`
+  - Sample data README with import order and FK resolution guide
+  - 1 new environment variable (seo_DefaultDashboardId)
+  - ADR-016 (MDA vs Canvas split), ADR-017 (BPF for incident lifecycle), ADR-018 (sample data strategy)
+  - USER-GUIDE.md "For Dispatchers", "For Supervisors / ICs", "For Administrators" sections populated
 
 ### What's Pending
-- Phase 5: Model-driven app (dispatch/supervisor)
 - Phase 6: Reporting / Power BI
 - Phase 7: Deployment + GCC auth scripts
 
@@ -65,22 +80,27 @@
 7. **MutualAidAgreement separate from MutualAidRequest** — agreements are standing documents, requests are per-incident
 8. **AfterActionReport as single entity with rollup-ready fields**
 9. **Multi-agency shared environment** — each agency = 1 Dataverse Business Unit for automatic row-level isolation
-10. **8 security roles** with granular per-table privileges: SystemAdmin, DispatchSupervisor, Dispatcher, IC, Responder, EMSProvider, StationOfficer, ReadOnlyAnalyst
-11. **User-scope + team sharing** for Responder and EMSProvider — least privilege, incident access via owner teams
-12. **Cross-BU mutual aid** via access teams + Mutual Aid Partners org-scoped team, with PHI never leaking across BUs
-13. **Flow security context split:** TriggeringUser for simple flows; FlowOwner for BU/team management, cross-BU sharing, and notifications
-14. **Circular trigger prevention:** filterColumns on all Dataverse triggers. Only one intentional cascade: PatientCountSync → NotifyMCIAlarm (terminates at email)
-15. **Notification architecture:** 3 sub-flows for dispatch supervisor alerts (MCI/alarm, mutual aid, command transfer)
-16. **No PHI in flows:** All 10 flows verified — none read or write PHI columns
-17. **Single app for Responder + EMSProvider** — Patient Triage screen visible only for EMSProvider role. Avoids maintaining two apps.
-18. **Phone layout, offline-first** — optimized for one-hand use in turnout gear. Dark high-contrast theme. Minimum 44px touch targets. Dataverse offline with Server Wins conflict resolution.
-19. **GCC map fallback** — primary Map PCF control + fallback gallery list with Launch() to native device maps. PCF availability varies by GCC tenant.
-20. **PHI contained to single screen** — Patient Triage is the only screen accessing PHI columns, with UI gate + field security profile double protection.
-21. **GPS on every status change** — the app patches seo_Unit.seo_latitude/longitude on each status button tap, plus periodic updates via timer.
+10. **8 security roles** with granular per-table privileges
+11. **User-scope + team sharing** for Responder and EMSProvider — least privilege
+12. **Cross-BU mutual aid** via access teams + Mutual Aid Partners org-scoped team
+13. **Flow security context split:** TriggeringUser for simple; FlowOwner for BU/team/cross-BU
+14. **Circular trigger prevention:** filterColumns on all Dataverse triggers
+15. **Notification architecture:** 3 sub-flows for dispatch supervisor alerts
+16. **No PHI in flows:** All 10 flows verified
+17. **Single canvas app for Responder + EMSProvider** — Patient Triage gated by role
+18. **Phone layout, offline-first** — dark high-contrast, 44px touch targets, Server Wins
+19. **GCC map fallback** — PCF + Launch() to native device maps
+20. **GPS on every status change** — patches seo_Unit on each status tap
+21. **MDA for dispatch, Canvas for field** — ADR-016
+22. **BPF for incident lifecycle** — 6 stages with gates (≥1 assignment, all cleared) — ADR-017
+23. **Declare MCI button** — manual supervisor override, separate from PatientCountSync auto-detection
+24. **PHI containment in MDA** — dedicated tab on PatientRecord form, no PHI in views
+25. **4-area sitemap** — mirrors operational workflow (Dispatch → ICS → Planning → Admin)
+26. **Sample data with symbolic FK references** — @ref: format, import order documented — ADR-018
 
 ## Open Questions / Blockers
-- None currently — ready for Phase 5 (Model-driven app)
+- None currently — ready for Phase 6 (Power BI reporting)
 
 ## Next Steps
-1. O'G reviews Phase 4 canvas app specifications
-2. Begin Phase 5: Model-driven app (dispatch console / supervisor dashboard)
+1. O'G reviews Phase 5 model-driven app and sample data specifications
+2. Begin Phase 6: Reporting / Power BI layer

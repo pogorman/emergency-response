@@ -1,0 +1,117 @@
+{
+  "forms": [
+    {
+      "schemaName": "seo_MutualAidAgreementMainForm",
+      "displayName": "Mutual Aid Agreement Main Form",
+      "entity": "seo_MutualAidAgreement",
+      "description": "Main form for managing mutual aid agreements between agencies, including cost sharing terms and linked requests.",
+      "formType": "Main",
+      "header": [
+        { "name": "seo_agreementType" },
+        { "name": "seo_isActive" }
+      ],
+      "layout": {
+        "tabs": [
+          {
+            "name": "agreement_tab",
+            "label": "Agreement",
+            "sections": [
+              {
+                "name": "parties_section",
+                "label": "Parties",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_name", "isRequired": true },
+                  { "name": "seo_requestingAgencyId", "isRequired": true },
+                  { "name": "seo_providingAgencyId", "isRequired": true },
+                  { "name": "seo_agreementType", "isRequired": true },
+                  { "name": "seo_isActive" }
+                ]
+              },
+              {
+                "name": "dates_section",
+                "label": "Dates",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_effectiveDate", "isRequired": true },
+                  { "name": "seo_expirationDate" }
+                ]
+              },
+              {
+                "name": "terms_section",
+                "label": "Terms",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_terms" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "cost_sharing_tab",
+            "label": "Cost Sharing",
+            "sections": [
+              {
+                "name": "cost_section",
+                "label": "Cost",
+                "columns": 2,
+                "fields": [
+                  { "name": "seo_hasCostSharing" }
+                ]
+              },
+              {
+                "name": "cost_terms_section",
+                "label": "Cost Terms",
+                "columns": 1,
+                "fields": [
+                  { "name": "seo_costSharingTerms" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "related_requests_tab",
+            "label": "Related Requests",
+            "sections": [
+              {
+                "name": "requests_section",
+                "label": "Requests",
+                "columns": 1,
+                "fields": [],
+                "subgrids": [
+                  {
+                    "name": "mutual_aid_requests_subgrid",
+                    "label": "Mutual Aid Requests",
+                    "entity": "seo_MutualAidRequest",
+                    "relationship": "seo_MutualAidAgreement_MutualAidRequest",
+                    "viewName": "seo_ActiveMutualAidRequests",
+                    "allowCreate": false,
+                    "allowDelete": false,
+                    "maxRows": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "businessRules": [
+        {
+          "name": "Show Cost Terms",
+          "description": "If seo_hasCostSharing is true, show seo_costSharingTerms. Otherwise hide it.",
+          "condition": {
+            "field": "seo_hasCostSharing",
+            "operator": "eq",
+            "value": true
+          },
+          "actions": [
+            { "type": "setVisible", "field": "seo_costSharingTerms", "value": true }
+          ],
+          "elseActions": [
+            { "type": "setVisible", "field": "seo_costSharingTerms", "value": false }
+          ]
+        }
+      ]
+    }
+  ]
+}

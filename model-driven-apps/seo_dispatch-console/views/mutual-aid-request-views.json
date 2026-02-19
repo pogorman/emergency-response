@@ -1,0 +1,36 @@
+{
+  "entity": "seo_MutualAidRequest",
+  "views": [
+    {
+      "schemaName": "seo_ActiveMutualAidRequests",
+      "displayName": "Active Mutual Aid Requests",
+      "entity": "seo_MutualAidRequest",
+      "description": "All mutual aid requests that are not Returned, Denied, or Cancelled, sorted by request date descending.",
+      "viewType": "Public",
+      "isDefault": true,
+      "columns": [
+        { "name": "seo_name", "width": 200 },
+        { "name": "seo_incidentId", "width": 150 },
+        { "name": "seo_requestingAgencyId", "width": 150 },
+        { "name": "seo_providingAgencyId", "width": 150 },
+        { "name": "seo_status", "width": 120 },
+        { "name": "seo_resourcesRequested", "width": 200 },
+        { "name": "seo_requestedOn", "width": 160 },
+        { "name": "seo_estimatedCost", "width": 100 }
+      ],
+      "filter": {
+        "type": "and",
+        "conditions": [
+          {
+            "column": "seo_status",
+            "operator": "not-in",
+            "values": ["Returned", "Denied", "Cancelled"]
+          }
+        ]
+      },
+      "sortOrder": [
+        { "column": "seo_requestedOn", "direction": "Descending" }
+      ]
+    }
+  ]
+}
