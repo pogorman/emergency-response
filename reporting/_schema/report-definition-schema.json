@@ -1,0 +1,672 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stateemergencyops.gov/schemas/report-definition-schema.json",
+  "title": "Power BI Report Definition Schema",
+  "description": "JSON Schema for EmergencyResponseCoordination Power BI dataset, report, page, visual, measure, RLS, and refresh specifications. Makers use these specs to build reports in Power BI Desktop / Service.",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/DatasetDefinition" },
+    { "$ref": "#/$defs/ReportDefinition" },
+    { "$ref": "#/$defs/SharedMeasuresDefinition" },
+    { "$ref": "#/$defs/RLSDefinition" }
+  ],
+  "$defs": {
+    "DatasetDefinition": {
+      "type": "object",
+      "required": ["$schema", "definitionType", "dataset"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "definitionType": { "const": "dataset" },
+        "dataset": { "$ref": "#/$defs/Dataset" }
+      },
+      "additionalProperties": false
+    },
+    "Dataset": {
+      "type": "object",
+      "required": ["name", "displayName", "description", "refreshMode", "tables", "relationships"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Internal dataset name (PascalCase)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable dataset name"
+        },
+        "description": { "type": "string" },
+        "refreshMode": {
+          "type": "string",
+          "enum": ["Import", "DirectQuery", "Dual"],
+          "description": "Data connectivity mode. GCC requires Import."
+        },
+        "refreshSchedule": { "$ref": "#/$defs/RefreshSchedule" },
+        "tables": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DatasetTable" },
+          "minItems": 1
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DatasetRelationship" }
+        },
+        "measures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Measure" },
+          "description": "Dataset-specific DAX measures"
+        },
+        "calculatedColumns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CalculatedColumn" }
+        },
+        "rlsRoles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RLSRole" }
+        },
+        "phiCompliance": { "$ref": "#/$defs/PHICompliance" },
+        "gccConstraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "GCC-specific constraints applicable to this dataset"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DatasetTable": {
+      "type": "object",
+      "required": ["name", "source", "columns"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Table name in the Power BI data model"
+        },
+        "source": {
+          "type": "string",
+          "description": "Dataverse table schemaName (e.g., seo_Incident) or 'Calculated' for generated tables"
+        },
+        "description": { "type": "string" },
+        "isDateDimension": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this is the shared Date dimension table"
+        },
+        "columns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TableColumn" },
+          "minItems": 1
+        },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceFilter" },
+          "description": "Filters applied at import time (Power Query)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TableColumn": {
+      "type": "object",
+      "required": ["name", "sourceColumn", "dataType"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name in Power BI"
+        },
+        "sourceColumn": {
+          "type": "string",
+          "description": "Dataverse column schemaName"
+        },
+        "dataType": {
+          "type": "string",
+          "enum": ["String", "Int64", "Double", "DateTime", "Boolean", "Decimal", "Currency", "DateOnly"],
+          "description": "Power BI data type"
+        },
+        "isHidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "sortByColumn": {
+          "type": "string",
+          "description": "Column to sort by (for month names sorted by month number, etc.)"
+        },
+        "format": {
+          "type": "string",
+          "description": "Display format string (e.g., '#,##0', '0.0%', 'yyyy-MM-dd')"
+        },
+        "description": { "type": "string" },
+        "phi": {
+          "type": "boolean",
+          "default": false,
+          "description": "MUST be false for all columns. PHI columns are never included in Power BI datasets."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SourceFilter": {
+      "type": "object",
+      "required": ["column", "operator", "value"],
+      "properties": {
+        "column": { "type": "string" },
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "notEquals", "greaterThan", "lessThan", "greaterOrEqual", "lessOrEqual", "contains", "in", "isNotNull"]
+        },
+        "value": {},
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "DatasetRelationship": {
+      "type": "object",
+      "required": ["name", "fromTable", "fromColumn", "toTable", "toColumn", "cardinality"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Relationship name"
+        },
+        "fromTable": { "type": "string" },
+        "fromColumn": { "type": "string" },
+        "toTable": { "type": "string" },
+        "toColumn": { "type": "string" },
+        "cardinality": {
+          "type": "string",
+          "enum": ["ManyToOne", "OneToMany", "OneToOne", "ManyToMany"]
+        },
+        "crossFilterDirection": {
+          "type": "string",
+          "enum": ["Single", "Both"],
+          "default": "Single"
+        },
+        "isActive": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "CalculatedColumn": {
+      "type": "object",
+      "required": ["name", "table", "expression", "dataType"],
+      "properties": {
+        "name": { "type": "string" },
+        "table": { "type": "string" },
+        "expression": {
+          "type": "string",
+          "description": "DAX expression for the calculated column"
+        },
+        "dataType": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "RefreshSchedule": {
+      "type": "object",
+      "required": ["intervalHours"],
+      "properties": {
+        "intervalHours": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Refresh interval in hours. Default from seo_PowerBIDatasetRefreshHours env var."
+        },
+        "timeZone": {
+          "type": "string",
+          "default": "Eastern Standard Time"
+        },
+        "notifyOnFailure": {
+          "type": "boolean",
+          "default": true
+        },
+        "gatewayRequired": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if dataset requires on-premises data gateway"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Measure": {
+      "type": "object",
+      "required": ["name", "expression", "dataType"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Measure display name"
+        },
+        "expression": {
+          "type": "string",
+          "description": "DAX expression"
+        },
+        "dataType": {
+          "type": "string",
+          "enum": ["Integer", "Decimal", "Percentage", "Currency", "Duration", "String"]
+        },
+        "format": {
+          "type": "string",
+          "description": "Display format string"
+        },
+        "description": { "type": "string" },
+        "folder": {
+          "type": "string",
+          "description": "Display folder for organizing measures in the field list"
+        },
+        "usedInReports": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Report names that reference this measure"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RLSRole": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "tableFilters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RLSTableFilter" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RLSTableFilter": {
+      "type": "object",
+      "required": ["table", "daxFilter"],
+      "properties": {
+        "table": {
+          "type": "string",
+          "description": "Table to apply the filter on"
+        },
+        "daxFilter": {
+          "type": "string",
+          "description": "DAX filter expression for RLS"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PHICompliance": {
+      "type": "object",
+      "required": ["usesPatientRecord", "phiColumnsIncluded"],
+      "properties": {
+        "usesPatientRecord": {
+          "type": "boolean",
+          "description": "Whether this dataset references seo_PatientRecord"
+        },
+        "phiColumnsIncluded": {
+          "type": "boolean",
+          "description": "MUST always be false. PHI columns are never in Power BI datasets."
+        },
+        "safeColumnsUsed": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Non-PHI columns from seo_PatientRecord used in this dataset"
+        },
+        "excludedPhiColumns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PHI columns explicitly excluded"
+        },
+        "justification": {
+          "type": "string",
+          "description": "Explanation of PHI compliance approach"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReportDefinition": {
+      "type": "object",
+      "required": ["$schema", "definitionType", "report"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "definitionType": { "const": "report" },
+        "report": { "$ref": "#/$defs/Report" }
+      },
+      "additionalProperties": false
+    },
+    "Report": {
+      "type": "object",
+      "required": ["name", "displayName", "description", "dataset", "audience", "pages"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Internal report name (PascalCase)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User-facing report title"
+        },
+        "description": { "type": "string" },
+        "dataset": {
+          "type": "string",
+          "description": "Name of the dataset this report connects to"
+        },
+        "audience": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security roles that should access this report"
+        },
+        "rlsEnforced": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether RLS filters apply to this report"
+        },
+        "theme": {
+          "type": "string",
+          "description": "Power BI theme name or JSON theme file"
+        },
+        "pages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReportPage" },
+          "minItems": 1
+        },
+        "drillthrough": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DrillthroughConfig" },
+          "description": "Cross-report or cross-page drillthrough configuration"
+        },
+        "bookmarks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Bookmark" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReportPage": {
+      "type": "object",
+      "required": ["name", "displayName", "visuals"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Internal page name"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Page tab label"
+        },
+        "description": { "type": "string" },
+        "layout": {
+          "type": "string",
+          "enum": ["FitToPage", "FitToWidth", "Custom"],
+          "default": "FitToPage"
+        },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "isHidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hidden pages are used for drillthrough targets"
+        },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/VisualFilter" },
+          "description": "Page-level filters"
+        },
+        "slicers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Slicer" }
+        },
+        "visuals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Visual" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "Visual": {
+      "type": "object",
+      "required": ["name", "type", "title"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique visual identifier within the page"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "card", "multiRowCard", "kpiIndicator",
+            "clusteredBarChart", "stackedBarChart", "hundredPercentStackedBarChart",
+            "clusteredColumnChart", "stackedColumnChart",
+            "lineChart", "areaChart", "lineAndClusteredColumnChart",
+            "donutChart", "pieChart", "treemap",
+            "table", "matrix",
+            "gauge", "slicer",
+            "map", "filledMap", "shapeMap",
+            "scatter", "waterfall", "funnel", "ribbon",
+            "decompositionTree", "smartNarrative"
+          ],
+          "description": "Standard Power BI visual type. GCC: no AI visuals, no uncertified custom visuals."
+        },
+        "title": {
+          "type": "string",
+          "description": "Visual title text"
+        },
+        "subtitle": { "type": "string" },
+        "position": { "$ref": "#/$defs/VisualPosition" },
+        "fields": { "$ref": "#/$defs/VisualFields" },
+        "conditionalFormatting": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ConditionalFormat" }
+        },
+        "interactions": {
+          "type": "string",
+          "enum": ["filter", "highlight", "none"],
+          "default": "highlight"
+        },
+        "sortBy": {
+          "type": "object",
+          "properties": {
+            "field": { "type": "string" },
+            "direction": { "type": "string", "enum": ["ascending", "descending"] }
+          }
+        },
+        "tooltip": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional fields shown in tooltip"
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "VisualPosition": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "integer", "description": "X position in pixels" },
+        "y": { "type": "integer", "description": "Y position in pixels" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "VisualFields": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Measure or column references for Values well"
+        },
+        "axis": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fields for Axis well"
+        },
+        "legend": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fields for Legend well"
+        },
+        "details": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fields for Details / Tooltips well"
+        },
+        "rows": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Row fields (matrix/table)"
+        },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Column fields (matrix)"
+        },
+        "location": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Location field for map visuals"
+        },
+        "size": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Size field for map bubble / scatter visuals"
+        },
+        "target": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Target value for gauge / KPI visuals"
+        },
+        "minimum": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Minimum value for gauge"
+        },
+        "maximum": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Maximum value for gauge"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VisualFilter": {
+      "type": "object",
+      "required": ["field", "operator"],
+      "properties": {
+        "field": { "type": "string" },
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "notEquals", "greaterThan", "lessThan", "in", "between", "isNotBlank", "isBlank", "topN", "relativeDateFilter"]
+        },
+        "value": {},
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Slicer": {
+      "type": "object",
+      "required": ["name", "field"],
+      "properties": {
+        "name": { "type": "string" },
+        "field": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["list", "dropdown", "between", "relativeDate", "before", "after"],
+          "default": "dropdown"
+        },
+        "defaultValue": {},
+        "position": { "$ref": "#/$defs/VisualPosition" }
+      },
+      "additionalProperties": false
+    },
+    "ConditionalFormat": {
+      "type": "object",
+      "required": ["field", "rules"],
+      "properties": {
+        "field": { "type": "string" },
+        "formatType": {
+          "type": "string",
+          "enum": ["backgroundColor", "fontColor", "dataBar", "icon"],
+          "default": "backgroundColor"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "type": "string" },
+              "value": {},
+              "color": { "type": "string" }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DrillthroughConfig": {
+      "type": "object",
+      "required": ["targetPage", "filterField"],
+      "properties": {
+        "targetPage": { "type": "string" },
+        "filterField": { "type": "string" },
+        "keepAllFilters": { "type": "boolean", "default": true }
+      },
+      "additionalProperties": false
+    },
+    "Bookmark": {
+      "type": "object",
+      "required": ["name", "displayName"],
+      "properties": {
+        "name": { "type": "string" },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SharedMeasuresDefinition": {
+      "type": "object",
+      "required": ["$schema", "definitionType", "measureTable"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "definitionType": { "const": "sharedMeasures" },
+        "measureTable": {
+          "type": "object",
+          "required": ["name", "description", "measures"],
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "measures": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Measure" }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "RLSDefinition": {
+      "type": "object",
+      "required": ["$schema", "definitionType", "rls"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "definitionType": { "const": "rls" },
+        "rls": {
+          "type": "object",
+          "required": ["description", "mappingTable", "roles"],
+          "properties": {
+            "description": { "type": "string" },
+            "mappingTable": { "$ref": "#/$defs/DatasetTable" },
+            "roles": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/RLSRole" }
+            },
+            "securityRoleMapping": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["dataverseRole", "rlsRole"],
+                "properties": {
+                  "dataverseRole": { "type": "string" },
+                  "rlsRole": { "type": "string" }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

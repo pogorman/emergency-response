@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 5)
+## Last Updated: 2026-02-18 (Session 6)
 
 ## Session Log
 
@@ -16,6 +16,7 @@
 | 3 | 2026-02-18 | ~40 min | Phase 3 Power Automate flows (10 flow specs, schema, 5 env vars, full docs update) |
 | 4 | 2026-02-18 | ~50 min | Phase 4 Canvas app (8 screens, 3 components, schema, 2 env vars, full docs update) |
 | 5 | 2026-02-18 | ~60 min | Phase 5 Model-driven app (27 views, 19 forms, 4 dashboards, BPF, command bar, 22 sample data files, schema, 1 env var, full docs update) |
+| 6 | 2026-02-18 | ~45 min | Phase 6 Power BI reporting (5 datasets, 8 reports, shared measures, RLS, schema, 3 env vars, 1 conn ref, full docs update) |
 
 ## Current Project State
 
@@ -65,9 +66,19 @@
   - 1 new environment variable (seo_DefaultDashboardId)
   - ADR-016 (MDA vs Canvas split), ADR-017 (BPF for incident lifecycle), ADR-018 (sample data strategy)
   - USER-GUIDE.md "For Dispatchers", "For Supervisors / ICs", "For Administrators" sections populated
+- **Phase 6 COMPLETE:** Reporting / Power BI layer
+  - Report definition JSON Schema in `/reporting/_schema/`
+  - Reporting README with translation guide in `/reporting/README.md`
+  - 5 dataset definitions in `/reporting/datasets/` (star-schema, Import mode, shared Date dimension)
+  - 14 shared DAX measures in `/reporting/measures/shared-measures.json`
+  - RLS definition in `/reporting/rls/agency-rls.json` (dynamic AgencyUserMapping)
+  - 8 report definitions (~33 pages) in `/reporting/reports/`
+  - 3 new environment variables (PowerBI workspace, refresh hours, NFPA benchmark)
+  - 1 new connection reference (seo_PowerBIConnection)
+  - ADR-019 (Import mode), ADR-020 (PHI exclusion), ADR-021 (RLS), ADR-022 (GCC constraints), ADR-023 (PBI vs MDA)
+  - USER-GUIDE.md "For Analysts / Report Consumers" section populated
 
 ### What's Pending
-- Phase 6: Reporting / Power BI
 - Phase 7: Deployment + GCC auth scripts
 
 ## Key Decisions
@@ -97,10 +108,17 @@
 24. **PHI containment in MDA** — dedicated tab on PatientRecord form, no PHI in views
 25. **4-area sitemap** — mirrors operational workflow (Dispatch → ICS → Planning → Admin)
 26. **Sample data with symbolic FK references** — @ref: format, import order documented — ADR-018
+27. **Import mode for Power BI** — GCC Dataverse does not support DirectQuery, 4-hour refresh — ADR-019
+28. **Zero PHI in Power BI** — all 7 PHI columns excluded at dataset level, not filtered/hidden — ADR-020
+29. **Dynamic RLS with AgencyUserMapping** — mirrors Dataverse BU isolation in Power BI — ADR-021
+30. **GCC Power BI constraints** — standard visuals only, no AI visuals, no Embedded — ADR-022
+31. **Power BI for analytics, MDA for real-time** — no dashboard duplication — ADR-023
+32. **NFPA 1710 benchmark configurable** — 6.33 min default via env var
+33. **Role-playing dimensions** — Mutual Aid dataset uses separate RequestingAgency/ProvidingAgency tables
 
 ## Open Questions / Blockers
-- None currently — ready for Phase 6 (Power BI reporting)
+- None currently — ready for Phase 7 (Deployment + GCC auth scripts)
 
 ## Next Steps
-1. O'G reviews Phase 5 model-driven app and sample data specifications
-2. Begin Phase 6: Reporting / Power BI layer
+1. O'G reviews Phase 6 Power BI reporting specifications
+2. Begin Phase 7: Deployment + GCC auth scripts

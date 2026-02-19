@@ -1,0 +1,281 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "dataset",
+  "dataset": {
+    "name": "EMSOperations",
+    "displayName": "EMS Operations",
+    "description": "EMS metrics using de-identified patient data: triage distribution, transport metrics, facility load. Primary fact table is seo_PatientRecord with ZERO PHI columns — only operational/statistical fields.",
+    "refreshMode": "Import",
+    "refreshSchedule": {
+      "intervalHours": 4,
+      "timeZone": "Eastern Standard Time",
+      "notifyOnFailure": true,
+      "gatewayRequired": true
+    },
+    "tables": [
+      {
+        "name": "PatientRecord",
+        "source": "seo_PatientRecord",
+        "description": "Fact table — one row per patient. PHI columns are COMPLETELY EXCLUDED at the dataset level.",
+        "columns": [
+          { "name": "Patient Record ID", "sourceColumn": "seo_patientrecordid", "dataType": "String", "isHidden": true },
+          { "name": "Patient ID", "sourceColumn": "seo_patientIdentifier", "dataType": "String", "description": "System-generated ID only — NOT a real-world patient ID" },
+          { "name": "Triage Category", "sourceColumn": "seo_triageCategory", "dataType": "String" },
+          { "name": "Is Transported", "sourceColumn": "seo_isTransported", "dataType": "Boolean" },
+          { "name": "Refused Care", "sourceColumn": "seo_refusedCare", "dataType": "Boolean" },
+          { "name": "Transport Started On", "sourceColumn": "seo_transportStartedOn", "dataType": "DateTime" },
+          { "name": "Arrived at Facility On", "sourceColumn": "seo_arrivedAtFacilityOn", "dataType": "DateTime" },
+          { "name": "Incident ID", "sourceColumn": "seo_incidentId", "dataType": "String", "isHidden": true },
+          { "name": "Destination Facility ID", "sourceColumn": "seo_destinationFacilityId", "dataType": "String", "isHidden": true },
+          { "name": "Transport Unit ID", "sourceColumn": "seo_transportUnitId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Incident",
+        "source": "seo_Incident",
+        "description": "Dimension — linked incidents",
+        "columns": [
+          { "name": "Incident ID", "sourceColumn": "seo_incidentid", "dataType": "String", "isHidden": true },
+          { "name": "Incident Number", "sourceColumn": "seo_incidentNumber", "dataType": "String" },
+          { "name": "Incident Type", "sourceColumn": "seo_incidentType", "dataType": "String" },
+          { "name": "Is MCI", "sourceColumn": "seo_isMCI", "dataType": "Boolean" },
+          { "name": "Dispatched On", "sourceColumn": "seo_dispatchedOn", "dataType": "DateTime" },
+          { "name": "Agency ID", "sourceColumn": "seo_primaryAgencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Facility",
+        "source": "seo_Facility",
+        "description": "Dimension — hospitals and transport destinations",
+        "columns": [
+          { "name": "Facility ID", "sourceColumn": "seo_facilityid", "dataType": "String", "isHidden": true },
+          { "name": "Facility Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Facility Type", "sourceColumn": "seo_facilityType", "dataType": "String" },
+          { "name": "Latitude", "sourceColumn": "seo_latitude", "dataType": "Double" },
+          { "name": "Longitude", "sourceColumn": "seo_longitude", "dataType": "Double" }
+        ]
+      },
+      {
+        "name": "Unit",
+        "source": "seo_Unit",
+        "description": "Dimension — transport units",
+        "columns": [
+          { "name": "Unit ID", "sourceColumn": "seo_unitid", "dataType": "String", "isHidden": true },
+          { "name": "Unit Designator", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Is ALS", "sourceColumn": "seo_isALS", "dataType": "Boolean" },
+          { "name": "Agency ID", "sourceColumn": "seo_agencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Agency",
+        "source": "seo_Agency",
+        "description": "Dimension — fire/EMS agencies",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Agency Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agency Code", "sourceColumn": "seo_code", "dataType": "String" }
+        ],
+        "filters": [
+          { "column": "seo_isActive", "operator": "equals", "value": true, "description": "Only active agencies" }
+        ]
+      },
+      {
+        "name": "Date",
+        "source": "Calculated",
+        "description": "Shared date dimension — 3-year rolling calendar",
+        "isDateDimension": true,
+        "columns": [
+          { "name": "Date", "sourceColumn": "Date", "dataType": "DateTime" },
+          { "name": "Year", "sourceColumn": "Year", "dataType": "Int64" },
+          { "name": "Quarter", "sourceColumn": "Quarter", "dataType": "String" },
+          { "name": "Month", "sourceColumn": "Month", "dataType": "String", "sortByColumn": "MonthNumber" },
+          { "name": "MonthNumber", "sourceColumn": "MonthNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "Week", "sourceColumn": "Week", "dataType": "Int64" },
+          { "name": "DayOfWeek", "sourceColumn": "DayOfWeek", "dataType": "String", "sortByColumn": "DayOfWeekNumber" },
+          { "name": "DayOfWeekNumber", "sourceColumn": "DayOfWeekNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "IsWeekend", "sourceColumn": "IsWeekend", "dataType": "Boolean" },
+          { "name": "FiscalYear", "sourceColumn": "FiscalYear", "dataType": "Int64" }
+        ]
+      },
+      {
+        "name": "AgencyUserMapping",
+        "source": "Calculated",
+        "description": "RLS mapping table",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "AgencyId", "dataType": "String", "isHidden": true },
+          { "name": "User Principal Name", "sourceColumn": "UserPrincipalName", "dataType": "String", "isHidden": true }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "Patient_Incident",
+        "fromTable": "PatientRecord",
+        "fromColumn": "Incident ID",
+        "toTable": "Incident",
+        "toColumn": "Incident ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Patient_Facility",
+        "fromTable": "PatientRecord",
+        "fromColumn": "Destination Facility ID",
+        "toTable": "Facility",
+        "toColumn": "Facility ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Patient_Unit",
+        "fromTable": "PatientRecord",
+        "fromColumn": "Transport Unit ID",
+        "toTable": "Unit",
+        "toColumn": "Unit ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Patient_Date",
+        "fromTable": "PatientRecord",
+        "fromColumn": "Transport Started On",
+        "toTable": "Date",
+        "toColumn": "Date",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Agency",
+        "fromTable": "Incident",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Unit_Agency",
+        "fromTable": "Unit",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Both",
+        "isActive": true
+      },
+      {
+        "name": "Agency_RLS",
+        "fromTable": "AgencyUserMapping",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      }
+    ],
+    "measures": [
+      {
+        "name": "Patient Count",
+        "expression": "COUNTROWS(PatientRecord)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["EMSAnalytics"]
+      },
+      {
+        "name": "Transport Rate %",
+        "expression": "DIVIDE(CALCULATE(COUNTROWS(PatientRecord), PatientRecord[Is Transported] = TRUE), COUNTROWS(PatientRecord))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "folder": "Transport",
+        "usedInReports": ["EMSAnalytics", "ExecutiveSummary"]
+      },
+      {
+        "name": "Refusal Rate %",
+        "expression": "DIVIDE(CALCULATE(COUNTROWS(PatientRecord), PatientRecord[Refused Care] = TRUE), COUNTROWS(PatientRecord))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "folder": "Transport",
+        "usedInReports": ["EMSAnalytics"]
+      },
+      {
+        "name": "Avg Scene-to-Hospital (min)",
+        "expression": "AVERAGE(DATEDIFF(PatientRecord[Transport Started On], PatientRecord[Arrived at Facility On], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "folder": "Transport",
+        "usedInReports": ["EMSAnalytics", "ExecutiveSummary"]
+      },
+      {
+        "name": "MCI Patient Count",
+        "expression": "CALCULATE(COUNTROWS(PatientRecord), Incident[Is MCI] = TRUE)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["EMSAnalytics"]
+      }
+    ],
+    "calculatedColumns": [
+      {
+        "name": "Transport Time (min)",
+        "table": "PatientRecord",
+        "expression": "DATEDIFF(PatientRecord[Transport Started On], PatientRecord[Arrived at Facility On], MINUTE)",
+        "dataType": "Int64",
+        "description": "Minutes from transport start to facility arrival"
+      }
+    ],
+    "rlsRoles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filter to user's agency via AgencyUserMapping",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter — SystemAdmin and cross-agency analysts",
+        "tableFilters": []
+      }
+    ],
+    "phiCompliance": {
+      "usesPatientRecord": true,
+      "phiColumnsIncluded": false,
+      "safeColumnsUsed": [
+        "seo_patientIdentifier",
+        "seo_triageCategory",
+        "seo_isTransported",
+        "seo_refusedCare",
+        "seo_transportStartedOn",
+        "seo_arrivedAtFacilityOn",
+        "seo_destinationFacilityId",
+        "seo_transportUnitId",
+        "seo_incidentId"
+      ],
+      "excludedPhiColumns": [
+        "seo_patientFirstName",
+        "seo_patientLastName",
+        "seo_patientAge",
+        "seo_patientGender",
+        "seo_chiefComplaint",
+        "seo_assessmentNotes",
+        "seo_treatmentNotes"
+      ],
+      "justification": "seo_PatientRecord is used but ALL 7 PHI columns are completely excluded from the dataset. Only operational/statistical columns (triage, transport, facility) are imported. Power BI datasets are cached extracts outside Dataverse field-level security, so PHI must never be included."
+    },
+    "gccConstraints": [
+      "Import mode only — no DirectQuery to Dataverse in GCC",
+      "Scheduled refresh requires on-premises data gateway",
+      "PHI exclusion is mandatory per HIPAA — Power BI cached extracts bypass Dataverse field security"
+    ]
+  }
+}

@@ -105,6 +105,27 @@
       "type": "String",
       "description": "GUID of the default dashboard for the Dispatch Console model-driven app landing page. Set per environment after dashboard deployment.",
       "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_PowerBIWorkspaceId",
+      "displayName": "Power BI Workspace ID",
+      "type": "String",
+      "description": "GUID of the GCC Power BI workspace where datasets and reports are published. Set per environment.",
+      "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_PowerBIDatasetRefreshHours",
+      "displayName": "Power BI Dataset Refresh (Hours)",
+      "type": "String",
+      "description": "How often Power BI datasets refresh from Dataverse (in hours). Lower values provide fresher analytics but consume more gateway resources.",
+      "defaultValue": "4"
+    },
+    {
+      "schemaName": "seo_NFPAResponseTimeBenchmarkMinutes",
+      "displayName": "NFPA Response Time Benchmark (Minutes)",
+      "type": "String",
+      "description": "NFPA 1710 first-unit response time benchmark in minutes. Default 6.33 = 6 minutes 20 seconds. Used in compliance % calculations in Power BI reports.",
+      "defaultValue": "6.33"
     }
   ]
 }

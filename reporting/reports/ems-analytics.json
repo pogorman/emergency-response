@@ -1,0 +1,130 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "EMSAnalytics",
+    "displayName": "EMS Analytics",
+    "description": "EMS operational metrics: triage distribution, transport rates, scene-to-hospital times, facility destinations, MCI patient breakdown. ZERO PHI columns.",
+    "dataset": "EMSOperations",
+    "audience": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "TriageOverview",
+        "displayName": "Triage Overview",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdPatientCount", "type": "card", "title": "Total Patients", "fields": { "values": ["[Patient Count]"] } },
+          { "name": "crdTransportRate", "type": "card", "title": "Transport Rate", "fields": { "values": ["[Transport Rate %]"] } },
+          { "name": "crdRefusalRate", "type": "card", "title": "Refusal Rate", "fields": { "values": ["[Refusal Rate %]"] } },
+          {
+            "name": "stkTriageDistribution",
+            "type": "stackedBarChart",
+            "title": "Triage Category Distribution by Month",
+            "description": "START triage: Red (Immediate), Yellow (Delayed), Green (Minor), Black (Deceased)",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Patient Count]"], "legend": ["PatientRecord[Triage Category]"] }
+          },
+          {
+            "name": "dntTriageOverall",
+            "type": "donutChart",
+            "title": "Overall Triage Distribution",
+            "fields": { "legend": ["PatientRecord[Triage Category]"], "values": ["[Patient Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "TransportMetrics",
+        "displayName": "Transport",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdAvgTransportTime", "type": "card", "title": "Avg Scene-to-Hospital", "fields": { "values": ["[Avg Scene-to-Hospital (min)]"] } },
+          {
+            "name": "lnTransportTimeTrend",
+            "type": "lineChart",
+            "title": "Scene-to-Hospital Time Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Avg Scene-to-Hospital (min)]"] }
+          },
+          {
+            "name": "lnTransportRateTrend",
+            "type": "lineChart",
+            "title": "Transport Rate Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Transport Rate %]"] }
+          },
+          {
+            "name": "barTransportByUnit",
+            "type": "clusteredBarChart",
+            "title": "Transports by Unit",
+            "fields": { "axis": ["Unit[Unit Designator]"], "values": ["[Patient Count]"] },
+            "filters": [{ "field": "PatientRecord[Is Transported]", "operator": "equals", "value": true }],
+            "sortBy": { "field": "[Patient Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "FacilityDestinations",
+        "displayName": "Facilities",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" }
+        ],
+        "visuals": [
+          {
+            "name": "barFacilityVolume",
+            "type": "clusteredBarChart",
+            "title": "Transports by Destination Facility",
+            "fields": { "axis": ["Facility[Facility Name]"], "values": ["[Patient Count]"] },
+            "filters": [{ "field": "PatientRecord[Is Transported]", "operator": "equals", "value": true }],
+            "sortBy": { "field": "[Patient Count]", "direction": "descending" }
+          },
+          {
+            "name": "mapFacilities",
+            "type": "map",
+            "title": "Destination Facility Map",
+            "fields": { "location": ["Facility[Latitude]", "Facility[Longitude]"], "size": ["[Patient Count]"], "legend": ["Facility[Facility Type]"] }
+          },
+          {
+            "name": "tblFacilityMetrics",
+            "type": "table",
+            "title": "Facility Transport Metrics",
+            "fields": { "values": ["Facility[Facility Name]", "Facility[Facility Type]", "[Patient Count]", "[Avg Scene-to-Hospital (min)]"] },
+            "sortBy": { "field": "[Patient Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "MCIPatientBreakdown",
+        "displayName": "MCI Patients",
+        "layout": "FitToPage",
+        "filters": [{ "field": "Incident[Is MCI]", "operator": "equals", "value": true }],
+        "slicers": [
+          { "name": "slcIncident", "field": "Incident[Incident Number]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdMCIPatients", "type": "card", "title": "MCI Patient Count", "fields": { "values": ["[MCI Patient Count]"] } },
+          {
+            "name": "stkMCITriage",
+            "type": "stackedBarChart",
+            "title": "MCI Triage Distribution by Incident",
+            "fields": { "axis": ["Incident[Incident Number]"], "values": ["[Patient Count]"], "legend": ["PatientRecord[Triage Category]"] }
+          },
+          {
+            "name": "tblMCIPatients",
+            "type": "table",
+            "title": "MCI Patient Summary (De-Identified)",
+            "description": "No PHI — shows triage, transport status, and destination only",
+            "fields": { "values": ["PatientRecord[Patient ID]", "PatientRecord[Triage Category]", "PatientRecord[Is Transported]", "Facility[Facility Name]", "PatientRecord[Transport Time (min)]"] }
+          }
+        ]
+      }
+    ]
+  }
+}

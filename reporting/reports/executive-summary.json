@@ -1,0 +1,176 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "ExecutiveSummary",
+    "displayName": "Executive Summary",
+    "description": "High-level KPI dashboard for leadership: incident volume, response times, MCI events, mutual aid activity, property loss, and cross-agency comparison with YoY trends.",
+    "dataset": "IncidentAnalytics",
+    "audience": ["seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "KPIDashboard",
+        "displayName": "KPI Dashboard",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcFiscalYear", "field": "Date[FiscalYear]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdTotalIncidents", "type": "card", "title": "Total Incidents", "fields": { "values": ["[Incident Count]"] } },
+          {
+            "name": "crdAvgResponse",
+            "type": "card",
+            "title": "Avg Response Time",
+            "fields": { "values": ["[Avg Response Time (min)]"] },
+            "conditionalFormatting": [{ "field": "[Avg Response Time (min)]", "formatType": "fontColor", "rules": [
+              { "condition": "lessThanOrEqual", "value": 6.33, "color": "#28A745" },
+              { "condition": "lessThanOrEqual", "value": 8, "color": "#FFC107" },
+              { "condition": "greaterThan", "value": 8, "color": "#DC3545" }
+            ]}]
+          },
+          { "name": "crdMCIEvents", "type": "card", "title": "MCI Events", "fields": { "values": ["[MCI Count]"] } },
+          { "name": "crdNFPA", "type": "card", "title": "NFPA 1710 Compliance", "fields": { "values": ["[NFPA 1710 Compliance %]"] } },
+          { "name": "crd90th", "type": "card", "title": "90th Pctl Response", "fields": { "values": ["[90th Percentile Response (min)]"] } },
+          {
+            "name": "lnMonthlyTrend",
+            "type": "lineChart",
+            "title": "Monthly Incident Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Incident Count]"], "legend": ["Date[Year]"] }
+          }
+        ]
+      },
+      {
+        "name": "AgencyComparison",
+        "displayName": "Agency Comparison",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" }
+        ],
+        "visuals": [
+          {
+            "name": "tblAgencyRanking",
+            "type": "table",
+            "title": "Agency Performance Ranking",
+            "fields": { "values": ["Agency[Agency Name]", "[Incident Count]", "[Avg Response Time (min)]", "[NFPA 1710 Compliance %]", "[MCI Count]"] },
+            "sortBy": { "field": "[Avg Response Time (min)]", "direction": "ascending" }
+          },
+          {
+            "name": "barAgencyVolume",
+            "type": "clusteredBarChart",
+            "title": "Incident Volume by Agency",
+            "fields": { "axis": ["Agency[Agency Name]"], "values": ["[Incident Count]"] },
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "YoYTrends",
+        "displayName": "Year-over-Year",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcYear", "field": "Date[Year]", "type": "list" }
+        ],
+        "visuals": [
+          {
+            "name": "lnYoYIncidents",
+            "type": "lineChart",
+            "title": "Incidents YoY",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Incident Count]"], "legend": ["Date[Year]"] },
+            "sortBy": { "field": "Date[MonthNumber]", "direction": "ascending" }
+          },
+          {
+            "name": "lnYoYResponse",
+            "type": "lineChart",
+            "title": "Avg Response Time YoY",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Avg Response Time (min)]"], "legend": ["Date[Year]"] },
+            "sortBy": { "field": "Date[MonthNumber]", "direction": "ascending" }
+          },
+          {
+            "name": "lnYoYNFPA",
+            "type": "lineChart",
+            "title": "NFPA Compliance YoY",
+            "fields": { "axis": ["Date[Month]"], "values": ["[NFPA 1710 Compliance %]"], "legend": ["Date[Year]"] },
+            "sortBy": { "field": "Date[MonthNumber]", "direction": "ascending" }
+          }
+        ]
+      },
+      {
+        "name": "TopTens",
+        "displayName": "Top 10 Analysis",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" }
+        ],
+        "visuals": [
+          {
+            "name": "tblTop10Addresses",
+            "type": "table",
+            "title": "Top 10 Incident Addresses",
+            "fields": { "values": ["Incident[Address]", "[Incident Count]", "[Avg Response Time (min)]"] },
+            "filters": [{ "field": "[Incident Count]", "operator": "topN", "value": 10 }],
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          },
+          {
+            "name": "tblTop10Types",
+            "type": "table",
+            "title": "Top 10 Incident Types",
+            "fields": { "values": ["Incident[Incident Type]", "[Incident Count]", "[Avg Response Time (min)]"] },
+            "filters": [{ "field": "[Incident Count]", "operator": "topN", "value": 10 }],
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          },
+          {
+            "name": "tblTop10Stations",
+            "type": "table",
+            "title": "Top 10 Busiest Stations",
+            "fields": { "values": ["Station[Station Name]", "[Incident Count]", "[Avg Response Time (min)]"] },
+            "filters": [{ "field": "[Incident Count]", "operator": "topN", "value": 10 }],
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "NFPACompliance",
+        "displayName": "NFPA Compliance",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "gauNFPA",
+            "type": "gauge",
+            "title": "NFPA 1710 Compliance Rate",
+            "fields": { "values": ["[NFPA 1710 Compliance %]"] }
+          },
+          {
+            "name": "lnNFPATrend",
+            "type": "lineChart",
+            "title": "NFPA Compliance Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[NFPA 1710 Compliance %]"] }
+          },
+          {
+            "name": "barResponseBand",
+            "type": "clusteredColumnChart",
+            "title": "Response Time Distribution",
+            "fields": { "axis": ["Incident[Response Time Band]"], "values": ["[Incident Count]"] }
+          },
+          {
+            "name": "barNFPAByAgency",
+            "type": "clusteredBarChart",
+            "title": "NFPA Compliance by Agency",
+            "fields": { "axis": ["Agency[Agency Name]"], "values": ["[NFPA 1710 Compliance %]"] },
+            "conditionalFormatting": [{ "field": "[NFPA 1710 Compliance %]", "formatType": "backgroundColor", "rules": [
+              { "condition": "greaterThanOrEqual", "value": 0.90, "color": "#28A745" },
+              { "condition": "greaterThanOrEqual", "value": 0.80, "color": "#FFC107" },
+              { "condition": "lessThan", "value": 0.80, "color": "#DC3545" }
+            ]}]
+          }
+        ]
+      }
+    ]
+  }
+}

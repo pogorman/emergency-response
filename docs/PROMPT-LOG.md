@@ -180,3 +180,45 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/RELEASE-NOTES.md` — added v0.5.0
 - Updated `docs/SESSION-MEMORY.md` — updated project state
 - Updated `CLAUDE.md` — Phase 5 → COMPLETE
+
+## 2026-02-18 — Session 6: Phase 6 — Reporting / Power BI Layer
+
+**Prompt Summary:** Implement Phase 6 — create Power BI reporting layer specification files (JSON blueprints). 5 star-schema datasets, 8 reports (~33 pages), shared DAX measures, RLS definition, report definition JSON Schema, 3 new environment variables, 1 new connection reference, and full documentation updates including 5 ADRs.
+
+**Actions Taken:**
+- Created `reporting/_schema/report-definition-schema.json` — JSON Schema for dataset, report, page, visual, measure, RLS, and refresh specs
+- Created `reporting/README.md` — spec format, translation guide (spec → Power BI Desktop / Service), GCC constraints, PHI compliance policy, RLS strategy, refresh strategy
+- Created 5 dataset definitions in `reporting/datasets/`:
+  - `incident-analytics.json` — seo_Incident fact + Agency, Jurisdiction, Station, Call, Date dimensions
+  - `unit-operations.json` — seo_UnitStatusLog fact + Unit, Apparatus, Station, Agency, Incident, Date dimensions
+  - `ems-operations.json` — seo_PatientRecord (de-identified, zero PHI) + Incident, Facility, Unit, Agency, Date dimensions
+  - `mutual-aid-cost.json` — seo_MutualAidRequest fact + Agreement, Agency (role-playing requesting/providing), Incident, Date dimensions
+  - `outcomes-after-action.json` — seo_AfterActionReport fact + Incident, Agency, Date dimensions
+- Created `reporting/measures/shared-measures.json` — 14 shared DAX measures (response time, NFPA compliance, volume, EMS, loss, cost)
+- Created `reporting/rls/agency-rls.json` — dynamic RLS with AgencyUserMapping table, 2 roles (Agency Filter, All Agencies), 4 Dataverse-to-RLS role mappings
+- Created 8 report definitions in `reporting/reports/`:
+  - `response-performance.json` — 4 pages: overview KPIs, turnout vs travel, time-of-day heatmap, agency comparison
+  - `incident-operations.json` — 5 pages: volume overview, type distribution, priority & MCI, geographic view, drillthrough
+  - `unit-utilization.json` — 4 pages: availability, workload, status breakdown, out-of-service tracking
+  - `ems-analytics.json` — 4 pages: triage overview, transport metrics, facility destinations, MCI patient breakdown
+  - `mutual-aid-cost.json` — 3 pages: request overview, cost analysis, agreement status
+  - `executive-summary.json` — 5 pages: KPI dashboard, agency comparison, YoY trends, top-10 analysis, NFPA compliance
+  - `station-management.json` — 4 pages: station workload, apparatus utilization, personnel coverage, inspection status
+  - `after-action-outcomes.json` — 4 pages: loss overview, cause analysis, injury/fatality trends, AAR completion
+- Added 3 new environment variables to `solution/environment-variables.json`:
+  - `seo_PowerBIWorkspaceId` (default: "")
+  - `seo_PowerBIDatasetRefreshHours` (default: "4")
+  - `seo_NFPAResponseTimeBenchmarkMinutes` (default: "6.33")
+- Added 1 new connection reference to `solution/connection-references.json`:
+  - `seo_PowerBIConnection` (shared_powerbi, required: false)
+- Updated `docs/TECHNICAL.md`:
+  - Added Reporting / Power BI Layer section (overview, datasets, reports, measures, RLS, PHI compliance, role access matrix)
+  - Added ADR-019 (Import mode), ADR-020 (PHI exclusion), ADR-021 (RLS strategy), ADR-022 (GCC constraints), ADR-023 (Power BI vs MDA)
+  - Updated environment variables table with 3 new variables
+  - Updated connection references table with Power BI connection
+- Updated `docs/USER-GUIDE.md`:
+  - Added "For Analysts / Report Consumers" section (report inventory, access instructions, RLS, key metrics, data freshness, PHI policy)
+  - Updated table of contents and audience line
+- Updated `docs/RELEASE-NOTES.md` — added v0.6.0
+- Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
+- Updated `CLAUDE.md` — Phase 6 → COMPLETE

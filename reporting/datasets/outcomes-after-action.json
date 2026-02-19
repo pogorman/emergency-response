@@ -1,0 +1,250 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "dataset",
+  "dataset": {
+    "name": "OutcomesAfterAction",
+    "displayName": "Outcomes & After-Action",
+    "description": "Post-incident outcomes: loss metrics, cause analysis, injury/fatality tracking. Primary fact table is seo_AfterActionReport with Incident, Agency, and Date dimensions.",
+    "refreshMode": "Import",
+    "refreshSchedule": {
+      "intervalHours": 4,
+      "timeZone": "Eastern Standard Time",
+      "notifyOnFailure": true,
+      "gatewayRequired": true
+    },
+    "tables": [
+      {
+        "name": "AfterActionReport",
+        "source": "seo_AfterActionReport",
+        "description": "Fact table — one row per after-action report",
+        "columns": [
+          { "name": "AAR ID", "sourceColumn": "seo_afteractionreportid", "dataType": "String", "isHidden": true },
+          { "name": "Report Title", "sourceColumn": "seo_reportTitle", "dataType": "String" },
+          { "name": "Report Status", "sourceColumn": "seo_reportStatus", "dataType": "String" },
+          { "name": "Completed On", "sourceColumn": "seo_completedOn", "dataType": "DateTime" },
+          { "name": "Outcome", "sourceColumn": "seo_outcome", "dataType": "String" },
+          { "name": "Civilian Injuries", "sourceColumn": "seo_civilianInjuries", "dataType": "Int64" },
+          { "name": "Civilian Fatalities", "sourceColumn": "seo_civilianFatalities", "dataType": "Int64" },
+          { "name": "Responder Injuries", "sourceColumn": "seo_responderInjuries", "dataType": "Int64" },
+          { "name": "Responder Fatalities", "sourceColumn": "seo_responderFatalities", "dataType": "Int64" },
+          { "name": "Estimated Property Loss", "sourceColumn": "seo_estimatedPropertyLoss", "dataType": "Currency", "format": "$#,##0.00" },
+          { "name": "Estimated Content Loss", "sourceColumn": "seo_estimatedContentLoss", "dataType": "Currency", "format": "$#,##0.00" },
+          { "name": "Area of Origin", "sourceColumn": "seo_areaOfOrigin", "dataType": "String" },
+          { "name": "Cause of Fire", "sourceColumn": "seo_causeOfFire", "dataType": "String" },
+          { "name": "Lessons Learned", "sourceColumn": "seo_lessonsLearned", "dataType": "String" },
+          { "name": "Incident ID", "sourceColumn": "seo_incidentId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Incident",
+        "source": "seo_Incident",
+        "description": "Dimension — linked incidents",
+        "columns": [
+          { "name": "Incident ID", "sourceColumn": "seo_incidentid", "dataType": "String", "isHidden": true },
+          { "name": "Incident Number", "sourceColumn": "seo_incidentNumber", "dataType": "String" },
+          { "name": "Incident Type", "sourceColumn": "seo_incidentType", "dataType": "String" },
+          { "name": "Priority", "sourceColumn": "seo_priority", "dataType": "String" },
+          { "name": "Is MCI", "sourceColumn": "seo_isMCI", "dataType": "Boolean" },
+          { "name": "Alarm Level", "sourceColumn": "seo_alarmLevel", "dataType": "Int64" },
+          { "name": "Address", "sourceColumn": "seo_address", "dataType": "String" },
+          { "name": "Dispatched On", "sourceColumn": "seo_dispatchedOn", "dataType": "DateTime" },
+          { "name": "Agency ID", "sourceColumn": "seo_primaryAgencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Agency",
+        "source": "seo_Agency",
+        "description": "Dimension — fire/EMS agencies",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Agency Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agency Code", "sourceColumn": "seo_code", "dataType": "String" },
+          { "name": "Agency Type", "sourceColumn": "seo_agencyType", "dataType": "String" }
+        ],
+        "filters": [
+          { "column": "seo_isActive", "operator": "equals", "value": true, "description": "Only active agencies" }
+        ]
+      },
+      {
+        "name": "Date",
+        "source": "Calculated",
+        "description": "Shared date dimension — 3-year rolling calendar",
+        "isDateDimension": true,
+        "columns": [
+          { "name": "Date", "sourceColumn": "Date", "dataType": "DateTime" },
+          { "name": "Year", "sourceColumn": "Year", "dataType": "Int64" },
+          { "name": "Quarter", "sourceColumn": "Quarter", "dataType": "String" },
+          { "name": "Month", "sourceColumn": "Month", "dataType": "String", "sortByColumn": "MonthNumber" },
+          { "name": "MonthNumber", "sourceColumn": "MonthNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "Week", "sourceColumn": "Week", "dataType": "Int64" },
+          { "name": "DayOfWeek", "sourceColumn": "DayOfWeek", "dataType": "String", "sortByColumn": "DayOfWeekNumber" },
+          { "name": "DayOfWeekNumber", "sourceColumn": "DayOfWeekNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "IsWeekend", "sourceColumn": "IsWeekend", "dataType": "Boolean" },
+          { "name": "FiscalYear", "sourceColumn": "FiscalYear", "dataType": "Int64" }
+        ]
+      },
+      {
+        "name": "AgencyUserMapping",
+        "source": "Calculated",
+        "description": "RLS mapping table",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "AgencyId", "dataType": "String", "isHidden": true },
+          { "name": "User Principal Name", "sourceColumn": "UserPrincipalName", "dataType": "String", "isHidden": true }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "AAR_Incident",
+        "fromTable": "AfterActionReport",
+        "fromColumn": "Incident ID",
+        "toTable": "Incident",
+        "toColumn": "Incident ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "AAR_Date",
+        "fromTable": "AfterActionReport",
+        "fromColumn": "Completed On",
+        "toTable": "Date",
+        "toColumn": "Date",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Agency",
+        "fromTable": "Incident",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Agency_RLS",
+        "fromTable": "AgencyUserMapping",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      }
+    ],
+    "measures": [
+      {
+        "name": "Total Property Loss",
+        "expression": "SUM(AfterActionReport[Estimated Property Loss])",
+        "dataType": "Currency",
+        "format": "$#,##0",
+        "folder": "Loss",
+        "usedInReports": ["AfterActionOutcomes", "ExecutiveSummary"]
+      },
+      {
+        "name": "Total Content Loss",
+        "expression": "SUM(AfterActionReport[Estimated Content Loss])",
+        "dataType": "Currency",
+        "format": "$#,##0",
+        "folder": "Loss",
+        "usedInReports": ["AfterActionOutcomes"]
+      },
+      {
+        "name": "Total Combined Loss",
+        "expression": "SUM(AfterActionReport[Estimated Property Loss]) + SUM(AfterActionReport[Estimated Content Loss])",
+        "dataType": "Currency",
+        "format": "$#,##0",
+        "folder": "Loss",
+        "usedInReports": ["AfterActionOutcomes", "ExecutiveSummary"]
+      },
+      {
+        "name": "Civilian Injuries Total",
+        "expression": "SUM(AfterActionReport[Civilian Injuries])",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Casualties",
+        "usedInReports": ["AfterActionOutcomes", "ExecutiveSummary"]
+      },
+      {
+        "name": "Civilian Fatalities Total",
+        "expression": "SUM(AfterActionReport[Civilian Fatalities])",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Casualties",
+        "usedInReports": ["AfterActionOutcomes", "ExecutiveSummary"]
+      },
+      {
+        "name": "Responder Injuries Total",
+        "expression": "SUM(AfterActionReport[Responder Injuries])",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Casualties",
+        "usedInReports": ["AfterActionOutcomes"]
+      },
+      {
+        "name": "Responder Fatalities Total",
+        "expression": "SUM(AfterActionReport[Responder Fatalities])",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Casualties",
+        "usedInReports": ["AfterActionOutcomes"]
+      },
+      {
+        "name": "AAR Count",
+        "expression": "COUNTROWS(AfterActionReport)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["AfterActionOutcomes"]
+      },
+      {
+        "name": "AAR Completion Rate %",
+        "expression": "DIVIDE(CALCULATE(COUNTROWS(AfterActionReport), AfterActionReport[Report Status] IN {\"Approved\", \"Final\"}), COUNTROWS(AfterActionReport))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Percentage of AARs in Approved or Final status",
+        "folder": "Volume",
+        "usedInReports": ["AfterActionOutcomes"]
+      },
+      {
+        "name": "Avg Property Loss per Incident",
+        "expression": "AVERAGE(AfterActionReport[Estimated Property Loss])",
+        "dataType": "Currency",
+        "format": "$#,##0",
+        "folder": "Loss",
+        "usedInReports": ["AfterActionOutcomes"]
+      }
+    ],
+    "rlsRoles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filter to user's agency via AgencyUserMapping",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter — SystemAdmin and cross-agency analysts",
+        "tableFilters": []
+      }
+    ],
+    "phiCompliance": {
+      "usesPatientRecord": false,
+      "phiColumnsIncluded": false,
+      "safeColumnsUsed": [],
+      "excludedPhiColumns": [],
+      "justification": "This dataset does not reference seo_PatientRecord. No PHI risk."
+    },
+    "gccConstraints": [
+      "Import mode only — no DirectQuery to Dataverse in GCC",
+      "Scheduled refresh requires on-premises data gateway"
+    ]
+  }
+}

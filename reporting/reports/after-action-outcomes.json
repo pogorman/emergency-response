@@ -1,0 +1,138 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "AfterActionOutcomes",
+    "displayName": "After-Action & Outcomes",
+    "description": "Post-incident analysis: property/content loss metrics, cause of fire distribution, injury/fatality trends, AAR completion rates, and lessons learned.",
+    "dataset": "OutcomesAfterAction",
+    "audience": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "LossOverview",
+        "displayName": "Loss Overview",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdPropertyLoss", "type": "card", "title": "Total Property Loss", "fields": { "values": ["[Total Property Loss]"] } },
+          { "name": "crdContentLoss", "type": "card", "title": "Total Content Loss", "fields": { "values": ["[Total Content Loss]"] } },
+          { "name": "crdCombinedLoss", "type": "card", "title": "Total Combined Loss", "fields": { "values": ["[Total Combined Loss]"] } },
+          {
+            "name": "barLossByType",
+            "type": "clusteredBarChart",
+            "title": "Property Loss by Incident Type",
+            "fields": { "axis": ["Incident[Incident Type]"], "values": ["[Total Property Loss]"] },
+            "sortBy": { "field": "[Total Property Loss]", "direction": "descending" }
+          },
+          {
+            "name": "lnLossTrend",
+            "type": "lineChart",
+            "title": "Loss Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Total Property Loss]", "[Total Content Loss]"] }
+          }
+        ]
+      },
+      {
+        "name": "CauseAnalysis",
+        "displayName": "Cause Analysis",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "pieCause",
+            "type": "pieChart",
+            "title": "Cause of Fire Distribution",
+            "fields": { "legend": ["AfterActionReport[Cause of Fire]"], "values": ["[AAR Count]"] }
+          },
+          {
+            "name": "barAreaOfOrigin",
+            "type": "clusteredBarChart",
+            "title": "Top Areas of Origin",
+            "fields": { "axis": ["AfterActionReport[Area of Origin]"], "values": ["[AAR Count]"] },
+            "sortBy": { "field": "[AAR Count]", "direction": "descending" }
+          },
+          {
+            "name": "tblCauseDetail",
+            "type": "table",
+            "title": "Cause Detail",
+            "fields": { "values": ["Incident[Incident Number]", "Incident[Incident Type]", "AfterActionReport[Cause of Fire]", "AfterActionReport[Area of Origin]", "[Total Property Loss]", "AfterActionReport[Outcome]"] },
+            "sortBy": { "field": "[Total Property Loss]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "InjuryFatality",
+        "displayName": "Injuries & Fatalities",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdCivInjuries", "type": "card", "title": "Civilian Injuries", "fields": { "values": ["[Civilian Injuries Total]"] } },
+          { "name": "crdCivFatalities", "type": "card", "title": "Civilian Fatalities", "fields": { "values": ["[Civilian Fatalities Total]"] } },
+          { "name": "crdRespInjuries", "type": "card", "title": "Responder Injuries", "fields": { "values": ["[Responder Injuries Total]"] } },
+          { "name": "crdRespFatalities", "type": "card", "title": "Responder Fatalities", "fields": { "values": ["[Responder Fatalities Total]"] } },
+          {
+            "name": "lnInjuryTrend",
+            "type": "lineChart",
+            "title": "Injury/Fatality Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Civilian Injuries Total]", "[Civilian Fatalities Total]", "[Responder Injuries Total]"] }
+          },
+          {
+            "name": "barInjuriesByType",
+            "type": "clusteredBarChart",
+            "title": "Injuries by Incident Type",
+            "fields": { "axis": ["Incident[Incident Type]"], "values": ["[Civilian Injuries Total]", "[Responder Injuries Total]"] }
+          }
+        ]
+      },
+      {
+        "name": "AARCompletion",
+        "displayName": "AAR Completion",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStatus", "field": "AfterActionReport[Report Status]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "crdCompletionRate",
+            "type": "card",
+            "title": "AAR Completion Rate",
+            "fields": { "values": ["[AAR Completion Rate %]"] },
+            "conditionalFormatting": [{ "field": "[AAR Completion Rate %]", "formatType": "fontColor", "rules": [
+              { "condition": "greaterThanOrEqual", "value": 0.90, "color": "#28A745" },
+              { "condition": "greaterThanOrEqual", "value": 0.70, "color": "#FFC107" },
+              { "condition": "lessThan", "value": 0.70, "color": "#DC3545" }
+            ]}]
+          },
+          { "name": "crdTotalAARs", "type": "card", "title": "Total AARs", "fields": { "values": ["[AAR Count]"] } },
+          {
+            "name": "dntStatusDistribution",
+            "type": "donutChart",
+            "title": "AAR Status Distribution",
+            "fields": { "legend": ["AfterActionReport[Report Status]"], "values": ["[AAR Count]"] }
+          },
+          {
+            "name": "tblLessonsLearned",
+            "type": "table",
+            "title": "Lessons Learned (Recent)",
+            "description": "Consider word cloud custom visual (certified only) in future",
+            "fields": { "values": ["Incident[Incident Number]", "Incident[Incident Type]", "AfterActionReport[Report Title]", "AfterActionReport[Lessons Learned]", "AfterActionReport[Report Status]"] },
+            "filters": [{ "field": "AfterActionReport[Lessons Learned]", "operator": "isNotBlank" }],
+            "sortBy": { "field": "AfterActionReport[Completed On]", "direction": "descending" }
+          }
+        ]
+      }
+    ]
+  }
+}

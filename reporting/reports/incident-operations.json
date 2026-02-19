@@ -1,0 +1,144 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "IncidentOperations",
+    "displayName": "Incident Operations",
+    "description": "Incident volume, type distribution, priority breakdown, MCI summary, and geographic analysis.",
+    "dataset": "IncidentAnalytics",
+    "audience": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "VolumeOverview",
+        "displayName": "Volume Overview",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" },
+          { "name": "slcJurisdiction", "field": "Jurisdiction[Jurisdiction Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdTotalIncidents", "type": "card", "title": "Total Incidents", "fields": { "values": ["[Incident Count]"] } },
+          { "name": "crdMCICount", "type": "card", "title": "MCI Events", "fields": { "values": ["[MCI Count]"] } },
+          {
+            "name": "colMonthlyVolume",
+            "type": "clusteredColumnChart",
+            "title": "Incident Volume by Month",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Incident Count]"], "legend": ["Date[Year]"] },
+            "sortBy": { "field": "Date[MonthNumber]", "direction": "ascending" }
+          },
+          {
+            "name": "lnVolumeTrend",
+            "type": "lineChart",
+            "title": "12-Month Incident Trend",
+            "fields": { "axis": ["Date[Date]"], "values": ["[Incident Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "TypeDistribution",
+        "displayName": "Incident Types",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "dntTypeDistribution",
+            "type": "donutChart",
+            "title": "Incident Type Distribution",
+            "fields": { "legend": ["Incident[Incident Type]"], "values": ["[Incident Count]"] }
+          },
+          {
+            "name": "barTypeCount",
+            "type": "clusteredBarChart",
+            "title": "Incident Count by Type",
+            "fields": { "axis": ["Incident[Incident Type]"], "values": ["[Incident Count]"] },
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          },
+          {
+            "name": "stkTypeTrend",
+            "type": "stackedColumnChart",
+            "title": "Incident Type Trend by Month",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Incident Count]"], "legend": ["Incident[Incident Type]"] }
+          }
+        ]
+      },
+      {
+        "name": "PriorityAnalysis",
+        "displayName": "Priority & MCI",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barPriorityCount",
+            "type": "clusteredBarChart",
+            "title": "Incidents by Priority",
+            "fields": { "axis": ["Incident[Priority]"], "values": ["[Incident Count]"] }
+          },
+          {
+            "name": "tblMCIDetail",
+            "type": "table",
+            "title": "MCI Incident Detail",
+            "fields": { "values": ["Incident[Incident Number]", "Incident[Incident Type]", "Incident[Dispatched On]", "Incident[Alarm Level]", "Incident[Patient Count]", "Incident[Address]"] },
+            "filters": [ { "field": "Incident[Is MCI]", "operator": "equals", "value": true } ]
+          },
+          {
+            "name": "lnAlarmTrend",
+            "type": "lineChart",
+            "title": "Alarm Level Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Incident Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "GeographicAnalysis",
+        "displayName": "Geographic View",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcIncidentType", "field": "Incident[Incident Type]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "mapIncidents",
+            "type": "map",
+            "title": "Incident Location Map",
+            "description": "Bubble map showing incident density by location",
+            "fields": { "location": ["Incident[Latitude]", "Incident[Longitude]"], "size": ["[Incident Count]"], "legend": ["Incident[Incident Type]"] }
+          },
+          {
+            "name": "barJurisdiction",
+            "type": "clusteredBarChart",
+            "title": "Incidents by Jurisdiction",
+            "fields": { "axis": ["Jurisdiction[Jurisdiction Name]"], "values": ["[Incident Count]"] },
+            "sortBy": { "field": "[Incident Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "IncidentDrillthrough",
+        "displayName": "Incident Detail",
+        "layout": "FitToPage",
+        "isHidden": true,
+        "visuals": [
+          {
+            "name": "tblIncidentDetail",
+            "type": "table",
+            "title": "Incident Detail",
+            "fields": { "values": ["Incident[Incident Number]", "Incident[Incident Type]", "Incident[Priority]", "Incident[Status]", "Incident[Address]", "Incident[Dispatched On]", "Incident[First Unit On Scene]", "Incident[Response Time (min)]", "Incident[Alarm Level]", "Incident[Patient Count]", "Agency[Agency Name]"] }
+          }
+        ]
+      }
+    ],
+    "drillthrough": [
+      { "targetPage": "IncidentDrillthrough", "filterField": "Incident[Incident Number]", "keepAllFilters": true }
+    ]
+  }
+}

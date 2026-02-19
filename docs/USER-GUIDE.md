@@ -1,6 +1,6 @@
 # EmergencyResponseCoordination — User Guide
 
-> **Audience:** Dispatchers, responders, supervisors, administrators
+> **Audience:** Dispatchers, responders, supervisors, analysts, administrators
 > **Solution:** EmergencyResponseCoordination for Microsoft Power Platform (GCC)
 
 ---
@@ -14,7 +14,8 @@
 5. [For Responders](#for-responders)
 6. [For Supervisors / ICs](#for-supervisors--ics)
 7. [For Administrators](#for-administrators)
-8. [FAQ](#faq)
+8. [For Analysts / Report Consumers](#for-analysts--report-consumers)
+9. [FAQ](#faq)
 
 ---
 
@@ -460,6 +461,75 @@ Configure in Power Platform Admin Center → Environments → Environment Variab
 2. Set **Current Unit** to assign personnel to their shift unit
 3. Set **System User** to link the Dataverse login to the personnel record
 4. Manage certifications, rank, paramedic status
+
+---
+
+## For Analysts / Report Consumers
+
+### Overview
+
+Power BI reports provide **historical analytics, trends, and KPIs** for supervisors, station officers, and analysts. These complement the MDA's real-time dashboards with deeper analysis — response time benchmarking, cross-agency comparison, and outcome tracking.
+
+**Key difference:** MDA dashboards show *live operational state*. Power BI reports show *historical trends and aggregated metrics* (refreshed every 4 hours).
+
+### Available Reports
+
+| Report | What It Shows | Who Uses It |
+|--------|--------------|-------------|
+| **Response Performance** | Response times, NFPA 1710 compliance, turnout vs travel breakdown, time-of-day heatmap | Supervisors, Analysts |
+| **Incident Operations** | Incident volume trends, type distribution, priority breakdown, MCI summary, geographic heatmap | Supervisors, Analysts |
+| **Unit Utilization** | Unit availability %, busy time, calls per unit, out-of-service tracking | Supervisors, Station Officers, Analysts |
+| **EMS Analytics** | Triage distribution, transport rate, scene-to-hospital time, facility destinations, MCI patient breakdown | Supervisors, Analysts |
+| **Mutual Aid & Cost** | Request volume by agency pair, cost tracking, agreement status | Supervisors, Analysts |
+| **Executive Summary** | KPI cards, cross-agency comparison, YoY trends, NFPA compliance, top-10 tables | Analysts, System Admins |
+| **Station Management** | Station workload, apparatus utilization, personnel coverage | Station Officers, Analysts |
+| **After-Action & Outcomes** | Property/content loss, cause analysis, injury/fatality trends, AAR completion rate | Supervisors, Analysts |
+
+### Accessing Reports
+
+1. Open **Power BI Service** (app.powerbigov.us for GCC)
+2. Navigate to the **EmergencyResponseCoordination** workspace
+3. Select the report you want to view
+4. Use **slicers** (date range, agency, incident type) to filter data
+5. Right-click on data points to **drill through** for detail
+
+### Understanding Row-Level Security
+
+Reports automatically filter data based on your agency assignment:
+
+- **Supervisors, Station Officers, Analysts** — see only your own agency's data
+- **System Admins** — see all agencies (cross-agency comparison enabled)
+
+You do not need to configure anything — RLS is applied automatically when you open a report.
+
+### Key Metrics Explained
+
+| Metric | What It Means | Target |
+|--------|--------------|--------|
+| **NFPA 1710 Compliance %** | Percentage of incidents where first unit arrived within 6 minutes 20 seconds of dispatch | ≥ 90% |
+| **Avg Response Time** | Average minutes from dispatch to first unit on scene | ≤ 6.33 min |
+| **90th Percentile Response** | Response time below which 90% of incidents fall — shows worst-case performance | ≤ 8 min |
+| **Turnout Time** | Time from dispatch notification to first unit leaving the station | ≤ 1.33 min (80 sec) |
+| **Travel Time** | Time from en route to on scene | ≤ 4 min |
+| **Transport Rate %** | Percentage of EMS patients who were transported to a facility | Varies |
+| **Scene-to-Hospital (min)** | Average transport time from scene departure to hospital arrival | Varies by distance |
+| **Unit Availability %** | Percentage of time units spent in Available status | ≥ 70% |
+
+### Data Freshness
+
+Power BI reports use **Import mode** — data refreshes every **4 hours**. The timestamp of the last refresh appears in the Power BI Service dataset details.
+
+For real-time operational status, use the **Dispatch Console** MDA dashboards instead.
+
+### PHI and Patient Privacy
+
+Power BI reports contain **zero patient-identifying information**. The EMS Analytics report shows only:
+- Triage category (e.g., Immediate, Delayed, Minor)
+- Transport status (yes/no)
+- Transport timestamps
+- Destination facility name
+
+Patient names, ages, genders, complaints, and clinical notes are **never** included in Power BI. If you need patient-level detail, use the PatientRecord form in the Dispatch Console (requires EMSProvider or SystemAdmin role).
 
 ---
 

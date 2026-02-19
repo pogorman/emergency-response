@@ -28,6 +28,13 @@
       "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365",
       "description": "Email notifications for critical alerts, mutual aid requests, and report approvals.",
       "required": false
+    },
+    {
+      "schemaName": "seo_PowerBIConnection",
+      "displayName": "Power BI Connection",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_powerbi",
+      "description": "Connection to Power BI Service for dataset refresh triggers and report embedding references. Required only for reporting layer (Phase 6).",
+      "required": false
     }
   ]
 }

@@ -1,0 +1,136 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "sharedMeasures",
+  "measureTable": {
+    "name": "_Measures",
+    "description": "Shared DAX measure table for EmergencyResponseCoordination Power BI reports. These measures span multiple reports and should be created in a dedicated _Measures table in each dataset where they are referenced. Measures are organized by folder for discoverability in the field list.",
+    "measures": [
+      {
+        "name": "Incident Count",
+        "expression": "COUNTROWS(Incident)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "description": "Total number of incidents in the current filter context",
+        "folder": "Volume",
+        "usedInReports": ["ResponsePerformance", "IncidentOperations", "ExecutiveSummary", "StationManagement"]
+      },
+      {
+        "name": "MCI Count",
+        "expression": "CALCULATE(COUNTROWS(Incident), Incident[Is MCI] = TRUE)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "description": "Number of declared Mass Casualty Incidents",
+        "folder": "Volume",
+        "usedInReports": ["IncidentOperations", "ExecutiveSummary"]
+      },
+      {
+        "name": "Avg Response Time (min)",
+        "expression": "AVERAGE(Incident[Response Time (min)])",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average minutes from dispatch to first unit on scene",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "Median Response Time (min)",
+        "expression": "MEDIAN(Incident[Response Time (min)])",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Median response time — less sensitive to outliers than average",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      },
+      {
+        "name": "90th Percentile Response (min)",
+        "expression": "PERCENTILE.INC(Incident[Response Time (min)], 0.90)",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "90th percentile response time — captures worst-case performance",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "NFPA 1710 Compliance %",
+        "expression": "DIVIDE(COUNTROWS(FILTER(Incident, Incident[Response Time (min)] <= 6.33)), COUNTROWS(Incident))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Percentage of incidents with response time at or below NFPA 1710 benchmark (6 min 20 sec = 6.33 min). Benchmark configurable via seo_NFPAResponseTimeBenchmarkMinutes env var.",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "Avg Turnout Time (min)",
+        "expression": "AVERAGE(DATEDIFF(Incident[Dispatched On], Incident[First Unit En Route], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average time from dispatch notification to first unit leaving the station",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      },
+      {
+        "name": "Avg Travel Time (min)",
+        "expression": "AVERAGE(DATEDIFF(Incident[First Unit En Route], Incident[First Unit On Scene], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average time from en route to on scene",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      },
+      {
+        "name": "Unit Availability %",
+        "expression": "DIVIDE([Available Status Count], [Total Status Count])",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Proportion of status log entries in Available status — proxy for unit availability",
+        "folder": "Utilization",
+        "usedInReports": ["UnitUtilization"]
+      },
+      {
+        "name": "Avg Scene-to-Hospital (min)",
+        "expression": "AVERAGE(DATEDIFF(PatientRecord[Transport Started On], PatientRecord[Arrived at Facility On], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average transport time from scene departure to hospital arrival",
+        "folder": "EMS",
+        "usedInReports": ["EMSAnalytics"]
+      },
+      {
+        "name": "Transport Rate %",
+        "expression": "DIVIDE(CALCULATE(COUNTROWS(PatientRecord), PatientRecord[Is Transported] = TRUE), COUNTROWS(PatientRecord))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Percentage of patients who were transported",
+        "folder": "EMS",
+        "usedInReports": ["EMSAnalytics"]
+      },
+      {
+        "name": "Total Property Loss",
+        "expression": "SUM(AfterActionReport[Estimated Property Loss])",
+        "dataType": "Currency",
+        "format": "$#,##0",
+        "description": "Sum of estimated property loss across after-action reports",
+        "folder": "Loss",
+        "usedInReports": ["AfterActionOutcomes", "ExecutiveSummary"]
+      },
+      {
+        "name": "Mutual Aid Cost",
+        "expression": "SUM(MutualAidRequest[Actual Cost])",
+        "dataType": "Currency",
+        "format": "$#,##0.00",
+        "description": "Total actual cost of mutual aid requests",
+        "folder": "Cost",
+        "usedInReports": ["MutualAidCost", "ExecutiveSummary"]
+      },
+      {
+        "name": "Mutual Aid Request Count",
+        "expression": "COUNTROWS(MutualAidRequest)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "description": "Total number of mutual aid requests",
+        "folder": "Volume",
+        "usedInReports": ["MutualAidCost", "ExecutiveSummary"]
+      }
+    ]
+  }
+}

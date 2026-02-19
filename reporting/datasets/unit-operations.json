@@ -1,0 +1,302 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "dataset",
+  "dataset": {
+    "name": "UnitOperations",
+    "displayName": "Unit Operations",
+    "description": "Unit utilization, availability, workload, and status duration analysis. Primary fact table is seo_UnitStatusLog with Unit, Apparatus, Station, Agency, Incident, and Date dimensions.",
+    "refreshMode": "Import",
+    "refreshSchedule": {
+      "intervalHours": 4,
+      "timeZone": "Eastern Standard Time",
+      "notifyOnFailure": true,
+      "gatewayRequired": true
+    },
+    "tables": [
+      {
+        "name": "UnitStatusLog",
+        "source": "seo_UnitStatusLog",
+        "description": "Fact table — one row per unit status change (append-only audit trail)",
+        "columns": [
+          { "name": "Log ID", "sourceColumn": "seo_unitstatuslogid", "dataType": "String", "isHidden": true },
+          { "name": "Log Entry", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Status", "sourceColumn": "seo_status", "dataType": "String" },
+          { "name": "Previous Status", "sourceColumn": "seo_previousStatus", "dataType": "String" },
+          { "name": "Changed On", "sourceColumn": "seo_changedOn", "dataType": "DateTime" },
+          { "name": "Source", "sourceColumn": "seo_source", "dataType": "String" },
+          { "name": "Unit ID", "sourceColumn": "seo_unitId", "dataType": "String", "isHidden": true },
+          { "name": "Incident ID", "sourceColumn": "seo_incidentId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Unit",
+        "source": "seo_Unit",
+        "description": "Dimension — dispatchable units",
+        "columns": [
+          { "name": "Unit ID", "sourceColumn": "seo_unitid", "dataType": "String", "isHidden": true },
+          { "name": "Unit Designator", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Current Status", "sourceColumn": "seo_currentStatus", "dataType": "String" },
+          { "name": "Is ALS", "sourceColumn": "seo_isALS", "dataType": "Boolean" },
+          { "name": "Personnel Count", "sourceColumn": "seo_personnelCount", "dataType": "Int64" },
+          { "name": "Station ID", "sourceColumn": "seo_stationId", "dataType": "String", "isHidden": true },
+          { "name": "Agency ID", "sourceColumn": "seo_agencyId", "dataType": "String", "isHidden": true },
+          { "name": "Apparatus ID", "sourceColumn": "seo_apparatusId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Apparatus",
+        "source": "seo_Apparatus",
+        "description": "Dimension — vehicles/equipment",
+        "columns": [
+          { "name": "Apparatus ID", "sourceColumn": "seo_apparatusid", "dataType": "String", "isHidden": true },
+          { "name": "Apparatus Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Apparatus Type", "sourceColumn": "seo_apparatusType", "dataType": "String" },
+          { "name": "Year/Make/Model", "sourceColumn": "seo_yearMakeModel", "dataType": "String" },
+          { "name": "Is ALS Capable", "sourceColumn": "seo_isALS", "dataType": "Boolean" },
+          { "name": "Is In Service", "sourceColumn": "seo_isInService", "dataType": "Boolean" }
+        ]
+      },
+      {
+        "name": "Station",
+        "source": "seo_Station",
+        "description": "Dimension — fire/EMS stations",
+        "columns": [
+          { "name": "Station ID", "sourceColumn": "seo_stationid", "dataType": "String", "isHidden": true },
+          { "name": "Station Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Station Number", "sourceColumn": "seo_stationNumber", "dataType": "String" },
+          { "name": "Agency ID", "sourceColumn": "seo_agencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Agency",
+        "source": "seo_Agency",
+        "description": "Dimension — fire/EMS agencies",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Agency Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agency Code", "sourceColumn": "seo_code", "dataType": "String" }
+        ],
+        "filters": [
+          { "column": "seo_isActive", "operator": "equals", "value": true, "description": "Only active agencies" }
+        ]
+      },
+      {
+        "name": "Incident",
+        "source": "seo_Incident",
+        "description": "Dimension — linked incidents for context",
+        "columns": [
+          { "name": "Incident ID", "sourceColumn": "seo_incidentid", "dataType": "String", "isHidden": true },
+          { "name": "Incident Number", "sourceColumn": "seo_incidentNumber", "dataType": "String" },
+          { "name": "Incident Type", "sourceColumn": "seo_incidentType", "dataType": "String" }
+        ]
+      },
+      {
+        "name": "Date",
+        "source": "Calculated",
+        "description": "Shared date dimension — 3-year rolling calendar",
+        "isDateDimension": true,
+        "columns": [
+          { "name": "Date", "sourceColumn": "Date", "dataType": "DateTime" },
+          { "name": "Year", "sourceColumn": "Year", "dataType": "Int64" },
+          { "name": "Quarter", "sourceColumn": "Quarter", "dataType": "String" },
+          { "name": "Month", "sourceColumn": "Month", "dataType": "String", "sortByColumn": "MonthNumber" },
+          { "name": "MonthNumber", "sourceColumn": "MonthNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "Week", "sourceColumn": "Week", "dataType": "Int64" },
+          { "name": "DayOfWeek", "sourceColumn": "DayOfWeek", "dataType": "String", "sortByColumn": "DayOfWeekNumber" },
+          { "name": "DayOfWeekNumber", "sourceColumn": "DayOfWeekNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "IsWeekend", "sourceColumn": "IsWeekend", "dataType": "Boolean" },
+          { "name": "FiscalYear", "sourceColumn": "FiscalYear", "dataType": "Int64" }
+        ]
+      },
+      {
+        "name": "AgencyUserMapping",
+        "source": "Calculated",
+        "description": "RLS mapping table",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "AgencyId", "dataType": "String", "isHidden": true },
+          { "name": "User Principal Name", "sourceColumn": "UserPrincipalName", "dataType": "String", "isHidden": true }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "StatusLog_Unit",
+        "fromTable": "UnitStatusLog",
+        "fromColumn": "Unit ID",
+        "toTable": "Unit",
+        "toColumn": "Unit ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "StatusLog_Incident",
+        "fromTable": "UnitStatusLog",
+        "fromColumn": "Incident ID",
+        "toTable": "Incident",
+        "toColumn": "Incident ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "StatusLog_Date",
+        "fromTable": "UnitStatusLog",
+        "fromColumn": "Changed On",
+        "toTable": "Date",
+        "toColumn": "Date",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Unit_Station",
+        "fromTable": "Unit",
+        "fromColumn": "Station ID",
+        "toTable": "Station",
+        "toColumn": "Station ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Unit_Agency",
+        "fromTable": "Unit",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Unit_Apparatus",
+        "fromTable": "Unit",
+        "fromColumn": "Apparatus ID",
+        "toTable": "Apparatus",
+        "toColumn": "Apparatus ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Station_Agency",
+        "fromTable": "Station",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Agency_RLS",
+        "fromTable": "AgencyUserMapping",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      }
+    ],
+    "measures": [
+      {
+        "name": "Status Change Count",
+        "expression": "COUNTROWS(UnitStatusLog)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Activity"
+      },
+      {
+        "name": "Calls Per Unit",
+        "expression": "DIVIDE(DISTINCTCOUNT(UnitStatusLog[Incident ID]), DISTINCTCOUNT(UnitStatusLog[Unit ID]))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "folder": "Workload",
+        "usedInReports": ["UnitUtilization"]
+      },
+      {
+        "name": "Distinct Units Active",
+        "expression": "DISTINCTCOUNT(UnitStatusLog[Unit ID])",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Activity"
+      },
+      {
+        "name": "Unit Availability %",
+        "expression": "DIVIDE([Available Status Count], [Total Status Count])",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Proportion of status log entries in Available status. Proxy for availability.",
+        "folder": "Utilization",
+        "usedInReports": ["UnitUtilization", "ExecutiveSummary"]
+      },
+      {
+        "name": "Available Status Count",
+        "expression": "CALCULATE(COUNTROWS(UnitStatusLog), UnitStatusLog[Status] = \"Available\")",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Utilization"
+      },
+      {
+        "name": "Total Status Count",
+        "expression": "COUNTROWS(UnitStatusLog)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Utilization"
+      },
+      {
+        "name": "Busy Status Count",
+        "expression": "CALCULATE(COUNTROWS(UnitStatusLog), UnitStatusLog[Status] IN {\"Dispatched\", \"En Route\", \"On Scene\", \"Transporting\"})",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Utilization"
+      },
+      {
+        "name": "Out of Service Count",
+        "expression": "CALCULATE(COUNTROWS(UnitStatusLog), UnitStatusLog[Status] = \"Out of Service\")",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Utilization"
+      }
+    ],
+    "calculatedColumns": [
+      {
+        "name": "Hour of Day",
+        "table": "UnitStatusLog",
+        "expression": "HOUR(UnitStatusLog[Changed On])",
+        "dataType": "Int64",
+        "description": "Hour (0-23) for time-of-day analysis"
+      }
+    ],
+    "rlsRoles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filter to user's agency via AgencyUserMapping",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter — SystemAdmin and cross-agency analysts",
+        "tableFilters": []
+      }
+    ],
+    "phiCompliance": {
+      "usesPatientRecord": false,
+      "phiColumnsIncluded": false,
+      "safeColumnsUsed": [],
+      "excludedPhiColumns": [],
+      "justification": "This dataset does not reference seo_PatientRecord. No PHI risk."
+    },
+    "gccConstraints": [
+      "Import mode only — no DirectQuery to Dataverse in GCC",
+      "Scheduled refresh requires on-premises data gateway"
+    ]
+  }
+}

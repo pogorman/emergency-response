@@ -1,0 +1,130 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "UnitUtilization",
+    "displayName": "Unit Utilization",
+    "description": "Unit availability, workload, and status duration analysis. Tracks calls per unit, busy time percentage, and out-of-service patterns.",
+    "dataset": "UnitOperations",
+    "audience": ["seo_DispatchSupervisor", "seo_StationOfficer", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "AvailabilityOverview",
+        "displayName": "Availability",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" },
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdAvailability", "type": "card", "title": "Overall Availability %", "fields": { "values": ["[Unit Availability %]"] } },
+          {
+            "name": "barAvailability",
+            "type": "clusteredBarChart",
+            "title": "Availability % by Unit",
+            "fields": { "axis": ["Unit[Unit Designator]"], "values": ["[Unit Availability %]"] },
+            "conditionalFormatting": [{ "field": "[Unit Availability %]", "formatType": "backgroundColor", "rules": [
+              { "condition": "greaterThanOrEqual", "value": 0.70, "color": "#28A745" },
+              { "condition": "greaterThanOrEqual", "value": 0.50, "color": "#FFC107" },
+              { "condition": "lessThan", "value": 0.50, "color": "#DC3545" }
+            ]}],
+            "sortBy": { "field": "[Unit Availability %]", "direction": "ascending" }
+          },
+          {
+            "name": "lnAvailabilityTrend",
+            "type": "lineChart",
+            "title": "Availability % Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Unit Availability %]"] }
+          }
+        ]
+      },
+      {
+        "name": "Workload",
+        "displayName": "Workload",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "tblCallsPerUnit",
+            "type": "table",
+            "title": "Calls per Unit",
+            "fields": { "values": ["Unit[Unit Designator]", "Station[Station Name]", "Apparatus[Apparatus Type]", "[Calls Per Unit]", "[Status Change Count]", "Unit[Is ALS]"] },
+            "sortBy": { "field": "[Calls Per Unit]", "direction": "descending" }
+          },
+          {
+            "name": "stkBusyTime",
+            "type": "stackedBarChart",
+            "title": "Status Distribution by Unit",
+            "fields": { "axis": ["Unit[Unit Designator]"], "values": ["[Busy Status Count]", "[Available Status Count]", "[Out of Service Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "StatusBreakdown",
+        "displayName": "Status Breakdown",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcUnit", "field": "Unit[Unit Designator]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "stkStatusByMonth",
+            "type": "stackedColumnChart",
+            "title": "Status Distribution by Month",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Status Change Count]"], "legend": ["UnitStatusLog[Status]"] }
+          },
+          {
+            "name": "dntStatusOverall",
+            "type": "donutChart",
+            "title": "Overall Status Distribution",
+            "fields": { "legend": ["UnitStatusLog[Status]"], "values": ["[Status Change Count]"] }
+          },
+          {
+            "name": "tblStatusTransitions",
+            "type": "table",
+            "title": "Recent Status Changes",
+            "fields": { "values": ["UnitStatusLog[Changed On]", "Unit[Unit Designator]", "UnitStatusLog[Previous Status]", "UnitStatusLog[Status]", "UnitStatusLog[Source]", "Incident[Incident Number]"] },
+            "sortBy": { "field": "UnitStatusLog[Changed On]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "OutOfService",
+        "displayName": "Out of Service",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barOOSByUnit",
+            "type": "clusteredBarChart",
+            "title": "Out-of-Service Events by Unit",
+            "fields": { "axis": ["Unit[Unit Designator]"], "values": ["[Out of Service Count]"] },
+            "sortBy": { "field": "[Out of Service Count]", "direction": "descending" }
+          },
+          {
+            "name": "lnOOSTrend",
+            "type": "lineChart",
+            "title": "Out-of-Service Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Out of Service Count]"] }
+          },
+          {
+            "name": "colOOSByHour",
+            "type": "clusteredColumnChart",
+            "title": "Out-of-Service by Hour of Day",
+            "fields": { "axis": ["UnitStatusLog[Hour of Day]"], "values": ["[Out of Service Count]"] }
+          }
+        ]
+      }
+    ]
+  }
+}

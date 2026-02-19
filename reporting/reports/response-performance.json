@@ -1,0 +1,243 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "ResponsePerformance",
+    "displayName": "Response Performance",
+    "description": "Response time analytics with NFPA 1710/1720 benchmarking. Tracks turnout time, travel time, and total response time trends. Includes time-of-day heatmap and agency comparison.",
+    "dataset": "IncidentAnalytics",
+    "audience": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "ResponseOverview",
+        "displayName": "Response Overview",
+        "description": "Key response time KPIs and trend line",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" },
+          { "name": "slcIncidentType", "field": "Incident[Incident Type]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "crdAvgResponse",
+            "type": "card",
+            "title": "Avg Response Time",
+            "fields": { "values": ["[Avg Response Time (min)]"] },
+            "conditionalFormatting": [
+              {
+                "field": "[Avg Response Time (min)]",
+                "formatType": "fontColor",
+                "rules": [
+                  { "condition": "lessThanOrEqual", "value": 6.33, "color": "#28A745" },
+                  { "condition": "lessThanOrEqual", "value": 8, "color": "#FFC107" },
+                  { "condition": "greaterThan", "value": 8, "color": "#DC3545" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "crdMedianResponse",
+            "type": "card",
+            "title": "Median Response Time",
+            "fields": { "values": ["[Median Response Time (min)]"] }
+          },
+          {
+            "name": "crd90thPercentile",
+            "type": "card",
+            "title": "90th Percentile",
+            "fields": { "values": ["[90th Percentile Response (min)]"] }
+          },
+          {
+            "name": "crdNFPACompliance",
+            "type": "card",
+            "title": "NFPA 1710 Compliance",
+            "fields": { "values": ["[NFPA 1710 Compliance %]"] },
+            "conditionalFormatting": [
+              {
+                "field": "[NFPA 1710 Compliance %]",
+                "formatType": "fontColor",
+                "rules": [
+                  { "condition": "greaterThanOrEqual", "value": 0.90, "color": "#28A745" },
+                  { "condition": "greaterThanOrEqual", "value": 0.80, "color": "#FFC107" },
+                  { "condition": "lessThan", "value": 0.80, "color": "#DC3545" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "lnResponseTrend",
+            "type": "lineChart",
+            "title": "Response Time Trend",
+            "description": "Monthly average and 90th percentile response time with NFPA 1710 benchmark reference line",
+            "fields": {
+              "axis": ["Date[Month]"],
+              "values": ["[Avg Response Time (min)]", "[90th Percentile Response (min)]"]
+            },
+            "tooltip": ["[Incident Count]", "[NFPA 1710 Compliance %]"]
+          },
+          {
+            "name": "crdIncidentCount",
+            "type": "card",
+            "title": "Total Incidents",
+            "fields": { "values": ["[Incident Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "TurnoutVsTravel",
+        "displayName": "Turnout vs Travel",
+        "description": "Breakdown of response time into turnout time (dispatch to en route) and travel time (en route to on scene)",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "crdAvgTurnout",
+            "type": "card",
+            "title": "Avg Turnout Time",
+            "fields": { "values": ["[Avg Turnout Time (min)]"] }
+          },
+          {
+            "name": "crdAvgTravel",
+            "type": "card",
+            "title": "Avg Travel Time",
+            "fields": { "values": ["[Avg Travel Time (min)]"] }
+          },
+          {
+            "name": "stkTurnoutTravel",
+            "type": "stackedBarChart",
+            "title": "Turnout vs Travel Time by Station",
+            "fields": {
+              "axis": ["Station[Station Name]"],
+              "values": ["[Avg Turnout Time (min)]", "[Avg Travel Time (min)]"]
+            }
+          },
+          {
+            "name": "lnTurnoutTrend",
+            "type": "lineChart",
+            "title": "Turnout Time Monthly Trend",
+            "fields": {
+              "axis": ["Date[Month]"],
+              "values": ["[Avg Turnout Time (min)]"]
+            }
+          },
+          {
+            "name": "lnTravelTrend",
+            "type": "lineChart",
+            "title": "Travel Time Monthly Trend",
+            "fields": {
+              "axis": ["Date[Month]"],
+              "values": ["[Avg Travel Time (min)]"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "TimeOfDayAnalysis",
+        "displayName": "Time of Day",
+        "description": "Response time patterns by hour of day and day of week",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgency", "field": "Agency[Agency Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "mtxHeatmap",
+            "type": "matrix",
+            "title": "Response Time Heatmap (Hour x Day of Week)",
+            "fields": {
+              "rows": ["Incident[Hour of Day]"],
+              "columns": ["Date[DayOfWeek]"],
+              "values": ["[Avg Response Time (min)]"]
+            },
+            "conditionalFormatting": [
+              {
+                "field": "[Avg Response Time (min)]",
+                "formatType": "backgroundColor",
+                "rules": [
+                  { "condition": "lessThanOrEqual", "value": 5, "color": "#28A745" },
+                  { "condition": "lessThanOrEqual", "value": 6.33, "color": "#8BC34A" },
+                  { "condition": "lessThanOrEqual", "value": 8, "color": "#FFC107" },
+                  { "condition": "greaterThan", "value": 8, "color": "#DC3545" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "colIncidentsByHour",
+            "type": "clusteredColumnChart",
+            "title": "Incident Volume by Hour of Day",
+            "fields": {
+              "axis": ["Incident[Hour of Day]"],
+              "values": ["[Incident Count]"]
+            }
+          },
+          {
+            "name": "barResponseByDOW",
+            "type": "clusteredBarChart",
+            "title": "Avg Response Time by Day of Week",
+            "fields": {
+              "axis": ["Date[DayOfWeek]"],
+              "values": ["[Avg Response Time (min)]"]
+            },
+            "sortBy": { "field": "Date[DayOfWeekNumber]", "direction": "ascending" }
+          }
+        ]
+      },
+      {
+        "name": "AgencyComparison",
+        "displayName": "Agency Comparison",
+        "description": "Cross-agency response time benchmarking (subject to RLS — Agency Filter users see only their own agency)",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcIncidentType", "field": "Incident[Incident Type]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barAgencyResponse",
+            "type": "clusteredBarChart",
+            "title": "Avg Response Time by Agency",
+            "fields": {
+              "axis": ["Agency[Agency Name]"],
+              "values": ["[Avg Response Time (min)]"]
+            },
+            "conditionalFormatting": [
+              {
+                "field": "[Avg Response Time (min)]",
+                "formatType": "backgroundColor",
+                "rules": [
+                  { "condition": "lessThanOrEqual", "value": 6.33, "color": "#28A745" },
+                  { "condition": "greaterThan", "value": 6.33, "color": "#FFC107" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "tblAgencyMetrics",
+            "type": "table",
+            "title": "Agency Performance Summary",
+            "fields": {
+              "values": ["Agency[Agency Name]", "[Incident Count]", "[Avg Response Time (min)]", "[Median Response Time (min)]", "[90th Percentile Response (min)]", "[NFPA 1710 Compliance %]"]
+            },
+            "sortBy": { "field": "[Avg Response Time (min)]", "direction": "ascending" }
+          },
+          {
+            "name": "gauNFPAOverall",
+            "type": "gauge",
+            "title": "Overall NFPA 1710 Compliance",
+            "fields": {
+              "values": ["[NFPA 1710 Compliance %]"]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

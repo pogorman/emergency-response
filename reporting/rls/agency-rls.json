@@ -1,0 +1,63 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "rls",
+  "rls": {
+    "description": "Row-Level Security (RLS) definition for EmergencyResponseCoordination Power BI datasets. Mirrors the Dataverse BU-based agency isolation. Each agency sees only their own data; SystemAdmin and cross-agency analysts see all data. Dynamic RLS uses an AgencyUserMapping lookup table in each dataset.",
+    "mappingTable": {
+      "name": "AgencyUserMapping",
+      "source": "Calculated",
+      "description": "Maps agency GUIDs to user UPNs for dynamic RLS. Populated during deployment and maintained as users change agencies. Aligned with seo_AgencyOnboarding flow. Must be included in every dataset.",
+      "columns": [
+        {
+          "name": "Agency ID",
+          "sourceColumn": "AgencyId",
+          "dataType": "String",
+          "isHidden": true,
+          "description": "seo_Agency record GUID — joins to Agency dimension"
+        },
+        {
+          "name": "User Principal Name",
+          "sourceColumn": "UserPrincipalName",
+          "dataType": "String",
+          "isHidden": true,
+          "description": "Azure AD UPN (e.g., john.doe@agency.gov). Matched against USERPRINCIPALNAME() DAX function."
+        }
+      ]
+    },
+    "roles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filters all data to the user's agency. The DAX filter on AgencyUserMapping propagates through the Agency dimension table to all fact tables via active relationships. Users see only data from their own agency.",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter applied — users assigned to this role see data from all agencies. Intended for SystemAdmin and designated cross-agency analysts. This role has NO table filters, which means all rows pass through.",
+        "tableFilters": []
+      }
+    ],
+    "securityRoleMapping": [
+      {
+        "dataverseRole": "seo_SystemAdmin",
+        "rlsRole": "All Agencies"
+      },
+      {
+        "dataverseRole": "seo_DispatchSupervisor",
+        "rlsRole": "Agency Filter"
+      },
+      {
+        "dataverseRole": "seo_StationOfficer",
+        "rlsRole": "Agency Filter"
+      },
+      {
+        "dataverseRole": "seo_ReadOnlyAnalyst",
+        "rlsRole": "Agency Filter"
+      }
+    ]
+  }
+}

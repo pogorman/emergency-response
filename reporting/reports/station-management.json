@@ -1,0 +1,122 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "StationManagement",
+    "displayName": "Station Management",
+    "description": "Station-level operational metrics: workload distribution, apparatus utilization, personnel coverage, and pre-plan/hydrant inspection status.",
+    "dataset": "UnitOperations",
+    "audience": ["seo_StationOfficer", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "StationWorkload",
+        "displayName": "Station Workload",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barStationCalls",
+            "type": "clusteredBarChart",
+            "title": "Activity by Station",
+            "fields": { "axis": ["Station[Station Name]"], "values": ["[Status Change Count]"] },
+            "sortBy": { "field": "[Status Change Count]", "direction": "descending" }
+          },
+          {
+            "name": "lnStationTrend",
+            "type": "lineChart",
+            "title": "Station Activity Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Status Change Count]"], "legend": ["Station[Station Name]"] }
+          },
+          {
+            "name": "tblStationSummary",
+            "type": "table",
+            "title": "Station Summary",
+            "fields": { "values": ["Station[Station Name]", "Station[Station Number]", "[Distinct Units Active]", "[Status Change Count]", "[Unit Availability %]"] },
+            "sortBy": { "field": "[Status Change Count]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "ApparatusUtilization",
+        "displayName": "Apparatus",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barApparatusType",
+            "type": "clusteredBarChart",
+            "title": "Activity by Apparatus Type",
+            "fields": { "axis": ["Apparatus[Apparatus Type]"], "values": ["[Status Change Count]"] }
+          },
+          {
+            "name": "tblApparatus",
+            "type": "table",
+            "title": "Apparatus Detail",
+            "fields": { "values": ["Apparatus[Apparatus Name]", "Apparatus[Apparatus Type]", "Apparatus[Year/Make/Model]", "Apparatus[Is ALS Capable]", "Apparatus[Is In Service]", "Unit[Unit Designator]"] },
+            "conditionalFormatting": [{ "field": "Apparatus[Is In Service]", "formatType": "backgroundColor", "rules": [
+              { "condition": "equals", "value": true, "color": "#28A745" },
+              { "condition": "equals", "value": false, "color": "#DC3545" }
+            ]}]
+          },
+          {
+            "name": "dntApparatusDistribution",
+            "type": "donutChart",
+            "title": "Apparatus Type Distribution",
+            "fields": { "legend": ["Apparatus[Apparatus Type]"], "values": ["[Distinct Units Active]"] }
+          }
+        ]
+      },
+      {
+        "name": "PersonnelCoverage",
+        "displayName": "Personnel",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcStation", "field": "Station[Station Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "barPersonnelCount",
+            "type": "clusteredBarChart",
+            "title": "Personnel Count by Unit",
+            "fields": { "axis": ["Unit[Unit Designator]"], "values": ["Unit[Personnel Count]"] }
+          },
+          {
+            "name": "tblUnitPersonnel",
+            "type": "table",
+            "title": "Unit Staffing Summary",
+            "fields": { "values": ["Unit[Unit Designator]", "Station[Station Name]", "Apparatus[Apparatus Name]", "Unit[Personnel Count]", "Unit[Is ALS]", "Unit[Current Status]"] }
+          },
+          {
+            "name": "stkALSvsBLS",
+            "type": "stackedBarChart",
+            "title": "ALS vs BLS Units by Station",
+            "fields": { "axis": ["Station[Station Name]"], "values": ["[Distinct Units Active]"], "legend": ["Unit[Is ALS]"] }
+          }
+        ]
+      },
+      {
+        "name": "InspectionStatus",
+        "displayName": "Inspections",
+        "description": "Placeholder — requires cross-dataset reference to IncidentAnalytics for PrePlan and Hydrant data",
+        "layout": "FitToPage",
+        "visuals": [
+          {
+            "name": "crdPlaceholder",
+            "type": "card",
+            "title": "Inspection Status",
+            "description": "Pre-plan inspection and hydrant test status tracking. Requires composite model or separate dataset connection for PrePlan and Hydrant tables from IncidentAnalytics dataset.",
+            "fields": { "values": [] }
+          }
+        ]
+      }
+    ]
+  }
+}

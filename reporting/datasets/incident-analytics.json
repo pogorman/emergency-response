@@ -1,0 +1,299 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "dataset",
+  "dataset": {
+    "name": "IncidentAnalytics",
+    "displayName": "Incident Analytics",
+    "description": "Core incident metrics: volume, types, response times, trends. Primary fact table is seo_Incident with Agency, Jurisdiction, Station, Call, and Date dimensions.",
+    "refreshMode": "Import",
+    "refreshSchedule": {
+      "intervalHours": 4,
+      "timeZone": "Eastern Standard Time",
+      "notifyOnFailure": true,
+      "gatewayRequired": true
+    },
+    "tables": [
+      {
+        "name": "Incident",
+        "source": "seo_Incident",
+        "description": "Fact table — one row per incident",
+        "columns": [
+          { "name": "Incident ID", "sourceColumn": "seo_incidentid", "dataType": "String", "isHidden": true },
+          { "name": "Incident Number", "sourceColumn": "seo_incidentNumber", "dataType": "String" },
+          { "name": "Incident Type", "sourceColumn": "seo_incidentType", "dataType": "String" },
+          { "name": "Priority", "sourceColumn": "seo_priority", "dataType": "String" },
+          { "name": "Status", "sourceColumn": "seo_status", "dataType": "String" },
+          { "name": "Address", "sourceColumn": "seo_address", "dataType": "String" },
+          { "name": "Latitude", "sourceColumn": "seo_latitude", "dataType": "Double" },
+          { "name": "Longitude", "sourceColumn": "seo_longitude", "dataType": "Double" },
+          { "name": "Dispatched On", "sourceColumn": "seo_dispatchedOn", "dataType": "DateTime" },
+          { "name": "First Unit En Route", "sourceColumn": "seo_firstUnitEnRouteOn", "dataType": "DateTime" },
+          { "name": "First Unit On Scene", "sourceColumn": "seo_firstUnitOnSceneOn", "dataType": "DateTime" },
+          { "name": "Under Control On", "sourceColumn": "seo_underControlOn", "dataType": "DateTime" },
+          { "name": "Cleared On", "sourceColumn": "seo_clearedOn", "dataType": "DateTime" },
+          { "name": "Closed On", "sourceColumn": "seo_closedOn", "dataType": "DateTime" },
+          { "name": "Is MCI", "sourceColumn": "seo_isMCI", "dataType": "Boolean" },
+          { "name": "Alarm Level", "sourceColumn": "seo_alarmLevel", "dataType": "Int64" },
+          { "name": "Patient Count", "sourceColumn": "seo_patientCount", "dataType": "Int64" },
+          { "name": "Response Time (min)", "sourceColumn": "seo_responseTimeMinutes", "dataType": "Double", "format": "#,##0.0" },
+          { "name": "Total Duration (min)", "sourceColumn": "seo_totalDurationMinutes", "dataType": "Double", "format": "#,##0.0" },
+          { "name": "NFIRS Code", "sourceColumn": "seo_nfirsCode", "dataType": "String" },
+          { "name": "Agency ID", "sourceColumn": "seo_primaryAgencyId", "dataType": "String", "isHidden": true },
+          { "name": "Jurisdiction ID", "sourceColumn": "seo_jurisdictionId", "dataType": "String", "isHidden": true },
+          { "name": "Call ID", "sourceColumn": "seo_callId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Agency",
+        "source": "seo_Agency",
+        "description": "Dimension — fire/EMS agencies",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Agency Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agency Code", "sourceColumn": "seo_code", "dataType": "String" },
+          { "name": "Agency Type", "sourceColumn": "seo_agencyType", "dataType": "String" },
+          { "name": "FDID", "sourceColumn": "seo_fdid", "dataType": "String" },
+          { "name": "Is Active", "sourceColumn": "seo_isActive", "dataType": "Boolean" }
+        ],
+        "filters": [
+          { "column": "seo_isActive", "operator": "equals", "value": true, "description": "Only active agencies" }
+        ]
+      },
+      {
+        "name": "Jurisdiction",
+        "source": "seo_Jurisdiction",
+        "description": "Dimension — geographic jurisdictions",
+        "columns": [
+          { "name": "Jurisdiction ID", "sourceColumn": "seo_jurisdictionid", "dataType": "String", "isHidden": true },
+          { "name": "Jurisdiction Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Jurisdiction Type", "sourceColumn": "seo_jurisdictionType", "dataType": "String" }
+        ]
+      },
+      {
+        "name": "Station",
+        "source": "seo_Station",
+        "description": "Dimension — fire/EMS stations",
+        "columns": [
+          { "name": "Station ID", "sourceColumn": "seo_stationid", "dataType": "String", "isHidden": true },
+          { "name": "Station Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Station Number", "sourceColumn": "seo_stationNumber", "dataType": "String" },
+          { "name": "Agency ID", "sourceColumn": "seo_agencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Call",
+        "source": "seo_Call",
+        "description": "Dimension — originating calls",
+        "columns": [
+          { "name": "Call ID", "sourceColumn": "seo_callid", "dataType": "String", "isHidden": true },
+          { "name": "Call Type", "sourceColumn": "seo_callType", "dataType": "String" },
+          { "name": "Received On", "sourceColumn": "seo_receivedOn", "dataType": "DateTime" },
+          { "name": "Call Priority", "sourceColumn": "seo_priority", "dataType": "String" }
+        ]
+      },
+      {
+        "name": "Date",
+        "source": "Calculated",
+        "description": "Shared date dimension — 3-year rolling calendar",
+        "isDateDimension": true,
+        "columns": [
+          { "name": "Date", "sourceColumn": "Date", "dataType": "DateTime" },
+          { "name": "Year", "sourceColumn": "Year", "dataType": "Int64" },
+          { "name": "Quarter", "sourceColumn": "Quarter", "dataType": "String" },
+          { "name": "Month", "sourceColumn": "Month", "dataType": "String", "sortByColumn": "MonthNumber" },
+          { "name": "MonthNumber", "sourceColumn": "MonthNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "Week", "sourceColumn": "Week", "dataType": "Int64" },
+          { "name": "DayOfWeek", "sourceColumn": "DayOfWeek", "dataType": "String", "sortByColumn": "DayOfWeekNumber" },
+          { "name": "DayOfWeekNumber", "sourceColumn": "DayOfWeekNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "IsWeekend", "sourceColumn": "IsWeekend", "dataType": "Boolean" },
+          { "name": "FiscalYear", "sourceColumn": "FiscalYear", "dataType": "Int64" }
+        ]
+      },
+      {
+        "name": "AgencyUserMapping",
+        "source": "Calculated",
+        "description": "RLS mapping table — agency GUID to user UPN",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "AgencyId", "dataType": "String", "isHidden": true },
+          { "name": "User Principal Name", "sourceColumn": "UserPrincipalName", "dataType": "String", "isHidden": true }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "Incident_Agency",
+        "fromTable": "Incident",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Jurisdiction",
+        "fromTable": "Incident",
+        "fromColumn": "Jurisdiction ID",
+        "toTable": "Jurisdiction",
+        "toColumn": "Jurisdiction ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Call",
+        "fromTable": "Incident",
+        "fromColumn": "Call ID",
+        "toTable": "Call",
+        "toColumn": "Call ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Date",
+        "fromTable": "Incident",
+        "fromColumn": "Dispatched On",
+        "toTable": "Date",
+        "toColumn": "Date",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Station_Agency",
+        "fromTable": "Station",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Agency_RLS",
+        "fromTable": "AgencyUserMapping",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      }
+    ],
+    "measures": [
+      {
+        "name": "Incident Count",
+        "expression": "COUNTROWS(Incident)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["ResponsePerformance", "IncidentOperations", "ExecutiveSummary"]
+      },
+      {
+        "name": "MCI Count",
+        "expression": "CALCULATE(COUNTROWS(Incident), Incident[Is MCI] = TRUE)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["IncidentOperations", "ExecutiveSummary"]
+      },
+      {
+        "name": "Avg Response Time (min)",
+        "expression": "AVERAGE(Incident[Response Time (min)])",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "Median Response Time (min)",
+        "expression": "MEDIAN(Incident[Response Time (min)])",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      },
+      {
+        "name": "90th Percentile Response (min)",
+        "expression": "PERCENTILE.INC(Incident[Response Time (min)], 0.90)",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "NFPA 1710 Compliance %",
+        "expression": "DIVIDE(COUNTROWS(FILTER(Incident, Incident[Response Time (min)] <= 6.33)), COUNTROWS(Incident))",
+        "dataType": "Percentage",
+        "format": "0.0%",
+        "description": "Percentage of incidents with response time ≤ 6:20 (6.33 min) per NFPA 1710",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance", "ExecutiveSummary"]
+      },
+      {
+        "name": "Avg Turnout Time (min)",
+        "expression": "AVERAGE(DATEDIFF(Incident[Dispatched On], Incident[First Unit En Route], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average time from dispatch to first unit en route",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      },
+      {
+        "name": "Avg Travel Time (min)",
+        "expression": "AVERAGE(DATEDIFF(Incident[First Unit En Route], Incident[First Unit On Scene], MINUTE))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average time from en route to on scene",
+        "folder": "Response Time",
+        "usedInReports": ["ResponsePerformance"]
+      }
+    ],
+    "calculatedColumns": [
+      {
+        "name": "Hour of Day",
+        "table": "Incident",
+        "expression": "HOUR(Incident[Dispatched On])",
+        "dataType": "Int64",
+        "description": "Hour (0-23) for time-of-day heatmap analysis"
+      },
+      {
+        "name": "Response Time Band",
+        "table": "Incident",
+        "expression": "SWITCH(TRUE(), Incident[Response Time (min)] <= 4, \"0-4 min\", Incident[Response Time (min)] <= 6.33, \"4-6:20 min\", Incident[Response Time (min)] <= 8, \"6:20-8 min\", Incident[Response Time (min)] <= 10, \"8-10 min\", \"10+ min\")",
+        "dataType": "String",
+        "description": "Response time bucket for distribution analysis"
+      }
+    ],
+    "rlsRoles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filter incidents to user's agency via AgencyUserMapping",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter — SystemAdmin and cross-agency analysts see all data",
+        "tableFilters": []
+      }
+    ],
+    "phiCompliance": {
+      "usesPatientRecord": false,
+      "phiColumnsIncluded": false,
+      "safeColumnsUsed": [],
+      "excludedPhiColumns": [],
+      "justification": "This dataset does not reference seo_PatientRecord. No PHI risk."
+    },
+    "gccConstraints": [
+      "Import mode only — no DirectQuery to Dataverse in GCC",
+      "Scheduled refresh requires on-premises data gateway",
+      "All visuals use standard Power BI visuals (no AI visuals, no uncertified custom visuals)"
+    ]
+  }
+}

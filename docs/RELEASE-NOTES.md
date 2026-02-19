@@ -1,5 +1,79 @@
 # Release Notes
 
+## v0.6.0 — Phase 6: Reporting / Power BI Layer (2026-02-18)
+
+### Summary
+Complete Power BI reporting layer specification: 5 star-schema datasets, 8 reports (~33 pages), shared DAX measure definitions, row-level security, and a JSON schema for report specs. Provides historical analytics, KPIs, NFPA benchmarking, and cross-agency comparison — complementing the MDA's real-time dashboards with trend analysis and operational intelligence.
+
+### What's Included
+- **Report definition schema** (`reporting/_schema/report-definition-schema.json`):
+  - JSON Schema for dataset, report, page, visual, measure, RLS, and refresh specifications
+  - Covers data model (tables, columns, relationships), visual types, conditional formatting, drillthrough, bookmarks
+- **Reporting README** (`reporting/README.md`):
+  - Spec format documentation and step-by-step translation guide (spec → Power BI Desktop / Service)
+  - GCC constraint matrix with mitigations
+  - PHI compliance policy (zero PHI in Power BI)
+  - RLS strategy with AgencyUserMapping table documentation
+- **5 dataset definitions** (`reporting/datasets/`):
+  - `incident-analytics.json` — Incident fact + Agency, Jurisdiction, Station, Call, Date dimensions; 8 DAX measures; response time bands
+  - `unit-operations.json` — UnitStatusLog fact + Unit, Apparatus, Station, Agency, Incident, Date dimensions; 8 utilization measures
+  - `ems-operations.json` — PatientRecord fact (de-identified, zero PHI) + Incident, Facility, Unit, Agency, Date dimensions; 5 EMS measures
+  - `mutual-aid-cost.json` — MutualAidRequest fact + Agreement, Agency (role-playing), Incident, Date dimensions; 6 cost/volume measures
+  - `outcomes-after-action.json` — AfterActionReport fact + Incident, Agency, Date dimensions; 10 loss/casualty measures
+- **Shared measures** (`reporting/measures/shared-measures.json`):
+  - 14 DAX measures spanning response time, NFPA compliance, volume, EMS, loss, and cost
+  - Organized by folder (Response Time, Volume, Utilization, EMS, Loss, Cost)
+- **RLS definition** (`reporting/rls/agency-rls.json`):
+  - 2 roles: Agency Filter (dynamic via USERPRINCIPALNAME()), All Agencies (no filter)
+  - AgencyUserMapping table specification
+  - 4 Dataverse-to-RLS role mappings
+- **8 report definitions** (`reporting/reports/`):
+  - `response-performance.json` — 4 pages: overview KPIs, turnout vs travel, time-of-day heatmap, agency comparison
+  - `incident-operations.json` — 5 pages: volume overview, type distribution, priority & MCI, geographic view, drillthrough
+  - `unit-utilization.json` — 4 pages: availability, workload, status breakdown, out-of-service tracking
+  - `ems-analytics.json` — 4 pages: triage overview, transport metrics, facility destinations, MCI patient breakdown
+  - `mutual-aid-cost.json` — 3 pages: request overview, cost analysis, agreement status
+  - `executive-summary.json` — 5 pages: KPI dashboard, agency comparison, YoY trends, top-10 analysis, NFPA compliance
+  - `station-management.json` — 4 pages: station workload, apparatus utilization, personnel coverage, inspection status
+  - `after-action-outcomes.json` — 4 pages: loss overview, cause analysis, injury/fatality trends, AAR completion
+- **3 new environment variables** (`solution/environment-variables.json`):
+  - `seo_PowerBIWorkspaceId` (default: "")
+  - `seo_PowerBIDatasetRefreshHours` (default: "4")
+  - `seo_NFPAResponseTimeBenchmarkMinutes` (default: "6.33")
+- **1 new connection reference** (`solution/connection-references.json`):
+  - `seo_PowerBIConnection` (shared_powerbi, required: false)
+- **5 new ADRs** in TECHNICAL.md:
+  - ADR-019: Import Mode for Power BI Datasets
+  - ADR-020: PHI Exclusion in Power BI
+  - ADR-021: Row-Level Security Strategy
+  - ADR-022: GCC Power BI Constraints
+  - ADR-023: Power BI Reports vs MDA Dashboards
+- **TECHNICAL.md updated** with Reporting / Power BI section
+- **USER-GUIDE.md updated** with "For Analysts / Report Consumers" section
+
+### Key Design Decisions
+- Import mode with 4-hour refresh — GCC Dataverse does not support DirectQuery (ADR-019)
+- Zero PHI in Power BI — all 7 PHI columns completely excluded from all datasets (ADR-020)
+- Dynamic RLS via AgencyUserMapping table mirrors Dataverse BU isolation (ADR-021)
+- All visuals are standard Power BI — no AI visuals, no uncertified custom visuals (ADR-022)
+- Power BI for analytics/trends, MDA for real-time ops — no dashboard duplication (ADR-023)
+- NFPA 1710 benchmark (6:20 = 6.33 min) is configurable via environment variable
+- Date dimension is a shared calculated table (3-year rolling, fiscal year support)
+- Role-playing dimensions for Mutual Aid (RequestingAgency, ProvidingAgency)
+
+### Breaking Changes
+None (additive — new reporting specs, environment variables, and connection reference).
+
+### Dependencies
+- v0.5.0 (MDA dashboards — Power BI reports complement but do not duplicate)
+- v0.2.0 (security roles — RLS mirrors Dataverse role-based access)
+- v0.1.0 (data model — all dataset column references depend on Phase 1 tables)
+- Power BI Desktop (for building reports from specs)
+- Power BI Service GCC (for publishing and scheduled refresh)
+- On-premises data gateway (for Dataverse connector in GCC)
+
+---
+
 ## v0.5.0 — Phase 5: Model-Driven App — Dispatch Console & Supervisor Dashboard (2026-02-18)
 
 ### Summary

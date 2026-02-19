@@ -1,0 +1,110 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "report",
+  "report": {
+    "name": "MutualAidCost",
+    "displayName": "Mutual Aid & Cost",
+    "description": "Mutual aid agreement utilization, request history, cost tracking, and inter-agency cooperation analysis.",
+    "dataset": "MutualAidCost",
+    "audience": ["seo_DispatchSupervisor", "seo_ReadOnlyAnalyst", "seo_SystemAdmin"],
+    "rlsEnforced": true,
+    "theme": "EmergencyResponseDark",
+    "pages": [
+      {
+        "name": "RequestOverview",
+        "displayName": "Request Overview",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcStatus", "field": "MutualAidRequest[Status]", "type": "dropdown" }
+        ],
+        "visuals": [
+          { "name": "crdRequestCount", "type": "card", "title": "Total Requests", "fields": { "values": ["[Request Count]"] } },
+          { "name": "crdActiveAgreements", "type": "card", "title": "Active Agreements", "fields": { "values": ["[Active Agreements]"] } },
+          { "name": "crdTotalCost", "type": "card", "title": "Total Actual Cost", "fields": { "values": ["[Mutual Aid Cost]"] } },
+          {
+            "name": "mtxAgencyPairs",
+            "type": "matrix",
+            "title": "Request Volume by Agency Pair",
+            "fields": { "rows": ["RequestingAgency[Requesting Agency]"], "columns": ["ProvidingAgency[Providing Agency]"], "values": ["[Request Count]"] }
+          },
+          {
+            "name": "lnRequestTrend",
+            "type": "lineChart",
+            "title": "Monthly Request Trend",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Request Count]"] }
+          }
+        ]
+      },
+      {
+        "name": "CostAnalysis",
+        "displayName": "Cost Analysis",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcDateRange", "field": "Date[Date]", "type": "between" },
+          { "name": "slcAgreement", "field": "MutualAidAgreement[Agreement Name]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "lcCostTrend",
+            "type": "lineAndClusteredColumnChart",
+            "title": "Cost Trend (Estimated vs Actual)",
+            "fields": { "axis": ["Date[Month]"], "values": ["[Mutual Aid Cost]", "[Estimated Cost Total]"] }
+          },
+          {
+            "name": "crdCostVariance",
+            "type": "card",
+            "title": "Cost Variance",
+            "fields": { "values": ["[Cost Variance]"] },
+            "conditionalFormatting": [{ "field": "[Cost Variance]", "formatType": "fontColor", "rules": [
+              { "condition": "lessThanOrEqual", "value": 0, "color": "#28A745" },
+              { "condition": "greaterThan", "value": 0, "color": "#DC3545" }
+            ]}]
+          },
+          {
+            "name": "barCostByAgency",
+            "type": "clusteredBarChart",
+            "title": "Cost by Requesting Agency",
+            "fields": { "axis": ["RequestingAgency[Requesting Agency]"], "values": ["[Mutual Aid Cost]"] },
+            "sortBy": { "field": "[Mutual Aid Cost]", "direction": "descending" }
+          },
+          {
+            "name": "tblCostDetail",
+            "type": "table",
+            "title": "Request Cost Detail",
+            "fields": { "values": ["MutualAidRequest[Request Title]", "RequestingAgency[Requesting Agency]", "ProvidingAgency[Providing Agency]", "MutualAidRequest[Estimated Cost]", "MutualAidRequest[Actual Cost]", "MutualAidRequest[Status]"] },
+            "sortBy": { "field": "MutualAidRequest[Actual Cost]", "direction": "descending" }
+          }
+        ]
+      },
+      {
+        "name": "AgreementStatus",
+        "displayName": "Agreements",
+        "layout": "FitToPage",
+        "slicers": [
+          { "name": "slcAgreementType", "field": "MutualAidAgreement[Agreement Type]", "type": "dropdown" }
+        ],
+        "visuals": [
+          {
+            "name": "tblAgreements",
+            "type": "table",
+            "title": "Agreement Status",
+            "fields": { "values": ["MutualAidAgreement[Agreement Name]", "MutualAidAgreement[Agreement Type]", "MutualAidAgreement[Effective Date]", "MutualAidAgreement[Expiration Date]", "MutualAidAgreement[Has Cost Sharing]", "MutualAidAgreement[Is Active]", "[Request Count]"] },
+            "conditionalFormatting": [{ "field": "MutualAidAgreement[Is Active]", "formatType": "backgroundColor", "rules": [
+              { "condition": "equals", "value": true, "color": "#28A745" },
+              { "condition": "equals", "value": false, "color": "#DC3545" }
+            ]}]
+          },
+          {
+            "name": "barRequestsByAgreement",
+            "type": "clusteredBarChart",
+            "title": "Requests by Agreement",
+            "fields": { "axis": ["MutualAidAgreement[Agreement Name]"], "values": ["[Request Count]"] },
+            "sortBy": { "field": "[Request Count]", "direction": "descending" }
+          },
+          { "name": "crdAvgDeployTime", "type": "card", "title": "Avg Deployment Time (hours)", "fields": { "values": ["[Avg Deployment Time (hours)]"] } }
+        ]
+      }
+    ]
+  }
+}

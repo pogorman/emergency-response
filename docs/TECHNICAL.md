@@ -1053,6 +1053,30 @@ Patient Triage (scrPatientTriage) is the **only** screen accessing PHI columns. 
 **Decision:** Provide 22 sample data files with ~178 records across 5 incident scenarios using symbolic FK references.
 **Rationale:** Realistic sample data is critical for demos, testing, and user acceptance. The 5 scenarios (structure fire, MCI, hazmat, medical, brush fire) exercise different lifecycle stages, ICS structures, mutual aid patterns, and EMS workflows. Symbolic references (`@ref:entity-id`) avoid hardcoding GUIDs — importers resolve references to actual Dataverse GUIDs at import time. The import order document ensures FK dependencies are satisfied. PHI fields are included in patient records for EMS workflow testing but are clearly marked as fictional.
 
+### ADR-019: Import Mode for Power BI Datasets
+**Decision:** Import mode (scheduled refresh) for all Power BI datasets.
+**Rationale:** GCC Dataverse does not support DirectQuery from Power BI. Import mode provides better performance for aggregations and allows calculated columns/measures. Refresh every 4 hours (configurable via `seo_PowerBIDatasetRefreshHours`).
+**Trade-off:** Data is up to 4 hours stale — acceptable for trend/analytics reports. Real-time monitoring stays in MDA dashboards (Phase 5).
+
+### ADR-020: PHI Exclusion in Power BI
+**Decision:** The 7 PHI columns on seo_PatientRecord are **never included** in any Power BI dataset. Not filtered, not hidden — completely excluded from the data model.
+**Rationale:** Power BI datasets are cached extracts. Even with RLS, including PHI in a dataset creates a copy outside Dataverse's field-level security boundary. Excluding at the dataset level is the only way to guarantee HIPAA compliance. Reports use only: triageCategory, isTransported, refusedCare, transport timestamps, destination facility, and incident FK.
+**Trade-off:** No patient-name-level reporting in Power BI. If EMS providers need patient-level detail, they use the MDA PatientRecord form (PHI tab, gated by field security profile).
+
+### ADR-021: Row-Level Security Strategy
+**Decision:** Dynamic RLS using an AgencyUserMapping lookup table in each dataset.
+**Rationale:** Mirrors the Dataverse BU-based isolation. Each agency sees only their own data. SystemAdmin/cross-agency analysts are assigned the "All Agencies" RLS role. The mapping table is populated during deployment (agency GUID → user UPN).
+**Trade-off:** Requires maintaining the mapping table when users change agencies. Aligned with the existing team/BU provisioning flow (seo_AgencyOnboarding).
+
+### ADR-022: GCC Power BI Constraints
+**Decision:** Design for Power BI in GCC (gov) environment.
+**Constraints:** No DirectQuery to Dataverse (Import only), no Power BI Embedded (use native Power BI Service URLs), no custom visuals from AppSource marketplace (only certified visuals), no AI visuals (Q&A, Key Influencers) in GCC, Dataflows supported, scheduled refresh requires on-premises data gateway or Dataverse connector.
+**Mitigations:** All visuals use standard Power BI visuals only. No AI features referenced. Gateway configuration documented in reporting README.
+
+### ADR-023: Power BI Reports vs MDA Dashboards
+**Decision:** Power BI reports focus on historical analytics and trends; MDA dashboards (Phase 5) handle real-time operational monitoring.
+**Separation:** MDA dashboards provide live Dataverse views, current state, and operator actions (dispatch, assign, update). Power BI reports provide aggregated metrics, time-series trends, KPIs, cross-agency comparison, and NFPA benchmarks. No duplication — Power BI does not recreate the 4 MDA dashboards. Instead, it adds analytical depth (trends, percentiles, benchmarks, drill-through) that MDA cannot provide.
+
 ---
 
 ## Model-Driven App — Dispatch Console
@@ -1162,6 +1186,88 @@ PatientRecord form uses a dedicated "Patient Info (PHI)" tab for the 7 PHI colum
 
 ---
 
+## Reporting / Power BI Layer
+
+### Overview
+
+Phase 6 delivers 5 Power BI datasets and 8 reports (~33 pages) as JSON specification files. Makers translate specs into Power BI Desktop / Service. These reports provide historical analytics, KPIs, and cross-agency analysis complementing the MDA's real-time dashboards.
+
+- **Spec location:** `/reporting/`
+- **Mode:** Import (scheduled refresh every 4 hours — ADR-019)
+- **RLS:** Dynamic agency filtering via AgencyUserMapping table (ADR-021)
+- **PHI:** Zero PHI columns in any dataset (ADR-020)
+- **GCC:** Standard visuals only, no AI visuals, no uncertified custom visuals (ADR-022)
+
+### Datasets (5 Star-Schema Definitions)
+
+| Dataset | Primary Fact Table | Dimensions | Purpose |
+|---------|-------------------|------------|---------|
+| Incident Analytics | seo_Incident | Agency, Jurisdiction, Station, Call, Date | Incident volume, types, response times, trends |
+| Unit Operations | seo_UnitStatusLog | Unit, Apparatus, Station, Agency, Incident, Date | Unit utilization, availability, workload |
+| EMS Operations | seo_PatientRecord (de-identified) | Incident, Facility, Unit, Agency, Date | Triage, transport metrics — **NO PHI** |
+| Mutual Aid & Cost | seo_MutualAidRequest | MutualAidAgreement, Agency (requesting + providing), Incident, Date | Agreement utilization, cost tracking |
+| Outcomes & After-Action | seo_AfterActionReport | Incident, Agency, Date | Loss metrics, cause analysis, injury/fatality |
+
+Each dataset includes a shared Date dimension (3-year rolling calendar) and AgencyUserMapping table for RLS.
+
+### Reports (8 Reports, ~33 Pages)
+
+| # | Report | Dataset | Pages | Audience |
+|---|--------|---------|-------|----------|
+| 1 | Response Performance | IncidentAnalytics | 4 | DispatchSupervisor, ReadOnlyAnalyst |
+| 2 | Incident Operations | IncidentAnalytics | 5 | DispatchSupervisor, ReadOnlyAnalyst |
+| 3 | Unit Utilization | UnitOperations | 4 | DispatchSupervisor, StationOfficer, ReadOnlyAnalyst |
+| 4 | EMS Analytics | EMSOperations | 4 | DispatchSupervisor, ReadOnlyAnalyst |
+| 5 | Mutual Aid & Cost | MutualAidCost | 3 | DispatchSupervisor, ReadOnlyAnalyst |
+| 6 | Executive Summary | IncidentAnalytics | 5 | ReadOnlyAnalyst, SystemAdmin |
+| 7 | Station Management | UnitOperations | 4 | StationOfficer, ReadOnlyAnalyst |
+| 8 | After-Action & Outcomes | OutcomesAfterAction | 4 | DispatchSupervisor, ReadOnlyAnalyst |
+
+### Key DAX Measures
+
+| Measure | DAX Logic | Reports |
+|---------|-----------|---------|
+| Avg Response Time (min) | `AVERAGE(Incident[Response Time (min)])` | Response Performance, Executive |
+| Median Response Time | `MEDIAN(Incident[Response Time (min)])` | Response Performance |
+| 90th Percentile Response | `PERCENTILE.INC(Incident[Response Time (min)], 0.90)` | Response Performance, Executive |
+| NFPA 1710 Compliance % | `DIVIDE(COUNTROWS(FILTER(Incident, [Response Time (min)] <= 6.33)), COUNTROWS(Incident))` | Response Performance, Executive |
+| Incident Count | `COUNTROWS(Incident)` | All |
+| MCI Count | `CALCULATE(COUNTROWS(Incident), Incident[Is MCI] = TRUE)` | Incident Ops, Executive |
+| Transport Rate % | `DIVIDE(CALCULATE(COUNTROWS(PatientRecord), [Is Transported] = TRUE), COUNTROWS(PatientRecord))` | EMS Analytics |
+| Total Property Loss | `SUM(AfterActionReport[Estimated Property Loss])` | After-Action, Executive |
+| Mutual Aid Cost | `SUM(MutualAidRequest[Actual Cost])` | Mutual Aid, Executive |
+
+### Row-Level Security
+
+| RLS Role | Filter | Assigned To |
+|----------|--------|-------------|
+| Agency Filter | `AgencyUserMapping[UserPrincipalName] = USERPRINCIPALNAME()` | DispatchSupervisor, StationOfficer, ReadOnlyAnalyst |
+| All Agencies | No filter | SystemAdmin, cross-agency analysts |
+
+### PHI Compliance Matrix
+
+| Report | Uses seo_PatientRecord? | PHI Columns? | Safe Columns Used |
+|--------|------------------------|-------------|-------------------|
+| Response Performance | No | — | — |
+| Incident Operations | No | — | — |
+| Unit Utilization | No | — | — |
+| EMS Analytics | **Yes** | **None** | triageCategory, isTransported, refusedCare, transport timestamps, facility FK |
+| Mutual Aid & Cost | No | — | — |
+| Executive Summary | No | — | — |
+| Station Management | No | — | — |
+| After-Action & Outcomes | No | — | — |
+
+### Security Role → Report Access
+
+| Role | Resp Perf | Inc Ops | Unit Util | EMS | Mutual Aid | Executive | Station | After-Action |
+|------|-----------|---------|-----------|-----|------------|-----------|---------|-------------|
+| SystemAdmin | All | All | All | All | All | All | All | All |
+| DispatchSupervisor | Own | Own | Own | Own | Own | — | — | Own |
+| StationOfficer | — | — | Own | — | — | — | Own | — |
+| ReadOnlyAnalyst | Own | Own | Own | Own | Own | Own | Own | Own |
+
+---
+
 ## ALM & Deployment
 
 ### Solution Layering
@@ -1187,6 +1293,9 @@ PatientRecord form uses a dedicated "Patient Info (PHI)" tab for the 7 PHI colum
 | seo_GPSUpdateIntervalSeconds | String | "30" | How often the mobile app updates unit GPS (Phase 4) |
 | seo_OfflineSyncIntervalMinutes | String | "5" | Offline cache sync interval for mobile app (Phase 4) |
 | seo_DefaultDashboardId | String | "" | GUID of default dashboard for MDA landing page (Phase 5) |
+| seo_PowerBIWorkspaceId | String | "" | GCC Power BI workspace GUID (Phase 6) |
+| seo_PowerBIDatasetRefreshHours | String | "4" | Dataset refresh interval in hours (Phase 6) |
+| seo_NFPAResponseTimeBenchmarkMinutes | String | "6.33" | NFPA 1710 first-unit response benchmark (Phase 6) |
 
 ### Connection References
 | Reference | Connector | Description |
@@ -1195,6 +1304,7 @@ PatientRecord form uses a dedicated "Patient Info (PHI)" tab for the 7 PHI colum
 | seo_Office365UsersConnection | Office 365 Users | User profile lookups |
 | seo_SharePointConnection | SharePoint | Document storage (pre-plans, SOPs) |
 | seo_OutlookConnection | Office 365 Outlook | Email notifications |
+| seo_PowerBIConnection | Power BI | Dataset refresh triggers, report references (Phase 6) |
 
 ### GCC Considerations
 - All data residency within US Government cloud boundaries

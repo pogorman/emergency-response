@@ -1,0 +1,276 @@
+{
+  "$schema": "../_schema/report-definition-schema.json",
+  "definitionType": "dataset",
+  "dataset": {
+    "name": "MutualAidCost",
+    "displayName": "Mutual Aid & Cost",
+    "description": "Mutual aid agreement utilization, request history, and cost tracking. Primary fact table is seo_MutualAidRequest with MutualAidAgreement, Agency (requesting + providing), Incident, and Date dimensions.",
+    "refreshMode": "Import",
+    "refreshSchedule": {
+      "intervalHours": 4,
+      "timeZone": "Eastern Standard Time",
+      "notifyOnFailure": true,
+      "gatewayRequired": true
+    },
+    "tables": [
+      {
+        "name": "MutualAidRequest",
+        "source": "seo_MutualAidRequest",
+        "description": "Fact table — one row per mutual aid request",
+        "columns": [
+          { "name": "Request ID", "sourceColumn": "seo_mutualaidrequestid", "dataType": "String", "isHidden": true },
+          { "name": "Request Title", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Status", "sourceColumn": "seo_status", "dataType": "String" },
+          { "name": "Resources Requested", "sourceColumn": "seo_resourcesRequested", "dataType": "String" },
+          { "name": "Resources Provided", "sourceColumn": "seo_resourcesProvided", "dataType": "String" },
+          { "name": "Requested On", "sourceColumn": "seo_requestedOn", "dataType": "DateTime" },
+          { "name": "Deployed On", "sourceColumn": "seo_deployedOn", "dataType": "DateTime" },
+          { "name": "Returned On", "sourceColumn": "seo_returnedOn", "dataType": "DateTime" },
+          { "name": "Estimated Cost", "sourceColumn": "seo_estimatedCost", "dataType": "Currency", "format": "$#,##0.00" },
+          { "name": "Actual Cost", "sourceColumn": "seo_actualCost", "dataType": "Currency", "format": "$#,##0.00" },
+          { "name": "Agreement ID", "sourceColumn": "seo_agreementId", "dataType": "String", "isHidden": true },
+          { "name": "Requesting Agency ID", "sourceColumn": "seo_requestingAgencyId", "dataType": "String", "isHidden": true },
+          { "name": "Providing Agency ID", "sourceColumn": "seo_providingAgencyId", "dataType": "String", "isHidden": true },
+          { "name": "Incident ID", "sourceColumn": "seo_incidentId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "MutualAidAgreement",
+        "source": "seo_MutualAidAgreement",
+        "description": "Dimension — standing mutual aid agreements",
+        "columns": [
+          { "name": "Agreement ID", "sourceColumn": "seo_mutualaidagreementid", "dataType": "String", "isHidden": true },
+          { "name": "Agreement Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agreement Type", "sourceColumn": "seo_agreementType", "dataType": "String" },
+          { "name": "Effective Date", "sourceColumn": "seo_effectiveDate", "dataType": "DateOnly" },
+          { "name": "Expiration Date", "sourceColumn": "seo_expirationDate", "dataType": "DateOnly" },
+          { "name": "Has Cost Sharing", "sourceColumn": "seo_hasCostSharing", "dataType": "Boolean" },
+          { "name": "Is Active", "sourceColumn": "seo_isActive", "dataType": "Boolean" }
+        ]
+      },
+      {
+        "name": "RequestingAgency",
+        "source": "seo_Agency",
+        "description": "Dimension — agency requesting mutual aid (role-playing dimension)",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Requesting Agency", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Requesting Agency Code", "sourceColumn": "seo_code", "dataType": "String" }
+        ]
+      },
+      {
+        "name": "ProvidingAgency",
+        "source": "seo_Agency",
+        "description": "Dimension — agency providing mutual aid (role-playing dimension)",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Providing Agency", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Providing Agency Code", "sourceColumn": "seo_code", "dataType": "String" }
+        ]
+      },
+      {
+        "name": "Agency",
+        "source": "seo_Agency",
+        "description": "Master agency dimension for RLS",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "seo_agencyid", "dataType": "String", "isHidden": true },
+          { "name": "Agency Name", "sourceColumn": "seo_name", "dataType": "String" },
+          { "name": "Agency Code", "sourceColumn": "seo_code", "dataType": "String" }
+        ],
+        "filters": [
+          { "column": "seo_isActive", "operator": "equals", "value": true, "description": "Only active agencies" }
+        ]
+      },
+      {
+        "name": "Incident",
+        "source": "seo_Incident",
+        "description": "Dimension — linked incidents",
+        "columns": [
+          { "name": "Incident ID", "sourceColumn": "seo_incidentid", "dataType": "String", "isHidden": true },
+          { "name": "Incident Number", "sourceColumn": "seo_incidentNumber", "dataType": "String" },
+          { "name": "Incident Type", "sourceColumn": "seo_incidentType", "dataType": "String" },
+          { "name": "Agency ID", "sourceColumn": "seo_primaryAgencyId", "dataType": "String", "isHidden": true }
+        ]
+      },
+      {
+        "name": "Date",
+        "source": "Calculated",
+        "description": "Shared date dimension — 3-year rolling calendar",
+        "isDateDimension": true,
+        "columns": [
+          { "name": "Date", "sourceColumn": "Date", "dataType": "DateTime" },
+          { "name": "Year", "sourceColumn": "Year", "dataType": "Int64" },
+          { "name": "Quarter", "sourceColumn": "Quarter", "dataType": "String" },
+          { "name": "Month", "sourceColumn": "Month", "dataType": "String", "sortByColumn": "MonthNumber" },
+          { "name": "MonthNumber", "sourceColumn": "MonthNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "Week", "sourceColumn": "Week", "dataType": "Int64" },
+          { "name": "DayOfWeek", "sourceColumn": "DayOfWeek", "dataType": "String", "sortByColumn": "DayOfWeekNumber" },
+          { "name": "DayOfWeekNumber", "sourceColumn": "DayOfWeekNumber", "dataType": "Int64", "isHidden": true },
+          { "name": "IsWeekend", "sourceColumn": "IsWeekend", "dataType": "Boolean" },
+          { "name": "FiscalYear", "sourceColumn": "FiscalYear", "dataType": "Int64" }
+        ]
+      },
+      {
+        "name": "AgencyUserMapping",
+        "source": "Calculated",
+        "description": "RLS mapping table",
+        "columns": [
+          { "name": "Agency ID", "sourceColumn": "AgencyId", "dataType": "String", "isHidden": true },
+          { "name": "User Principal Name", "sourceColumn": "UserPrincipalName", "dataType": "String", "isHidden": true }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "Request_Agreement",
+        "fromTable": "MutualAidRequest",
+        "fromColumn": "Agreement ID",
+        "toTable": "MutualAidAgreement",
+        "toColumn": "Agreement ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Request_RequestingAgency",
+        "fromTable": "MutualAidRequest",
+        "fromColumn": "Requesting Agency ID",
+        "toTable": "RequestingAgency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Request_ProvidingAgency",
+        "fromTable": "MutualAidRequest",
+        "fromColumn": "Providing Agency ID",
+        "toTable": "ProvidingAgency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Request_Incident",
+        "fromTable": "MutualAidRequest",
+        "fromColumn": "Incident ID",
+        "toTable": "Incident",
+        "toColumn": "Incident ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Request_Date",
+        "fromTable": "MutualAidRequest",
+        "fromColumn": "Requested On",
+        "toTable": "Date",
+        "toColumn": "Date",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Incident_Agency",
+        "fromTable": "Incident",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      },
+      {
+        "name": "Agency_RLS",
+        "fromTable": "AgencyUserMapping",
+        "fromColumn": "Agency ID",
+        "toTable": "Agency",
+        "toColumn": "Agency ID",
+        "cardinality": "ManyToOne",
+        "crossFilterDirection": "Single",
+        "isActive": true
+      }
+    ],
+    "measures": [
+      {
+        "name": "Request Count",
+        "expression": "COUNTROWS(MutualAidRequest)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Volume",
+        "usedInReports": ["MutualAidCost", "ExecutiveSummary"]
+      },
+      {
+        "name": "Mutual Aid Cost",
+        "expression": "SUM(MutualAidRequest[Actual Cost])",
+        "dataType": "Currency",
+        "format": "$#,##0.00",
+        "folder": "Cost",
+        "usedInReports": ["MutualAidCost", "ExecutiveSummary"]
+      },
+      {
+        "name": "Estimated Cost Total",
+        "expression": "SUM(MutualAidRequest[Estimated Cost])",
+        "dataType": "Currency",
+        "format": "$#,##0.00",
+        "folder": "Cost",
+        "usedInReports": ["MutualAidCost"]
+      },
+      {
+        "name": "Cost Variance",
+        "expression": "SUM(MutualAidRequest[Actual Cost]) - SUM(MutualAidRequest[Estimated Cost])",
+        "dataType": "Currency",
+        "format": "$#,##0.00",
+        "description": "Positive = over budget, negative = under budget",
+        "folder": "Cost",
+        "usedInReports": ["MutualAidCost"]
+      },
+      {
+        "name": "Active Agreements",
+        "expression": "CALCULATE(COUNTROWS(MutualAidAgreement), MutualAidAgreement[Is Active] = TRUE)",
+        "dataType": "Integer",
+        "format": "#,##0",
+        "folder": "Agreements",
+        "usedInReports": ["MutualAidCost"]
+      },
+      {
+        "name": "Avg Deployment Time (hours)",
+        "expression": "AVERAGE(DATEDIFF(MutualAidRequest[Requested On], MutualAidRequest[Deployed On], HOUR))",
+        "dataType": "Decimal",
+        "format": "#,##0.0",
+        "description": "Average time from request to deployment",
+        "folder": "Response",
+        "usedInReports": ["MutualAidCost"]
+      }
+    ],
+    "rlsRoles": [
+      {
+        "name": "Agency Filter",
+        "description": "Filter to user's agency — sees requests where their agency is requesting OR providing",
+        "tableFilters": [
+          {
+            "table": "AgencyUserMapping",
+            "daxFilter": "[UserPrincipalName] = USERPRINCIPALNAME()"
+          }
+        ]
+      },
+      {
+        "name": "All Agencies",
+        "description": "No filter — SystemAdmin and cross-agency analysts",
+        "tableFilters": []
+      }
+    ],
+    "phiCompliance": {
+      "usesPatientRecord": false,
+      "phiColumnsIncluded": false,
+      "safeColumnsUsed": [],
+      "excludedPhiColumns": [],
+      "justification": "This dataset does not reference seo_PatientRecord. No PHI risk."
+    },
+    "gccConstraints": [
+      "Import mode only — no DirectQuery to Dataverse in GCC",
+      "Scheduled refresh requires on-premises data gateway"
+    ]
+  }
+}
