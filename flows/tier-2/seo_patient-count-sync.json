@@ -1,0 +1,120 @@
+{
+  "flowId": "seo_PatientCountSync",
+  "displayName": "Patient Count Sync and MCI Auto-Flag",
+  "description": "When a PatientRecord is created, increments the parent incident's seo_patientCount. If the updated count meets or exceeds the seo_MCIPatientThreshold environment variable, automatically sets seo_isMCI = true on the incident. This is the only flow that intentionally cascades to another flow (NotifyMCIAlarm).",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Updates the Incident record's patientCount and isMCI flag. The triggering user (EMSProvider) may be in a different BU during mutual aid and may not have Write on the Incident."
+  },
+  "trigger": {
+    "type": "DataverseRowCreated",
+    "table": "seo_PatientRecord",
+    "scope": "Organization",
+    "filterColumns": null,
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the PatientRecord to get the parent incident ID",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_PatientRecord",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_patientrecordid']}",
+        "selectColumns": "_seo_incidentid_value"
+      },
+      "notes": "Only reads the incident lookup — does NOT read any PHI columns."
+    },
+    {
+      "stepNumber": 2,
+      "action": "List rows — Count Patients",
+      "description": "Count all PatientRecord rows for this incident",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_PatientRecord",
+      "inputs": {
+        "filterQuery": "_seo_incidentid_value eq '@{outputs('Get_PatientRecord')?['body/_seo_incidentid_value']}'",
+        "selectColumns": "seo_patientrecordid",
+        "countRows": true
+      },
+      "notes": "Only selects the primary key — no PHI columns are retrieved. Uses $count for efficiency."
+    },
+    {
+      "stepNumber": 3,
+      "action": "Get a row by ID — Current Incident",
+      "description": "Get the incident's current patientCount and isMCI flag",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Incident",
+      "inputs": {
+        "rowId": "@{outputs('Get_PatientRecord')?['body/_seo_incidentid_value']}",
+        "selectColumns": "seo_patientCount,seo_isMCI"
+      }
+    },
+    {
+      "stepNumber": 4,
+      "action": "Get environment variable value",
+      "description": "Read the MCI patient threshold",
+      "inputs": {
+        "variableName": "seo_MCIPatientThreshold"
+      }
+    },
+    {
+      "stepNumber": 5,
+      "action": "Initialize variable — shouldFlagMCI",
+      "description": "Determine if MCI should be flagged: patient count >= threshold AND not already flagged",
+      "inputs": {
+        "name": "shouldFlagMCI",
+        "type": "Boolean",
+        "value": "@{and(greaterOrEquals(outputs('Count_Patients')?['body/@odata.count'], int(outputs('Get_MCI_Threshold')?['body/value'])), equals(outputs('Get_Current_Incident')?['body/seo_isMCI'], false))}"
+      }
+    },
+    {
+      "stepNumber": 6,
+      "action": "Update a row",
+      "description": "Update the incident's patient count and conditionally set MCI flag",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Incident",
+      "inputs": {
+        "rowId": "@{outputs('Get_PatientRecord')?['body/_seo_incidentid_value']}",
+        "seo_patientCount": "@{outputs('Count_Patients')?['body/@odata.count']}",
+        "seo_isMCI": "@{if(variables('shouldFlagMCI'), true, outputs('Get_Current_Incident')?['body/seo_isMCI'])}"
+      },
+      "notes": "The seo_isMCI field is set to true if threshold is met, otherwise preserved at its current value. This ensures manual MCI flags (set before threshold) are never cleared. The update writes seo_patientCount and seo_isMCI — neither is in the filterColumns of any flow watching seo_Incident timestamp columns, preventing circular triggers with IncidentStatusProgression. However, seo_isMCI IS monitored by NotifyMCIAlarm — this is the ONE intentional cascade."
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [
+    "seo_MCIPatientThreshold",
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_PatientRecord",
+    "seo_Incident"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Trigger is row-created on PatientRecord; flow updates Incident but not PatientRecord",
+    "details": "This flow triggers on seo_PatientRecord creation. It updates seo_Incident.seo_patientCount and seo_isMCI. The IncidentStatusProgression flow only watches timestamp columns (dispatchedOn, firstUnitEnRouteOn, etc.), so no circular trigger. The NotifyMCIAlarm flow watches seo_isMCI and seo_alarmLevel — this IS an intentional cascade, but NotifyMCIAlarm only sends email (no Dataverse writes), so the chain terminates.",
+    "relatedFlows": ["seo_NotifyMCIAlarm", "seo_IncidentStatusProgression"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "This flow reads seo_PatientRecord but ONLY the primary key (seo_patientrecordid) and the incident lookup (_seo_incidentid_value). No PHI columns (name, age, gender, complaint, assessment, treatment) are selected or accessed. The count query also only selects the primary key."
+  },
+  "designerNotes": "Pay careful attention to the $select on PatientRecord queries — only select seo_patientrecordid and _seo_incidentid_value. Never select PHI columns. The count approach (step 2) is more accurate than incrementing because it handles edge cases like concurrent patient record creation. The MCI flag is one-directional: this flow only sets it to true, never back to false. Un-flagging MCI is a manual supervisor action."
+}

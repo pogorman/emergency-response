@@ -49,6 +49,41 @@
       "type": "String",
       "description": "Number of days to retain PHI data before archival. Compliance-driven.",
       "defaultValue": "2555"
+    },
+    {
+      "schemaName": "seo_MCIPatientThreshold",
+      "displayName": "MCI Patient Threshold",
+      "type": "String",
+      "description": "When an incident's patient count reaches this number, the flow auto-flags seo_isMCI = true. Configurable per deployment.",
+      "defaultValue": "5"
+    },
+    {
+      "schemaName": "seo_MutualAidExpiryWarningDays",
+      "displayName": "Mutual Aid Expiry Warning (Days)",
+      "type": "String",
+      "description": "Number of days before a mutual aid agreement's expiration date to include it in the daily digest email.",
+      "defaultValue": "30"
+    },
+    {
+      "schemaName": "seo_DispatchSupervisorEmail",
+      "displayName": "Dispatch Supervisor Email",
+      "type": "String",
+      "description": "Distribution list or mailbox for supervisor alerts (MCI, alarm level changes, mutual aid requests, command transfers). Set per environment.",
+      "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_FlowErrorNotificationEmail",
+      "displayName": "Flow Error Notification Email",
+      "type": "String",
+      "description": "Recipient for Power Automate flow failure notifications. Typically a shared mailbox monitored by the admin team.",
+      "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_ServiceAccountUserId",
+      "displayName": "Service Account User ID",
+      "type": "String",
+      "description": "GUID of the Dataverse system user (service account) that owns elevated flows. Must have seo_SystemAdmin role. Used for flows that manage BUs, teams, and cross-BU sharing.",
+      "defaultValue": ""
     }
   ]
 }

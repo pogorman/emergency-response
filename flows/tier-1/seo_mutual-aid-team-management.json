@@ -1,0 +1,242 @@
+{
+  "flowId": "seo_MutualAidTeamManagement",
+  "displayName": "Mutual Aid Team Management",
+  "description": "Manages cross-BU team membership when a MutualAidRequest status changes. On Approved: adds providing agency users to the 'Mutual Aid Partners' org-scoped team and creates a per-incident access team. On Deployed: no additional action (access already granted). On Returned/Cancelled/Denied: removes providing agency users from the Mutual Aid Partners team and deactivates the per-incident access team. Implements the patterns defined in security/teams.json.",
+  "flowType": "Automated",
+  "tier": 1,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Managing team membership across Business Units and creating/deactivating access teams requires Organization-level admin privileges."
+  },
+  "trigger": {
+    "type": "DataverseRowModified",
+    "table": "seo_MutualAidRequest",
+    "scope": "Organization",
+    "filterColumns": ["seo_status"],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the full MutualAidRequest with expanded lookups for incident, requesting agency, and providing agency",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_MutualAidRequest",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_mutualaidrequestid']}",
+        "expandQuery": "seo_incidentId($select=seo_incidentNumber,seo_incidentid),seo_providingAgencyId($select=seo_name,seo_agencyid),seo_requestingAgencyId($select=seo_name)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Switch",
+      "description": "Branch based on the new status value",
+      "condition": {
+        "expression": "@triggerOutputs()?['body/seo_status']",
+        "ifTrue": [],
+        "ifFalse": []
+      },
+      "notes": "Implement as a Switch action with cases for Approved (100000001), Returned (100000003), Denied (100000004), and Cancelled (100000005). Deployed (100000002) is a no-op pass-through."
+    },
+    {
+      "stepNumber": 3,
+      "action": "Scope — Case: Approved",
+      "description": "When status = Approved (100000001): create access team, add providing agency users to Mutual Aid Partners team, share incident with access team",
+      "notes": "This scope contains steps 301-305"
+    },
+    {
+      "stepNumber": 301,
+      "action": "List rows",
+      "description": "Find the 'Mutual Aid Partners' team (org-scoped, in root BU)",
+      "connector": "seo_DataverseConnection",
+      "table": "team",
+      "inputs": {
+        "filterQuery": "name eq 'Mutual Aid Partners' and teamtype eq 0"
+      }
+    },
+    {
+      "stepNumber": 302,
+      "action": "Create a new row — Access Team",
+      "description": "Create a per-incident access team following the naming pattern from security/teams.json",
+      "connector": "seo_DataverseConnection",
+      "table": "team",
+      "inputs": {
+        "name": "Incident @{outputs('Get_a_row_by_ID')?['body/seo_incidentId/seo_incidentNumber']} — Access Team",
+        "description": "Mutual aid access team for @{outputs('Get_a_row_by_ID')?['body/seo_providingAgencyId/seo_name']} on incident @{outputs('Get_a_row_by_ID')?['body/seo_incidentId/seo_incidentNumber']}",
+        "teamtype": 1
+      },
+      "notes": "teamtype 1 = Access team. Access teams are not bound to a BU."
+    },
+    {
+      "stepNumber": 303,
+      "action": "List rows — Providing Agency Personnel",
+      "description": "List active personnel from the providing agency who have Dataverse system user accounts",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Personnel",
+      "inputs": {
+        "filterQuery": "_seo_agencyid_value eq '@{outputs('Get_a_row_by_ID')?['body/seo_providingAgencyId/seo_agencyid']}' and seo_isActive eq true and seo_systemUserId ne null",
+        "selectColumns": "seo_personnelid,seo_systemUserId,seo_fullName"
+      },
+      "notes": "In a production deployment, you may want to filter further by role (only add users with Responder/EMSProvider/IC roles). For the spec, we add all active personnel from the providing agency."
+    },
+    {
+      "stepNumber": 304,
+      "action": "Apply to each — Add to Mutual Aid Partners",
+      "description": "For each providing agency personnel member, add their system user to the Mutual Aid Partners team",
+      "loop": {
+        "forEach": "@outputs('List_Providing_Agency_Personnel')?['body/value']",
+        "steps": [
+          {
+            "stepNumber": 30401,
+            "action": "Perform a bound action — AddMembers",
+            "description": "Add the user to the Mutual Aid Partners team",
+            "connector": "seo_DataverseConnection",
+            "inputs": {
+              "actionName": "AddMembersTeam",
+              "teamId": "@{first(outputs('List_Mutual_Aid_Partners')?['body/value'])?['teamid']}",
+              "memberId": "@{items('Apply_to_each')?['_seo_systemuserid_value']}"
+            }
+          },
+          {
+            "stepNumber": 30402,
+            "action": "Perform a bound action — AddMembers",
+            "description": "Add the user to the per-incident access team",
+            "connector": "seo_DataverseConnection",
+            "inputs": {
+              "actionName": "AddMembersTeam",
+              "teamId": "@{outputs('Create_Access_Team')?['body/teamid']}",
+              "memberId": "@{items('Apply_to_each')?['_seo_systemuserid_value']}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stepNumber": 305,
+      "action": "Perform a bound action — GrantAccess",
+      "description": "Share the incident record with the access team (Read access)",
+      "connector": "seo_DataverseConnection",
+      "inputs": {
+        "actionName": "GrantAccess",
+        "target": {
+          "entityType": "seo_Incident",
+          "id": "@{outputs('Get_a_row_by_ID')?['body/_seo_incidentid_value']}"
+        },
+        "principalAccess": {
+          "principal": {
+            "entityType": "team",
+            "id": "@{outputs('Create_Access_Team')?['body/teamid']}"
+          },
+          "accessMask": "ReadAccess"
+        }
+      },
+      "notes": "GrantAccess shares the specific incident record with the access team. The Mutual Aid Partners team's privileges (defined in security/teams.json) provide Read on Incident, Read/Write on IncidentAssignment, Read/Create on IncidentNote and UnitStatusLog."
+    },
+    {
+      "stepNumber": 4,
+      "action": "Scope — Case: Returned / Cancelled / Denied",
+      "description": "When status = Returned (100000003), Cancelled (100000005), or Denied (100000004): remove users from Mutual Aid Partners team and deactivate the access team",
+      "notes": "This scope contains steps 401-404"
+    },
+    {
+      "stepNumber": 401,
+      "action": "List rows — Find Access Team",
+      "description": "Find the per-incident access team by name pattern",
+      "connector": "seo_DataverseConnection",
+      "table": "team",
+      "inputs": {
+        "filterQuery": "contains(name, 'Incident @{outputs('Get_a_row_by_ID')?['body/seo_incidentId/seo_incidentNumber']} — Access Team') and teamtype eq 1"
+      }
+    },
+    {
+      "stepNumber": 402,
+      "action": "Condition — Access Team Exists",
+      "description": "Only proceed if the access team was found (it may not exist if request was denied before approval)",
+      "condition": {
+        "expression": "@greater(length(outputs('Find_Access_Team')?['body/value']), 0)",
+        "ifTrue": [
+          {
+            "stepNumber": 40201,
+            "action": "List rows — Access Team Members",
+            "description": "Get current members of the access team",
+            "connector": "seo_DataverseConnection",
+            "inputs": {
+              "actionName": "RetrieveTeamMembers",
+              "teamId": "@{first(outputs('Find_Access_Team')?['body/value'])?['teamid']}"
+            }
+          },
+          {
+            "stepNumber": 40202,
+            "action": "Apply to each — Remove from Mutual Aid Partners",
+            "description": "Remove each member from the Mutual Aid Partners team",
+            "loop": {
+              "forEach": "@outputs('Access_Team_Members')?['body/value']",
+              "steps": [
+                {
+                  "stepNumber": 402021,
+                  "action": "Perform a bound action — RemoveMembers",
+                  "description": "Remove user from Mutual Aid Partners team",
+                  "connector": "seo_DataverseConnection",
+                  "inputs": {
+                    "actionName": "RemoveMembersTeam",
+                    "teamId": "@{first(outputs('List_Mutual_Aid_Partners_Cleanup')?['body/value'])?['teamid']}",
+                    "memberId": "@{items('Apply_to_each_Remove')?['systemuserid']}"
+                  },
+                  "notes": "This may fail silently if the user was already removed (e.g., they were on another mutual aid request that was returned first). The error handling should suppress 'member not found' errors."
+                }
+              ]
+            }
+          },
+          {
+            "stepNumber": 40203,
+            "action": "Update a row — Deactivate Access Team",
+            "description": "Deactivate (not delete) the access team. Preserved for audit trail per security/teams.json.",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "rowId": "@{first(outputs('Find_Access_Team')?['body/value'])?['teamid']}",
+              "statecode": 1
+            },
+            "notes": "statecode 1 = Inactive. Teams are deactivated, never deleted, to preserve the audit trail."
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_MutualAidRequest",
+    "seo_Incident",
+    "seo_Agency",
+    "seo_Personnel",
+    "team"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "filterColumns scoped to seo_status on MutualAidRequest; flow never modifies MutualAidRequest",
+    "details": "The trigger fires on seo_MutualAidRequest.seo_status changes. The flow only modifies team system tables and shares incident records — it never writes back to seo_MutualAidRequest, so no circular trigger is possible.",
+    "relatedFlows": ["seo_NotifyMutualAidRequest"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "fixed",
+      "count": 2,
+      "interval": "PT30S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — this flow reads MutualAidRequest, Incident, Agency, and Personnel tables. None contain PHI. The shared incident access never includes PHI columns (field security profile blocks PHI regardless of team membership)."
+  },
+  "designerNotes": "This is the most complex flow in the solution. Build it incrementally: (1) Approved case first with hardcoded team names for testing, (2) Returned/Cancelled/Denied cleanup, (3) Replace hardcoded values with dynamic lookups. The GrantAccess unbound action requires the exact entity type and GUID — use the Dataverse connector's 'Perform an unbound action' step. Team member operations (add/remove) use the associate/disassociate endpoints on the teammembership_association navigation property."
+}

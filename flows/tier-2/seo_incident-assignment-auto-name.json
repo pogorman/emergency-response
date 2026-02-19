@@ -1,0 +1,96 @@
+{
+  "flowId": "seo_IncidentAssignmentAutoName",
+  "displayName": "Incident Assignment Auto-Name",
+  "description": "Auto-populates the seo_name field on IncidentAssignment records when created. Format: 'Unit X - Incident Y' for unit assignments, or 'Personnel Z - Incident Y' for individual personnel assignments (ICS roles). Ensures consistent, readable names in views and lookups.",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "TriggeringUser",
+    "rationale": "Runs under the dispatcher who created the assignment. They already have Write on seo_IncidentAssignment."
+  },
+  "trigger": {
+    "type": "DataverseRowCreated",
+    "table": "seo_IncidentAssignment",
+    "scope": "Organization",
+    "filterColumns": null,
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the IncidentAssignment with expanded lookups for incident, unit, and personnel",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_IncidentAssignment",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_incidentassignmentid']}",
+        "expandQuery": "seo_incidentId($select=seo_incidentNumber),seo_unitId($select=seo_name),seo_personnelId($select=seo_fullName)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Condition",
+      "description": "Check if this is a unit assignment or personnel-only assignment",
+      "condition": {
+        "expression": "@not(empty(outputs('Get_Assignment')?['body/_seo_unitid_value']))",
+        "ifTrue": [
+          {
+            "stepNumber": 201,
+            "action": "Update a row",
+            "description": "Set name to 'Unit X - Incident Y' format",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_IncidentAssignment",
+            "inputs": {
+              "rowId": "@{triggerOutputs()?['body/seo_incidentassignmentid']}",
+              "seo_name": "@{outputs('Get_Assignment')?['body/seo_unitId/seo_name']} - @{outputs('Get_Assignment')?['body/seo_incidentId/seo_incidentNumber']}"
+            }
+          }
+        ],
+        "ifFalse": [
+          {
+            "stepNumber": 202,
+            "action": "Update a row",
+            "description": "Set name to 'Personnel Z - Incident Y' format (for ICS role assignments)",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_IncidentAssignment",
+            "inputs": {
+              "rowId": "@{triggerOutputs()?['body/seo_incidentassignmentid']}",
+              "seo_name": "@{outputs('Get_Assignment')?['body/seo_personnelId/seo_fullName']} - @{outputs('Get_Assignment')?['body/seo_incidentId/seo_incidentNumber']}"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [],
+  "tables": [
+    "seo_IncidentAssignment",
+    "seo_Incident",
+    "seo_Unit",
+    "seo_Personnel"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Trigger is row-created only; the update in step 2 modifies the same row but uses a Modified trigger which would require filterColumns to re-fire",
+    "details": "This flow triggers on seo_IncidentAssignment creation. The update to seo_name happens on the newly created row. Since the trigger is 'Created' (not 'Modified'), the update will not re-trigger this flow. The IncidentSharing flow also triggers on IncidentAssignment creation but does not modify IncidentAssignment rows, so no conflict.",
+    "relatedFlows": ["seo_IncidentSharing"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads IncidentAssignment, Incident (number), Unit (name), Personnel (name). No PHI columns."
+  },
+  "designerNotes": "Simple flow — good candidate for testing the flow framework before building more complex flows. Both this flow and seo_IncidentSharing trigger on IncidentAssignment creation. They run independently and don't conflict because they modify different things (this: seo_name; sharing: team access grants)."
+}

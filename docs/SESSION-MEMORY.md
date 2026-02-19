@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 2)
+## Last Updated: 2026-02-18 (Session 3)
 
 ## Session Log
 
@@ -13,6 +13,7 @@
 |---------|------|----------|---------|
 | 1 | 2026-02-18 | ~45 min | Project bootstrap, Phase 1 data model (20+ tables, choices, ERD, data dictionary) |
 | 2 | 2026-02-18 | ~30 min | Phase 2 security model (8 roles, PHI profile, BU structure, teams, privilege matrix) |
+| 3 | 2026-02-18 | ~40 min | Phase 3 Power Automate flows (10 flow specs, schema, 5 env vars, full docs update) |
 
 ## Current Project State
 
@@ -31,9 +32,15 @@
   - Team definitions in `/security/teams.json`
   - Complete privilege matrix in `/security/privilege-matrix.md`
   - Security model documented in TECHNICAL.md
+- **Phase 3 COMPLETE:** Power Automate flow definitions
+  - Flow definition JSON Schema in `/flows/_schema/`
+  - Flow README with translation guide in `/flows/README.md`
+  - 5 Tier 1 flows in `/flows/tier-1/` (must-have automations)
+  - 5 Tier 2 flows in `/flows/tier-2/` (high-value automations, 3 sub-flows)
+  - 5 new environment variables added to `/solution/environment-variables.json`
+  - ADR-011 (flow security context) and ADR-012 (notification architecture) in TECHNICAL.md
 
 ### What's Pending
-- Phase 3: Power Automate flows (next)
 - Phase 4: Canvas app (mobile responder)
 - Phase 5: Model-driven app (dispatch/supervisor)
 - Phase 6: Reporting / Power BI
@@ -52,10 +59,14 @@
 10. **8 security roles** with granular per-table privileges: SystemAdmin, DispatchSupervisor, Dispatcher, IC, Responder, EMSProvider, StationOfficer, ReadOnlyAnalyst
 11. **User-scope + team sharing** for Responder and EMSProvider — least privilege, incident access via owner teams
 12. **Cross-BU mutual aid** via access teams + Mutual Aid Partners org-scoped team, with PHI never leaking across BUs
+13. **Flow security context split:** TriggeringUser for simple flows (status log, status progression, auto-name); FlowOwner (service account) for BU/team management, cross-BU sharing, and notifications
+14. **Circular trigger prevention:** filterColumns on all Dataverse triggers scoped to specific columns. Only one intentional cascade: PatientCountSync → NotifyMCIAlarm (terminates at email)
+15. **Notification architecture:** 3 sub-flows for dispatch supervisor alerts (MCI/alarm, mutual aid, command transfer) because Power Automate doesn't support multiple triggers per flow
+16. **No PHI in flows:** All 10 flows verified — none read or write PHI columns. PatientCountSync only reads primary key + incident lookup on PatientRecord
 
 ## Open Questions / Blockers
-- None currently — ready for O'G to review Phase 2 and greenlight Phase 3
+- None currently — ready for Phase 4 (Canvas app)
 
 ## Next Steps
-1. O'G reviews security model and privilege matrix
-2. Begin Phase 3: Power Automate flows (BU provisioning, status notifications, mutual aid workflows)
+1. O'G reviews Phase 3 flow definitions
+2. Begin Phase 4: Canvas app (mobile responder) — incident view, unit status buttons, GPS tracking

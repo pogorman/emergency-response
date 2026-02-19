@@ -45,3 +45,36 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/RELEASE-NOTES.md` — added v0.2.0 entry
 - Updated `docs/SESSION-MEMORY.md` — updated project state, added session duration tracking
 - Updated `CLAUDE.md` — Phase 1 → COMPLETE, Phase 2 → COMPLETE
+
+## 2026-02-18 — Session 3: Phase 3 — Power Automate Flow Definitions
+
+**Prompt Summary:** Implement Phase 3 — create Power Automate flow specification files (JSON blueprints), flow definition schema, 5 new environment variables, 10 flow definitions across 2 tiers, and update all documentation.
+
+**Actions Taken:**
+- Created `flows/_schema/flow-definition-schema.json` — JSON Schema for flow definition validation
+- Created `flows/README.md` — explains spec format, security contexts, circular trigger prevention, translation guide
+- Added 5 new environment variables to `solution/environment-variables.json`:
+  - `seo_MCIPatientThreshold` (default: "5")
+  - `seo_MutualAidExpiryWarningDays` (default: "30")
+  - `seo_DispatchSupervisorEmail` (default: "")
+  - `seo_FlowErrorNotificationEmail` (default: "")
+  - `seo_ServiceAccountUserId` (default: "")
+- Created 5 Tier 1 flow definitions in `flows/tier-1/`:
+  - `seo_unit-status-change-log.json` — Immutable UnitStatusLog on status change (ADR-003)
+  - `seo_incident-status-progression.json` — Auto-advance status from timestamps
+  - `seo_agency-onboarding.json` — Auto-provision BU + 4 owner teams on Agency create
+  - `seo_mutual-aid-team-management.json` — Cross-BU team/access team management
+  - `seo_incident-sharing.json` — Share incidents with agency teams on assignment
+- Created 5 Tier 2 flow definitions in `flows/tier-2/`:
+  - `seo_incident-assignment-auto-name.json` — Auto-name "Unit X - Incident Y"
+  - `seo_after-action-report-creation.json` — Draft AAR on incident close
+  - `seo_notify-dispatch-supervisor/seo_notify-mci-alarm.json` — MCI/alarm email
+  - `seo_notify-dispatch-supervisor/seo_notify-mutual-aid-request.json` — Mutual aid status email
+  - `seo_notify-dispatch-supervisor/seo_notify-command-transfer.json` — Command transfer email
+  - `seo_patient-count-sync.json` — Patient count rollup + MCI auto-flag
+  - `seo_mutual-aid-agreement-expiry.json` — Daily digest of expiring agreements
+- Updated `docs/TECHNICAL.md` — added Power Automate Flows section, ADR-011 (flow security context), ADR-012 (notification architecture)
+- Updated `docs/USER-GUIDE.md` — added Automated Workflows section
+- Updated `docs/RELEASE-NOTES.md` — added v0.3.0 entry
+- Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
+- Updated `CLAUDE.md` — Phase 3 → COMPLETE

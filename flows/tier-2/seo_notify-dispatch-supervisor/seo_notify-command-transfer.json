@@ -1,0 +1,118 @@
+{
+  "flowId": "seo_NotifyCommandTransfer",
+  "displayName": "Notify Dispatch Supervisor — Command Transfer",
+  "description": "Sends an email alert to the dispatch supervisor distribution list when a new IncidentCommand record is created (command established or transferred). Provides situational awareness for command structure changes.",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Reads IncidentCommand data across all BUs and resolves personnel names for the notification."
+  },
+  "trigger": {
+    "type": "DataverseRowCreated",
+    "table": "seo_IncidentCommand",
+    "scope": "Organization",
+    "filterColumns": null,
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the IncidentCommand with expanded lookups for incident and IC personnel",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_IncidentCommand",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_incidentcommandid']}",
+        "expandQuery": "seo_incidentId($select=seo_incidentNumber,seo_address,seo_incidentType,seo_alarmLevel),seo_incidentCommanderId($select=seo_fullName,seo_rank)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "List rows — Previous Commands",
+      "description": "Check if this is a command transfer (previous command records exist for this incident)",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_IncidentCommand",
+      "inputs": {
+        "filterQuery": "_seo_incidentid_value eq '@{triggerOutputs()?['body/_seo_incidentid_value']}' and seo_incidentcommandid ne '@{triggerOutputs()?['body/seo_incidentcommandid']}'",
+        "orderBy": "seo_commandEstablishedOn desc",
+        "top": 1,
+        "expandQuery": "seo_incidentCommanderId($select=seo_fullName)"
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "Get environment variable value",
+      "description": "Read the supervisor email distribution list",
+      "inputs": {
+        "variableName": "seo_DispatchSupervisorEmail"
+      }
+    },
+    {
+      "stepNumber": 4,
+      "action": "Condition — Email configured",
+      "description": "Only send if the supervisor email is configured",
+      "condition": {
+        "expression": "@not(empty(outputs('Get_Supervisor_Email')?['body/value']))",
+        "ifTrue": [
+          {
+            "stepNumber": 401,
+            "action": "Compose — Subject",
+            "description": "Build subject based on whether this is initial command or a transfer",
+            "inputs": {
+              "value": "@{if(greater(length(outputs('Previous_Commands')?['body/value']), 0), concat('[COMMAND TRANSFER] ', outputs('Get_Command')?['body/seo_incidentId/seo_incidentNumber'], ' - ', outputs('Get_Command')?['body/seo_incidentCommanderId/seo_fullName']), concat('[COMMAND ESTABLISHED] ', outputs('Get_Command')?['body/seo_incidentId/seo_incidentNumber'], ' - ', outputs('Get_Command')?['body/seo_incidentCommanderId/seo_fullName']))}"
+            }
+          },
+          {
+            "stepNumber": 402,
+            "action": "Send an email (V2)",
+            "description": "Send the command notification email",
+            "connector": "seo_OutlookConnection",
+            "inputs": {
+              "to": "@{outputs('Get_Supervisor_Email')?['body/value']}",
+              "subject": "@{outputs('Compose_Subject')?['body']}",
+              "body": "<h2>@{outputs('Compose_Subject')?['body']}</h2><table><tr><td><b>Incident:</b></td><td>@{outputs('Get_Command')?['body/seo_incidentId/seo_incidentNumber']}</td></tr><tr><td><b>Address:</b></td><td>@{outputs('Get_Command')?['body/seo_incidentId/seo_address']}</td></tr><tr><td><b>New IC:</b></td><td>@{outputs('Get_Command')?['body/seo_incidentCommanderId/seo_fullName']} (@{outputs('Get_Command')?['body/seo_incidentCommanderId/seo_rank@OData.Community.Display.V1.FormattedValue']})</td></tr><tr><td><b>Previous IC:</b></td><td>@{if(greater(length(outputs('Previous_Commands')?['body/value']), 0), first(outputs('Previous_Commands')?['body/value'])?['seo_incidentCommanderId/seo_fullName'], 'N/A (Initial command)')}</td></tr><tr><td><b>Command Name:</b></td><td>@{outputs('Get_Command')?['body/seo_commandName']}</td></tr><tr><td><b>Established:</b></td><td>@{outputs('Get_Command')?['body/seo_commandEstablishedOn']}</td></tr><tr><td><b>Strategy:</b></td><td>@{coalesce(outputs('Get_Command')?['body/seo_strategyMode@OData.Community.Display.V1.FormattedValue'], 'Not set')}</td></tr><tr><td><b>Radio:</b></td><td>@{coalesce(outputs('Get_Command')?['body/seo_radioChannel'], 'Not set')}</td></tr></table><p><em>This is an automated alert from EmergencyResponseCoordination.</em></p>",
+              "importance": "Normal"
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection",
+    "seo_OutlookConnection"
+  ],
+  "environmentVariables": [
+    "seo_DispatchSupervisorEmail",
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_IncidentCommand",
+    "seo_Incident",
+    "seo_Personnel"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Terminal flow — sends email only, no Dataverse writes",
+    "details": "This flow only reads from Dataverse and sends email. No Dataverse modifications are made.",
+    "relatedFlows": []
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT30S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads IncidentCommand, Incident, and Personnel. None contain PHI columns."
+  },
+  "designerNotes": "This flow triggers on IncidentCommand creation, not modification. A command transfer in ICS creates a new IncidentCommand record (the previous one gets seo_commandTerminatedOn set). The flow detects transfers by checking for prior command records on the same incident."
+}

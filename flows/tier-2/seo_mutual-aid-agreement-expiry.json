@@ -1,0 +1,165 @@
+{
+  "flowId": "seo_MutualAidAgreementExpiry",
+  "displayName": "Mutual Aid Agreement Expiry Digest",
+  "description": "Runs daily to check for mutual aid agreements expiring within the configurable warning window (seo_MutualAidExpiryWarningDays). Sends a single digest email listing all agreements approaching expiration. Helps administrators renew agreements before they lapse.",
+  "flowType": "Scheduled",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Reads all MutualAidAgreement records org-wide to compile the digest. The scheduled trigger has no triggering user."
+  },
+  "trigger": {
+    "type": "Schedule",
+    "schedule": {
+      "frequency": "Day",
+      "interval": 1,
+      "startTime": "2026-02-18T07:00:00Z",
+      "timeZone": "Eastern Standard Time"
+    }
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get environment variable value",
+      "description": "Read the warning window (days before expiry to alert)",
+      "inputs": {
+        "variableName": "seo_MutualAidExpiryWarningDays"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Get environment variable value",
+      "description": "Read the supervisor email",
+      "inputs": {
+        "variableName": "seo_DispatchSupervisorEmail"
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "Condition — Email configured",
+      "description": "Only proceed if the supervisor email is configured",
+      "condition": {
+        "expression": "@not(empty(outputs('Get_Supervisor_Email')?['body/value']))",
+        "ifTrue": [
+          {
+            "stepNumber": 301,
+            "action": "Compose — Cutoff Date",
+            "description": "Calculate the cutoff date (today + warning days)",
+            "inputs": {
+              "value": "@{addDays(utcNow(), int(outputs('Get_Warning_Days')?['body/value']))}"
+            }
+          },
+          {
+            "stepNumber": 302,
+            "action": "List rows — Expiring Agreements",
+            "description": "Find active agreements with expiration date between today and the cutoff",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_MutualAidAgreement",
+            "inputs": {
+              "filterQuery": "seo_isActive eq true and seo_expirationDate ne null and seo_expirationDate ge @{formatDateTime(utcNow(), 'yyyy-MM-dd')} and seo_expirationDate le @{formatDateTime(outputs('Cutoff_Date')?['body'], 'yyyy-MM-dd')}",
+              "expandQuery": "seo_requestingAgencyId($select=seo_name),seo_providingAgencyId($select=seo_name)",
+              "orderBy": "seo_expirationDate asc"
+            }
+          },
+          {
+            "stepNumber": 303,
+            "action": "Condition — Any expiring",
+            "description": "Only send email if there are agreements expiring within the window",
+            "condition": {
+              "expression": "@greater(length(outputs('Expiring_Agreements')?['body/value']), 0)",
+              "ifTrue": [
+                {
+                  "stepNumber": 30301,
+                  "action": "Initialize variable — emailBody",
+                  "description": "Build the HTML table rows for the digest email",
+                  "inputs": {
+                    "name": "emailBody",
+                    "type": "String",
+                    "value": "<h2>Mutual Aid Agreements Expiring Soon</h2><p>The following agreements expire within the next @{outputs('Get_Warning_Days')?['body/value']} days:</p><table border='1' cellpadding='5'><tr><th>Agreement</th><th>Requesting Agency</th><th>Providing Agency</th><th>Type</th><th>Expiration Date</th><th>Days Remaining</th></tr>"
+                  }
+                },
+                {
+                  "stepNumber": 30302,
+                  "action": "Apply to each — Build Table Rows",
+                  "description": "Append a table row for each expiring agreement",
+                  "loop": {
+                    "forEach": "@outputs('Expiring_Agreements')?['body/value']",
+                    "steps": [
+                      {
+                        "stepNumber": 3030201,
+                        "action": "Append to string variable",
+                        "description": "Add HTML row for this agreement",
+                        "inputs": {
+                          "name": "emailBody",
+                          "value": "<tr><td>@{items('Apply_to_each')?['seo_name']}</td><td>@{items('Apply_to_each')?['seo_requestingAgencyId/seo_name']}</td><td>@{items('Apply_to_each')?['seo_providingAgencyId/seo_name']}</td><td>@{items('Apply_to_each')?['seo_agreementType@OData.Community.Display.V1.FormattedValue']}</td><td>@{items('Apply_to_each')?['seo_expirationDate']}</td><td>@{dateDifference(utcNow(), items('Apply_to_each')?['seo_expirationDate'])}</td></tr>"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "stepNumber": 30303,
+                  "action": "Append to string variable — Close Table",
+                  "description": "Close the HTML table",
+                  "inputs": {
+                    "name": "emailBody",
+                    "value": "</table><p><em>This is an automated daily digest from EmergencyResponseCoordination. Review and renew agreements as needed.</em></p>"
+                  }
+                },
+                {
+                  "stepNumber": 30304,
+                  "action": "Send an email (V2)",
+                  "description": "Send the digest email",
+                  "connector": "seo_OutlookConnection",
+                  "inputs": {
+                    "to": "@{outputs('Get_Supervisor_Email')?['body/value']}",
+                    "subject": "[MUTUAL AID] @{length(outputs('Expiring_Agreements')?['body/value'])} agreement(s) expiring within @{outputs('Get_Warning_Days')?['body/value']} days",
+                    "body": "@{variables('emailBody')}",
+                    "importance": "Normal"
+                  }
+                }
+              ],
+              "ifFalse": []
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection",
+    "seo_OutlookConnection"
+  ],
+  "environmentVariables": [
+    "seo_MutualAidExpiryWarningDays",
+    "seo_DispatchSupervisorEmail",
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_MutualAidAgreement",
+    "seo_Agency"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Scheduled trigger — no Dataverse row modifications",
+    "details": "This flow runs on a daily schedule and only reads from Dataverse. It never modifies any rows, so no circular triggers are possible.",
+    "relatedFlows": []
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "none",
+      "count": 0,
+      "interval": "PT0S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads MutualAidAgreement and Agency. Neither contains PHI."
+  },
+  "designerNotes": "The scheduled time (7:00 AM ET) should be adjusted per deployment. The flow is idempotent — running it multiple times on the same day produces the same email (assuming no data changes). No email is sent if no agreements are expiring, reducing noise. The dateDifference function calculates the remaining days for each agreement."
+}

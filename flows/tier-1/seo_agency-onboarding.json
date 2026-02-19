@@ -1,0 +1,157 @@
+{
+  "flowId": "seo_AgencyOnboarding",
+  "displayName": "Agency Onboarding — BU and Team Provisioning",
+  "description": "When a new Agency record is created, this flow provisions the corresponding Dataverse Business Unit and 4 owner teams (Dispatchers, Responders, EMS, Command) per the Phase 2 security model. Implements the automated provisioning process defined in security/business-units.json and security/teams.json.",
+  "flowType": "Automated",
+  "tier": 1,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Creating Business Units and teams requires Organization-level admin privileges. No standard user role has these permissions. The flow must run as the service account with SystemAdmin role."
+  },
+  "trigger": {
+    "type": "DataverseRowCreated",
+    "table": "seo_Agency",
+    "scope": "Organization",
+    "filterColumns": null,
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the full Agency record to get seo_name and seo_code",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Agency",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_agencyid']}",
+        "selectColumns": "seo_name,seo_code,seo_isActive"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Condition",
+      "description": "Only provision if the agency is active (seo_isActive = true). Skip inactive agencies imported for historical reference.",
+      "condition": {
+        "expression": "@equals(outputs('Get_a_row_by_ID')?['body/seo_isActive'], true)",
+        "ifTrue": [
+          {
+            "stepNumber": 201,
+            "action": "Perform an unbound action — CreateBusinessUnit",
+            "description": "Create a new Business Unit named after the agency, as a child of the root BU (State Emergency Operations)",
+            "connector": "seo_DataverseConnection",
+            "inputs": {
+              "actionName": "CreateBusinessUnit",
+              "body": {
+                "name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']}",
+                "parentbusinessunitid": "@{variables('rootBUId')}",
+                "description": "Auto-provisioned BU for agency: @{outputs('Get_a_row_by_ID')?['body/seo_code']}"
+              }
+            },
+            "notes": "In practice, BU creation uses the Dataverse Web API: POST /api/data/v9.2/businessunits. The rootBUId should be resolved by querying businessunits where parentbusinessunitid eq null. Alternatively, store it in an environment variable if the root BU GUID is stable."
+          },
+          {
+            "stepNumber": 202,
+            "action": "Create a new row — Team: Dispatchers",
+            "description": "Create the '{Agency} Dispatchers' owner team in the new BU",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']} Dispatchers",
+              "description": "Dispatch center personnel for @{outputs('Get_a_row_by_ID')?['body/seo_name']}",
+              "teamtype": 0,
+              "businessunitid": "@{outputs('CreateBusinessUnit')?['body/businessunitid']}"
+            },
+            "runAfter": [201],
+            "notes": "teamtype 0 = Owner team. Members with seo_Dispatcher or seo_DispatchSupervisor roles are added to this team."
+          },
+          {
+            "stepNumber": 203,
+            "action": "Create a new row — Team: Responders",
+            "description": "Create the '{Agency} Responders' owner team in the new BU",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']} Responders",
+              "description": "Field responders and station officers for @{outputs('Get_a_row_by_ID')?['body/seo_name']}",
+              "teamtype": 0,
+              "businessunitid": "@{outputs('CreateBusinessUnit')?['body/businessunitid']}"
+            },
+            "runAfter": [201]
+          },
+          {
+            "stepNumber": 204,
+            "action": "Create a new row — Team: EMS",
+            "description": "Create the '{Agency} EMS' owner team in the new BU",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']} EMS",
+              "description": "EMS providers for @{outputs('Get_a_row_by_ID')?['body/seo_name']}",
+              "teamtype": 0,
+              "businessunitid": "@{outputs('CreateBusinessUnit')?['body/businessunitid']}"
+            },
+            "runAfter": [201]
+          },
+          {
+            "stepNumber": 205,
+            "action": "Create a new row — Team: Command",
+            "description": "Create the '{Agency} Command' owner team in the new BU",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']} Command",
+              "description": "Incident commanders for @{outputs('Get_a_row_by_ID')?['body/seo_name']}",
+              "teamtype": 0,
+              "businessunitid": "@{outputs('CreateBusinessUnit')?['body/businessunitid']}"
+            },
+            "runAfter": [201]
+          }
+        ],
+        "ifFalse": [
+          {
+            "stepNumber": 210,
+            "action": "Terminate",
+            "description": "Skip provisioning for inactive agencies",
+            "inputs": {
+              "status": "Succeeded",
+              "message": "Agency is inactive — skipping BU and team provisioning."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_Agency",
+    "businessunit",
+    "team"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Trigger is row-created only; flow does not create Agency rows",
+    "details": "This flow triggers on seo_Agency creation and creates BU/team rows in system tables (businessunit, team). It never creates or modifies seo_Agency rows, so no circular trigger is possible.",
+    "relatedFlows": []
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "fixed",
+      "count": 2,
+      "interval": "PT30S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — this flow only reads seo_Agency (no PHI) and creates BU/team system rows."
+  },
+  "designerNotes": "Steps 202-205 (team creation) can run in parallel since they all depend only on step 201 (BU creation). Use parallel branches in the designer to create all 4 teams simultaneously. BU creation via the Web API may take a few seconds to propagate — the fixed retry policy handles transient failures. Note: The root BU GUID should be resolved once at flow start by listing businessunits where parentbusinessunitid eq null, or hardcoded as a variable for the environment."
+}

@@ -1,0 +1,105 @@
+{
+  "flowId": "seo_NotifyMCIAlarm",
+  "displayName": "Notify Dispatch Supervisor — MCI / Alarm Level Change",
+  "description": "Sends an email alert to the dispatch supervisor distribution list when an incident is flagged as MCI or when the alarm level changes. Part of the NotifyDispatchSupervisor flow group (3 sub-flows). This is the terminal flow in the PatientCountSync → NotifyMCIAlarm cascade.",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Reads incident data across all BUs to compose the notification email. The Outlook connector sends from the service account mailbox."
+  },
+  "trigger": {
+    "type": "DataverseRowModified",
+    "table": "seo_Incident",
+    "scope": "Organization",
+    "filterColumns": ["seo_isMCI", "seo_alarmLevel"],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve incident details for the email body",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Incident",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_incidentid']}",
+        "selectColumns": "seo_incidentNumber,seo_address,seo_incidentType,seo_priority,seo_isMCI,seo_alarmLevel,seo_patientCount,seo_status",
+        "expandQuery": "seo_primaryAgencyId($select=seo_name)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Get environment variable value",
+      "description": "Read the supervisor email distribution list",
+      "inputs": {
+        "variableName": "seo_DispatchSupervisorEmail"
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "Condition — Email configured",
+      "description": "Only send if the supervisor email is configured",
+      "condition": {
+        "expression": "@not(empty(outputs('Get_Supervisor_Email')?['body/value']))",
+        "ifTrue": [
+          {
+            "stepNumber": 301,
+            "action": "Compose — Email Subject",
+            "description": "Build the email subject line based on what changed",
+            "inputs": {
+              "value": "@{if(equals(triggerOutputs()?['body/seo_isMCI'], true), concat('[MCI DECLARED] ', outputs('Get_Incident')?['body/seo_incidentNumber'], ' - ', outputs('Get_Incident')?['body/seo_address']), concat('[ALARM LEVEL ', outputs('Get_Incident')?['body/seo_alarmLevel'], '] ', outputs('Get_Incident')?['body/seo_incidentNumber'], ' - ', outputs('Get_Incident')?['body/seo_address']))}"
+            }
+          },
+          {
+            "stepNumber": 302,
+            "action": "Send an email (V2)",
+            "description": "Send the alert email to the supervisor distribution list",
+            "connector": "seo_OutlookConnection",
+            "inputs": {
+              "to": "@{outputs('Get_Supervisor_Email')?['body/value']}",
+              "subject": "@{outputs('Compose_Subject')?['body']}",
+              "body": "<h2>@{outputs('Compose_Subject')?['body']}</h2><table><tr><td><b>Incident:</b></td><td>@{outputs('Get_Incident')?['body/seo_incidentNumber']}</td></tr><tr><td><b>Address:</b></td><td>@{outputs('Get_Incident')?['body/seo_address']}</td></tr><tr><td><b>Type:</b></td><td>@{outputs('Get_Incident')?['body/seo_incidentType@OData.Community.Display.V1.FormattedValue']}</td></tr><tr><td><b>Priority:</b></td><td>@{outputs('Get_Incident')?['body/seo_priority@OData.Community.Display.V1.FormattedValue']}</td></tr><tr><td><b>Agency:</b></td><td>@{outputs('Get_Incident')?['body/seo_primaryAgencyId/seo_name']}</td></tr><tr><td><b>Alarm Level:</b></td><td>@{outputs('Get_Incident')?['body/seo_alarmLevel']}</td></tr><tr><td><b>MCI:</b></td><td>@{if(equals(outputs('Get_Incident')?['body/seo_isMCI'], true), 'YES', 'No')}</td></tr><tr><td><b>Patient Count:</b></td><td>@{outputs('Get_Incident')?['body/seo_patientCount']}</td></tr><tr><td><b>Status:</b></td><td>@{outputs('Get_Incident')?['body/seo_status@OData.Community.Display.V1.FormattedValue']}</td></tr></table><p><em>This is an automated alert from EmergencyResponseCoordination.</em></p>",
+              "importance": "High"
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection",
+    "seo_OutlookConnection"
+  ],
+  "environmentVariables": [
+    "seo_DispatchSupervisorEmail",
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_Incident",
+    "seo_Agency"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Terminal flow — sends email only, no Dataverse writes",
+    "details": "This flow only reads from Dataverse and sends an email via Outlook. It never writes back to any Dataverse table, so it cannot trigger any other flow. It is the terminal node in the PatientCountSync → NotifyMCIAlarm cascade.",
+    "relatedFlows": ["seo_PatientCountSync"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT30S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads seo_Incident (no PHI) and seo_Agency (no PHI). Email body contains incident operational data only. Patient count is an aggregate, not individual PHI."
+  },
+  "designerNotes": "This flow may fire twice in rapid succession when PatientCountSync updates both seo_isMCI and seo_alarmLevel in a single write. Power Automate's trigger deduplication should merge these into one run, but test to confirm. If duplicate emails occur, add a 1-minute delay with duplicate detection based on incident ID + timestamp."
+}

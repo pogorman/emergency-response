@@ -1,0 +1,129 @@
+{
+  "flowId": "seo_AfterActionReportCreation",
+  "displayName": "After-Action Report Auto-Creation",
+  "description": "When an incident's status changes to Closed (seo_closedOn is populated), automatically creates a draft AfterActionReport with pre-populated fields from the incident record. The AAR includes the incident summary, a placeholder timeline, and zeroed casualty/loss fields ready for the station officer to complete.",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Creates the AAR record on behalf of the system. The triggering user may be a dispatcher closing the incident who doesn't have Create on AfterActionReport."
+  },
+  "trigger": {
+    "type": "DataverseRowModified",
+    "table": "seo_Incident",
+    "scope": "Organization",
+    "filterColumns": ["seo_closedOn"],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Condition",
+      "description": "Only proceed if seo_closedOn was actually populated (not cleared)",
+      "condition": {
+        "expression": "@not(empty(triggerOutputs()?['body/seo_closedOn']))",
+        "ifTrue": [
+          {
+            "stepNumber": 101,
+            "action": "Get a row by ID",
+            "description": "Retrieve the full incident record for pre-populating the AAR",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_Incident",
+            "inputs": {
+              "rowId": "@{triggerOutputs()?['body/seo_incidentid']}",
+              "selectColumns": "seo_incidentNumber,seo_incidentType,seo_address,seo_narrativeSummary,seo_patientCount,seo_isMCI,seo_alarmLevel,seo_dispatchedOn,seo_firstUnitOnSceneOn,seo_clearedOn,seo_closedOn,_seo_primaryagencyid_value"
+            }
+          },
+          {
+            "stepNumber": 102,
+            "action": "List rows — Check Existing AAR",
+            "description": "Check if an AAR already exists for this incident (prevent duplicates)",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_AfterActionReport",
+            "inputs": {
+              "filterQuery": "_seo_incidentid_value eq '@{triggerOutputs()?['body/seo_incidentid']}'"
+            }
+          },
+          {
+            "stepNumber": 103,
+            "action": "Condition — No Existing AAR",
+            "description": "Only create if no AAR exists yet",
+            "condition": {
+              "expression": "@equals(length(outputs('Check_Existing_AAR')?['body/value']), 0)",
+              "ifTrue": [
+                {
+                  "stepNumber": 10301,
+                  "action": "List rows — Find IC",
+                  "description": "Find the most recent incident commander for this incident to set as author",
+                  "connector": "seo_DataverseConnection",
+                  "table": "seo_IncidentCommand",
+                  "inputs": {
+                    "filterQuery": "_seo_incidentid_value eq '@{triggerOutputs()?['body/seo_incidentid']}'",
+                    "orderBy": "seo_commandEstablishedOn desc",
+                    "top": 1,
+                    "selectColumns": "_seo_incidentcommanderid_value"
+                  }
+                },
+                {
+                  "stepNumber": 10302,
+                  "action": "Create a new row",
+                  "description": "Create the draft AAR with pre-populated fields",
+                  "connector": "seo_DataverseConnection",
+                  "table": "seo_AfterActionReport",
+                  "inputs": {
+                    "seo_reportTitle": "AAR - @{outputs('Get_Incident')?['body/seo_incidentNumber']} - @{formatDateTime(utcNow(), 'yyyy-MM-dd')}",
+                    "seo_incidentId": "@{triggerOutputs()?['body/seo_incidentid']}",
+                    "seo_authorId": "@{if(greater(length(outputs('Find_IC')?['body/value']), 0), first(outputs('Find_IC')?['body/value'])?['_seo_incidentcommanderid_value'], null)}",
+                    "seo_reportStatus": 100000000,
+                    "seo_incidentSummary": "@{coalesce(outputs('Get_Incident')?['body/seo_narrativeSummary'], concat('Incident ', outputs('Get_Incident')?['body/seo_incidentNumber'], ' at ', outputs('Get_Incident')?['body/seo_address'], '. Type: ', outputs('Get_Incident')?['body/seo_incidentType@OData.Community.Display.V1.FormattedValue'], '. Alarm level: ', outputs('Get_Incident')?['body/seo_alarmLevel'], '. Patients: ', outputs('Get_Incident')?['body/seo_patientCount'], '.'))}",
+                    "seo_timelineOfEvents": "@{concat('Dispatched: ', coalesce(outputs('Get_Incident')?['body/seo_dispatchedOn'], 'N/A'), '\nFirst Unit On Scene: ', coalesce(outputs('Get_Incident')?['body/seo_firstUnitOnSceneOn'], 'N/A'), '\nCleared: ', coalesce(outputs('Get_Incident')?['body/seo_clearedOn'], 'N/A'), '\nClosed: ', coalesce(outputs('Get_Incident')?['body/seo_closedOn'], 'N/A'))}",
+                    "seo_civilianInjuries": 0,
+                    "seo_civilianFatalities": 0,
+                    "seo_responderInjuries": 0,
+                    "seo_responderFatalities": 0
+                  },
+                  "notes": "seo_reportStatus 100000000 = Draft. The author is set to the last IC if one exists; otherwise left null for manual assignment. The seo_incidentSummary uses the narrative if available, otherwise generates a basic summary from incident fields."
+                }
+              ],
+              "ifFalse": []
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_Incident",
+    "seo_AfterActionReport",
+    "seo_IncidentCommand"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "filterColumns scoped to seo_closedOn only; flow creates AAR rows, not Incident rows",
+    "details": "The trigger only fires when seo_closedOn changes. The flow creates a new seo_AfterActionReport row — it does not modify seo_Incident, so no re-trigger. The IncidentStatusProgression flow sets seo_status (not seo_closedOn), so they don't chain.",
+    "relatedFlows": ["seo_IncidentStatusProgression"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads Incident (no PHI), IncidentCommand (no PHI). Creates AfterActionReport which has no PHI columns. Patient count is a non-PHI aggregate."
+  },
+  "designerNotes": "The duplicate check (step 102) is important because seo_closedOn could be modified multiple times (e.g., correcting a timestamp). Without the check, multiple AARs would be created. The IC lookup (step 10301) uses descending order by commandEstablishedOn to get the final IC — in command transfers, the last IC is typically the one who closes the incident."
+}

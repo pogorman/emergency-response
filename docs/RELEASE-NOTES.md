@@ -1,5 +1,65 @@
 # Release Notes
 
+## v0.3.0 — Phase 3: Power Automate Flow Definitions (2026-02-18)
+
+### Summary
+10 Power Automate flow specification files covering the critical automation layer: immutable audit logging, incident lifecycle progression, agency onboarding (BU + team provisioning), mutual aid team management, incident sharing, auto-naming, after-action report creation, supervisor notifications, patient count sync with MCI auto-detection, and agreement expiry monitoring.
+
+### What's Included
+- **Flow definition schema** (`flows/_schema/flow-definition-schema.json`):
+  - JSON Schema for validating all flow specification files
+  - Covers trigger config, step definitions, security context, PHI compliance, circular trigger prevention
+- **Flow README** (`flows/README.md`):
+  - Translation guide: spec → Power Automate designer
+  - Security context summary for all 10 flows
+  - Circular trigger prevention analysis
+  - Environment variable mapping
+- **5 Tier 1 flows** (`flows/tier-1/`) — must-have automations:
+  - `seo_UnitStatusChangeLog` — immutable audit trail per ADR-003
+  - `seo_IncidentStatusProgression` — auto-advance status from timestamps
+  - `seo_AgencyOnboarding` — BU + 4 owner teams on Agency create
+  - `seo_MutualAidTeamManagement` — cross-BU team membership + access teams
+  - `seo_IncidentSharing` — share incidents with agency teams on assignment
+- **5 Tier 2 flows** (`flows/tier-2/`) — high-value automations:
+  - `seo_IncidentAssignmentAutoName` — auto-name "Unit X - Incident Y"
+  - `seo_AfterActionReportCreation` — draft AAR on incident close
+  - `seo_NotifyDispatchSupervisor` (3 sub-flows):
+    - `seo_NotifyMCIAlarm` — MCI flag / alarm level alerts
+    - `seo_NotifyMutualAidRequest` — mutual aid lifecycle alerts
+    - `seo_NotifyCommandTransfer` — command establishment/transfer alerts
+  - `seo_PatientCountSync` — patient count rollup + MCI auto-flag
+  - `seo_MutualAidAgreementExpiry` — daily expiry digest email
+- **5 new environment variables** (`solution/environment-variables.json`):
+  - `seo_MCIPatientThreshold` (default: "5")
+  - `seo_MutualAidExpiryWarningDays` (default: "30")
+  - `seo_DispatchSupervisorEmail`
+  - `seo_FlowErrorNotificationEmail`
+  - `seo_ServiceAccountUserId`
+- **2 new ADRs** in TECHNICAL.md:
+  - ADR-011: Flow Security Context (TriggeringUser vs FlowOwner)
+  - ADR-012: Notification Architecture (sub-flow pattern)
+- **TECHNICAL.md updated** with Power Automate Flows section
+- **USER-GUIDE.md updated** with Automated Workflows section
+
+### Key Design Decisions
+- TriggeringUser for flows that stay within the user's BU (status log, status progression, auto-name)
+- FlowOwner (service account with SystemAdmin) for BU/team management and cross-BU operations
+- filterColumns on all triggers prevents circular firing; one intentional cascade (PatientCountSync → NotifyMCIAlarm)
+- No flow reads or writes PHI columns — verified for all 10 flows
+- Access teams are deactivated (not deleted) when mutual aid ends — preserves audit trail
+- MCI flag is one-directional (auto-set to true, never auto-cleared)
+
+### Breaking Changes
+None (additive — new flow specs and environment variables).
+
+### Dependencies
+- v0.2.0 (security model must be in place — flows reference roles, teams, BU structure)
+- Service account with seo_SystemAdmin role for FlowOwner flows
+- Office 365 Outlook connector for notification flows
+- GCC environment with Dataverse connection
+
+---
+
 ## v0.2.0 — Phase 2: Security Model + Roles (2026-02-18)
 
 ### Summary

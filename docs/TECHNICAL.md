@@ -858,6 +858,88 @@ Non-PHI columns on PatientRecord (triageCategory, isTransported, refusedCare, de
 
 ---
 
+## Power Automate Flows
+
+### Flow Inventory
+
+10 cloud flows organized into two implementation tiers. Full specifications in `/flows/`.
+
+#### Tier 1 — Must-Have
+
+| Flow | Trigger | Security | What It Does |
+|------|---------|----------|-------------|
+| **UnitStatusChangeLog** | Unit.currentStatus modified | TriggeringUser | Creates immutable UnitStatusLog row (ADR-003), updates lastStatusChangeOn |
+| **IncidentStatusProgression** | Incident timestamp columns modified | TriggeringUser | Auto-advances Incident.status when dispatchedOn/firstUnitOnSceneOn/clearedOn/closedOn are populated |
+| **AgencyOnboarding** | Agency created | FlowOwner | Creates Business Unit + 4 owner teams (Dispatchers, Responders, EMS, Command) |
+| **MutualAidTeamManagement** | MutualAidRequest.status modified | FlowOwner | On Approved: creates access team, adds to Mutual Aid Partners. On Returned/Cancelled: deactivates access team, removes members. |
+| **IncidentSharing** | IncidentAssignment created | FlowOwner | Shares incident with primary agency's 4 teams; for mutual aid assignments also shares with providing agency |
+
+#### Tier 2 — High Value
+
+| Flow | Trigger | Security | What It Does |
+|------|---------|----------|-------------|
+| **IncidentAssignmentAutoName** | IncidentAssignment created | TriggeringUser | Sets seo_name to "Unit X - Incident Y" or "Personnel Z - Incident Y" |
+| **AfterActionReportCreation** | Incident.closedOn populated | FlowOwner | Creates draft AAR with pre-populated summary, timeline, and IC as author |
+| **NotifyMCIAlarm** | Incident.isMCI or alarmLevel modified | FlowOwner | Email to seo_DispatchSupervisorEmail for MCI/alarm changes |
+| **NotifyMutualAidRequest** | MutualAidRequest created/status modified | FlowOwner | Email to supervisors for mutual aid lifecycle changes |
+| **NotifyCommandTransfer** | IncidentCommand created | FlowOwner | Email to supervisors for command establishment/transfer |
+| **PatientCountSync** | PatientRecord created | FlowOwner | Updates Incident.patientCount, auto-flags isMCI if threshold met |
+| **MutualAidAgreementExpiry** | Daily schedule (7:00 AM ET) | FlowOwner | Digest email of agreements expiring within seo_MutualAidExpiryWarningDays |
+
+### Flow Security Contexts
+
+Two security models are used:
+
+- **TriggeringUser:** Flow runs under the identity of the user who triggered it. Used for flows that only need to modify records within the user's existing permissions (status log, status progression, auto-name).
+- **FlowOwner:** Flow runs under the service account specified by `seo_ServiceAccountUserId`. The service account must have `seo_SystemAdmin` role. Used for flows that create BUs/teams, share records across BUs, or read data org-wide (agency onboarding, mutual aid, sharing, notifications, patient count sync).
+
+### Circular Trigger Prevention
+
+All Dataverse-triggered flows use `filterColumns` to scope their triggers to specific columns. This prevents:
+1. **Self-triggering:** A flow's update to column B doesn't re-fire a trigger watching column A
+2. **Cross-flow loops:** Flow X updating column A doesn't trigger Flow Y watching column B
+
+**Intentional cascade (one-hop, terminates):**
+```
+PatientCountSync (creates PatientRecord → updates Incident.patientCount + isMCI)
+    → NotifyMCIAlarm (triggers on Incident.isMCI → sends email, no Dataverse writes)
+```
+
+**Trigger column map:**
+
+| Flow | Watches | Writes | Loop Risk |
+|------|---------|--------|-----------|
+| UnitStatusChangeLog | Unit.seo_currentStatus | UnitStatusLog (create), Unit.seo_lastStatusChangeOn | None — lastStatusChangeOn not in filterColumns |
+| IncidentStatusProgression | Incident timestamps (6 columns) | Incident.seo_status | None — seo_status not in filterColumns |
+| AgencyOnboarding | Agency (create) | businessunit, team | None — different tables |
+| MutualAidTeamManagement | MutualAidRequest.seo_status | team (create/deactivate), GrantAccess | None — doesn't modify MutualAidRequest |
+| IncidentSharing | IncidentAssignment (create) | GrantAccess only | None — GrantAccess is not a row modify |
+| IncidentAssignmentAutoName | IncidentAssignment (create) | IncidentAssignment.seo_name | None — create trigger, not modify |
+| AfterActionReportCreation | Incident.seo_closedOn | AfterActionReport (create) | None — different table |
+| NotifyMCIAlarm | Incident.seo_isMCI, seo_alarmLevel | Email only | Terminal — no Dataverse writes |
+| NotifyMutualAidRequest | MutualAidRequest.seo_status | Email only | Terminal — no Dataverse writes |
+| NotifyCommandTransfer | IncidentCommand (create) | Email only | Terminal — no Dataverse writes |
+| PatientCountSync | PatientRecord (create) | Incident.seo_patientCount, seo_isMCI | Cascades to NotifyMCIAlarm (terminal) |
+| MutualAidAgreementExpiry | Schedule | Email only | N/A — no Dataverse writes |
+
+### PHI Compliance
+
+All 10 flows have been verified to NOT access PHI columns. The PatientCountSync flow reads `seo_PatientRecord` but only selects the primary key (`seo_patientrecordid`) and incident lookup (`_seo_incidentid_value`). The 7 PHI columns on PatientRecord are never queried by any flow.
+
+---
+
+## Architecture Decisions (continued)
+
+### ADR-011: Flow Security Context — TriggeringUser vs FlowOwner
+**Decision:** Flows that manage BUs, teams, cross-BU sharing, or org-wide reads run as FlowOwner (service account). Flows that operate within the triggering user's existing permissions run as TriggeringUser.
+**Rationale:** TriggeringUser is preferred because it respects existing security boundaries — a user can't escalate privileges through a flow. FlowOwner is required only when the operation needs privileges no standard role has (BU creation, team management, GrantAccess across BUs). The service account must have seo_SystemAdmin role and its GUID is stored in the seo_ServiceAccountUserId environment variable for traceability.
+
+### ADR-012: Notification Architecture — Sub-Flow Pattern
+**Decision:** Dispatch supervisor notifications are split into 3 separate flows (MCI/alarm, mutual aid, command transfer) rather than a single flow with multiple triggers.
+**Rationale:** Power Automate does not support multiple triggers per flow. Alternatives considered: (1) A single scheduled flow that polls for changes — rejected due to latency and complexity. (2) A child flow called by multiple parent flows — rejected because child flows in Power Automate solutions have limitations in GCC and add deployment complexity. (3) Three independent flows — chosen for simplicity, independent error handling, and the ability to enable/disable specific notification types.
+
+---
+
 ## ALM & Deployment
 
 ### Solution Layering
@@ -866,15 +948,20 @@ Non-PHI columns on PatientRecord (triageCategory, isTransported, refusedCare, de
 - **Environment strategy:** Dev → Test → Prod (solution transport via managed export/import)
 
 ### Environment Variables
-| Variable | Type | Description |
-|----------|------|-------------|
-| seo_DefaultAgencyId | String | GUID of the default agency for new records |
-| seo_DefaultJurisdictionId | String | GUID of the default jurisdiction |
-| seo_MapDefaultLatitude | String | Default map center latitude |
-| seo_MapDefaultLongitude | String | Default map center longitude |
-| seo_MapDefaultZoom | String | Default map zoom level |
-| seo_EnableMutualAidCostTracking | String | "true"/"false" — enable cost fields on mutual aid |
-| seo_PatientRecordRetentionDays | String | Number of days to retain PHI data |
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| seo_DefaultAgencyId | String | "" | GUID of the default agency for new records |
+| seo_DefaultJurisdictionId | String | "" | GUID of the default jurisdiction |
+| seo_MapDefaultLatitude | String | "38.9072" | Default map center latitude |
+| seo_MapDefaultLongitude | String | "-77.0369" | Default map center longitude |
+| seo_MapDefaultZoom | String | "12" | Default map zoom level |
+| seo_EnableMutualAidCostTracking | String | "true" | "true"/"false" — enable cost fields on mutual aid |
+| seo_PatientRecordRetentionDays | String | "2555" | Number of days to retain PHI data |
+| seo_MCIPatientThreshold | String | "5" | Patient count that auto-flags MCI (Phase 3) |
+| seo_MutualAidExpiryWarningDays | String | "30" | Days before expiry to include in digest email (Phase 3) |
+| seo_DispatchSupervisorEmail | String | "" | Distribution list for supervisor alerts (Phase 3) |
+| seo_FlowErrorNotificationEmail | String | "" | Recipient for flow failure notifications (Phase 3) |
+| seo_ServiceAccountUserId | String | "" | GUID of the service account for elevated flows (Phase 3) |
 
 ### Connection References
 | Reference | Connector | Description |

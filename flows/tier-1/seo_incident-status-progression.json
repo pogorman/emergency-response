@@ -1,0 +1,195 @@
+{
+  "flowId": "seo_IncidentStatusProgression",
+  "displayName": "Incident Status Progression",
+  "description": "Automatically advances an incident's seo_status when key timestamp columns are populated. Ensures the status field stays in sync with the operational timeline: dispatchedOn → Dispatched, firstUnitEnRouteOn → En Route, firstUnitOnSceneOn → On Scene, underControlOn → Under Control, clearedOn → Cleared, closedOn → Closed.",
+  "flowType": "Automated",
+  "tier": 1,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "TriggeringUser",
+    "rationale": "Runs under the dispatcher/IC who set the timestamp. They already have Write on seo_Incident within their BU."
+  },
+  "trigger": {
+    "type": "DataverseRowModified",
+    "table": "seo_Incident",
+    "scope": "Organization",
+    "filterColumns": [
+      "seo_dispatchedOn",
+      "seo_firstUnitEnRouteOn",
+      "seo_firstUnitOnSceneOn",
+      "seo_underControlOn",
+      "seo_clearedOn",
+      "seo_closedOn"
+    ],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Initialize variable",
+      "description": "Initialize newStatus variable to hold the target status value",
+      "inputs": {
+        "name": "newStatus",
+        "type": "Integer",
+        "value": -1
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Condition",
+      "description": "Determine the correct status based on which timestamp was most recently set. Evaluate in reverse chronological order (closed → cleared → underControl → onScene → enRoute → dispatched) so the highest-priority status wins.",
+      "condition": {
+        "expression": "@not(empty(triggerOutputs()?['body/seo_closedOn']))",
+        "ifTrue": [
+          {
+            "stepNumber": 201,
+            "action": "Set variable",
+            "description": "Set newStatus to Closed (100000007)",
+            "inputs": { "name": "newStatus", "value": 100000007 }
+          }
+        ],
+        "ifFalse": [
+          {
+            "stepNumber": 202,
+            "action": "Condition",
+            "description": "Check if clearedOn is set",
+            "condition": {
+              "expression": "@not(empty(triggerOutputs()?['body/seo_clearedOn']))",
+              "ifTrue": [
+                {
+                  "stepNumber": 2021,
+                  "action": "Set variable",
+                  "description": "Set newStatus to Cleared (100000006)",
+                  "inputs": { "name": "newStatus", "value": 100000006 }
+                }
+              ],
+              "ifFalse": [
+                {
+                  "stepNumber": 2022,
+                  "action": "Condition",
+                  "description": "Check if underControlOn is set",
+                  "condition": {
+                    "expression": "@not(empty(triggerOutputs()?['body/seo_underControlOn']))",
+                    "ifTrue": [
+                      {
+                        "stepNumber": 20221,
+                        "action": "Set variable",
+                        "description": "Set newStatus to Under Control (100000004)",
+                        "inputs": { "name": "newStatus", "value": 100000004 }
+                      }
+                    ],
+                    "ifFalse": [
+                      {
+                        "stepNumber": 20222,
+                        "action": "Condition",
+                        "description": "Check if firstUnitOnSceneOn is set",
+                        "condition": {
+                          "expression": "@not(empty(triggerOutputs()?['body/seo_firstUnitOnSceneOn']))",
+                          "ifTrue": [
+                            {
+                              "stepNumber": 202221,
+                              "action": "Set variable",
+                              "description": "Set newStatus to On Scene (100000003)",
+                              "inputs": { "name": "newStatus", "value": 100000003 }
+                            }
+                          ],
+                          "ifFalse": [
+                            {
+                              "stepNumber": 202222,
+                              "action": "Condition",
+                              "description": "Check if firstUnitEnRouteOn is set",
+                              "condition": {
+                                "expression": "@not(empty(triggerOutputs()?['body/seo_firstUnitEnRouteOn']))",
+                                "ifTrue": [
+                                  {
+                                    "stepNumber": 2022221,
+                                    "action": "Set variable",
+                                    "description": "Set newStatus to En Route (100000002)",
+                                    "inputs": { "name": "newStatus", "value": 100000002 }
+                                  }
+                                ],
+                                "ifFalse": [
+                                  {
+                                    "stepNumber": 2022222,
+                                    "action": "Condition",
+                                    "description": "Check if dispatchedOn is set",
+                                    "condition": {
+                                      "expression": "@not(empty(triggerOutputs()?['body/seo_dispatchedOn']))",
+                                      "ifTrue": [
+                                        {
+                                          "stepNumber": 20222221,
+                                          "action": "Set variable",
+                                          "description": "Set newStatus to Dispatched (100000001)",
+                                          "inputs": { "name": "newStatus", "value": 100000001 }
+                                        }
+                                      ],
+                                      "ifFalse": []
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "Condition",
+      "description": "Only update if newStatus differs from current status (prevents unnecessary writes and avoids re-triggering)",
+      "condition": {
+        "expression": "@and(not(equals(variables('newStatus'), -1)), not(equals(variables('newStatus'), triggerOutputs()?['body/seo_status'])))",
+        "ifTrue": [
+          {
+            "stepNumber": 301,
+            "action": "Update a row",
+            "description": "Update the incident's seo_status to the determined value",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_Incident",
+            "inputs": {
+              "rowId": "@{triggerOutputs()?['body/seo_incidentid']}",
+              "seo_status": "@{variables('newStatus')}"
+            }
+          }
+        ],
+        "ifFalse": []
+      },
+      "notes": "The guard condition prevents a write when status is already correct, which avoids wasted API calls."
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [],
+  "tables": [
+    "seo_Incident"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "filterColumns scoped to timestamp columns only; status update does not re-trigger",
+    "details": "The trigger watches seo_dispatchedOn, seo_firstUnitEnRouteOn, seo_firstUnitOnSceneOn, seo_underControlOn, seo_clearedOn, seo_closedOn. Step 3 updates seo_status, which is NOT in the filterColumns list, so the flow will not re-trigger. Additionally, the guard in step 3 prevents writing if the status is already correct.",
+    "relatedFlows": ["seo_AfterActionReportCreation"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — this flow only reads timestamp columns and writes the status column on seo_Incident. No PHI columns exist on seo_Incident."
+  },
+  "designerNotes": "The nested conditions can be implemented as a Switch on the most-recently-set timestamp, but nested Conditions are clearer for the priority logic. In the Power Automate designer, use 'Configure run after' on the final Update to ensure it only runs when a valid newStatus was determined. Note: The Overhaul status (100000005) is intentionally omitted — it's a manual status set by the IC, not driven by a timestamp."
+}

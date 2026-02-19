@@ -1,0 +1,97 @@
+{
+  "flowId": "seo_NotifyMutualAidRequest",
+  "displayName": "Notify Dispatch Supervisor — Mutual Aid Request",
+  "description": "Sends an email alert to the dispatch supervisor distribution list when a mutual aid request is created or its status changes. Covers the full lifecycle: Requested, Approved, Deployed, Returned, Denied, Cancelled.",
+  "flowType": "Automated",
+  "tier": 2,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Reads mutual aid request data across all BUs (both requesting and providing agencies) to compose the notification."
+  },
+  "trigger": {
+    "type": "DataverseRowCreatedOrModified",
+    "table": "seo_MutualAidRequest",
+    "scope": "Organization",
+    "filterColumns": ["seo_status"],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the MutualAidRequest with expanded lookups",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_MutualAidRequest",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_mutualaidrequestid']}",
+        "expandQuery": "seo_incidentId($select=seo_incidentNumber,seo_address),seo_requestingAgencyId($select=seo_name),seo_providingAgencyId($select=seo_name)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Get environment variable value",
+      "description": "Read the supervisor email distribution list",
+      "inputs": {
+        "variableName": "seo_DispatchSupervisorEmail"
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "Condition — Email configured",
+      "description": "Only send if the supervisor email is configured",
+      "condition": {
+        "expression": "@not(empty(outputs('Get_Supervisor_Email')?['body/value']))",
+        "ifTrue": [
+          {
+            "stepNumber": 301,
+            "action": "Send an email (V2)",
+            "description": "Send the mutual aid alert email",
+            "connector": "seo_OutlookConnection",
+            "inputs": {
+              "to": "@{outputs('Get_Supervisor_Email')?['body/value']}",
+              "subject": "[MUTUAL AID - @{triggerOutputs()?['body/seo_status@OData.Community.Display.V1.FormattedValue']}] @{outputs('Get_Request')?['body/seo_incidentId/seo_incidentNumber']} - @{outputs('Get_Request')?['body/seo_requestingAgencyId/seo_name']} → @{outputs('Get_Request')?['body/seo_providingAgencyId/seo_name']}",
+              "body": "<h2>Mutual Aid Request Update</h2><table><tr><td><b>Status:</b></td><td>@{triggerOutputs()?['body/seo_status@OData.Community.Display.V1.FormattedValue']}</td></tr><tr><td><b>Incident:</b></td><td>@{outputs('Get_Request')?['body/seo_incidentId/seo_incidentNumber']}</td></tr><tr><td><b>Address:</b></td><td>@{outputs('Get_Request')?['body/seo_incidentId/seo_address']}</td></tr><tr><td><b>Requesting Agency:</b></td><td>@{outputs('Get_Request')?['body/seo_requestingAgencyId/seo_name']}</td></tr><tr><td><b>Providing Agency:</b></td><td>@{outputs('Get_Request')?['body/seo_providingAgencyId/seo_name']}</td></tr><tr><td><b>Resources Requested:</b></td><td>@{triggerOutputs()?['body/seo_resourcesRequested']}</td></tr><tr><td><b>Resources Provided:</b></td><td>@{coalesce(triggerOutputs()?['body/seo_resourcesProvided'], 'Pending')}</td></tr></table><p><em>This is an automated alert from EmergencyResponseCoordination.</em></p>",
+              "importance": "High"
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection",
+    "seo_OutlookConnection"
+  ],
+  "environmentVariables": [
+    "seo_DispatchSupervisorEmail",
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_MutualAidRequest",
+    "seo_Incident",
+    "seo_Agency"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Terminal flow — sends email only, no Dataverse writes",
+    "details": "This flow only reads from Dataverse and sends email. It never modifies any Dataverse row. The MutualAidTeamManagement flow also triggers on seo_MutualAidRequest.seo_status changes — both flows run independently since this one only sends email.",
+    "relatedFlows": ["seo_MutualAidTeamManagement"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT30S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — reads MutualAidRequest, Incident (number/address), Agency (names). No PHI columns exist on these tables."
+  },
+  "designerNotes": "Uses DataverseRowCreatedOrModified trigger to catch both the initial creation (status = Requested) and subsequent status changes. The filterColumns on seo_status means the trigger only fires on status updates, not on other field edits like cost updates."
+}

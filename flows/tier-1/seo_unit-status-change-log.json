@@ -1,0 +1,91 @@
+{
+  "flowId": "seo_UnitStatusChangeLog",
+  "displayName": "Unit Status Change Log",
+  "description": "Creates an immutable UnitStatusLog row every time a unit's currentStatus changes. Implements ADR-003 (append-only audit trail). Captures the previous status, timestamp, GPS location, related incident, and source. Also updates the unit's seo_lastStatusChangeOn timestamp.",
+  "flowType": "Automated",
+  "tier": 1,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "TriggeringUser",
+    "rationale": "Runs under the dispatcher/responder who changed the unit status. Stays within their BU permissions — they already have Create on UnitStatusLog and Write on Unit."
+  },
+  "trigger": {
+    "type": "DataverseRowModified",
+    "table": "seo_Unit",
+    "scope": "Organization",
+    "filterColumns": ["seo_currentStatus"],
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the full Unit record to get current GPS coordinates, current incident, and agency info",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Unit",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_unitid']}",
+        "selectColumns": "seo_name,seo_currentStatus,seo_latitude,seo_longitude,seo_currentIncidentId,seo_agencyId"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Create a new row",
+      "description": "Create the immutable UnitStatusLog entry with previous status from trigger's pre-image, new status from post-image, and current timestamp/GPS",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_UnitStatusLog",
+      "inputs": {
+        "seo_name": "@{outputs('Get_a_row_by_ID')?['body/seo_name']} - @{triggerOutputs()?['body/seo_currentStatus@OData.Community.Display.V1.FormattedValue']} - @{utcNow()}",
+        "seo_unitId": "@{triggerOutputs()?['body/seo_unitid']}",
+        "seo_status": "@{triggerOutputs()?['body/seo_currentStatus']}",
+        "seo_previousStatus": "@{triggerOutputs()?['body/_seo_currentstatus_oldvalue']}",
+        "seo_changedOn": "@{utcNow()}",
+        "seo_incidentId": "@{outputs('Get_a_row_by_ID')?['body/_seo_currentincidentid_value']}",
+        "seo_latitude": "@{outputs('Get_a_row_by_ID')?['body/seo_latitude']}",
+        "seo_longitude": "@{outputs('Get_a_row_by_ID')?['body/seo_longitude']}",
+        "seo_source": 100000003
+      },
+      "notes": "seo_source = 100000003 (Automated). The seo_changedById is intentionally left null for automated entries — the Dataverse 'createdby' system column captures the triggering user. The previous status uses the trigger's pre-image value."
+    },
+    {
+      "stepNumber": 3,
+      "action": "Update a row",
+      "description": "Update the Unit's seo_lastStatusChangeOn to the current timestamp",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Unit",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_unitid']}",
+        "seo_lastStatusChangeOn": "@{utcNow()}"
+      },
+      "notes": "This update targets seo_lastStatusChangeOn, NOT seo_currentStatus, so it will not re-trigger this flow (filterColumns only watches seo_currentStatus)."
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [],
+  "tables": [
+    "seo_Unit",
+    "seo_UnitStatusLog"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "filterColumns scoped to seo_currentStatus only",
+    "details": "Step 3 updates seo_lastStatusChangeOn on the Unit row, but the trigger only fires on seo_currentStatus changes. This prevents the flow from re-triggering itself. No other flow in the solution updates seo_currentStatus.",
+    "relatedFlows": []
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — this flow only reads/writes Unit and UnitStatusLog tables, which contain no PHI columns."
+  },
+  "designerNotes": "Enable the trigger's pre-image to capture the previous status value. In the Dataverse trigger configuration, expand 'Show advanced options' and set 'Select columns' to 'seo_currentStatus'. The pre-image provides the old value automatically."
+}

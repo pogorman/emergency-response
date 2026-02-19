@@ -1,0 +1,181 @@
+{
+  "flowId": "seo_IncidentSharing",
+  "displayName": "Incident Sharing with Agency Teams",
+  "description": "When an IncidentAssignment is created, shares the incident with the appropriate agency owner teams (Dispatchers, Responders, EMS, Command). This ensures users with User-scope roles (Responder, EMSProvider) can see incidents they are assigned to via team sharing. For mutual aid assignments (seo_isMutualAid = true), the incident is also shared with the providing agency's teams.",
+  "flowType": "Automated",
+  "tier": 1,
+  "status": "Specification",
+  "securityContext": {
+    "runAs": "FlowOwner",
+    "serviceAccountRole": "seo_SystemAdmin",
+    "rationale": "Sharing records across teams requires elevated privileges. The triggering user (dispatcher) may not have Share privilege on Incident for cross-team sharing."
+  },
+  "trigger": {
+    "type": "DataverseRowCreated",
+    "table": "seo_IncidentAssignment",
+    "scope": "Organization",
+    "filterColumns": null,
+    "filterExpression": null
+  },
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Get a row by ID",
+      "description": "Retrieve the IncidentAssignment with expanded incident and unit lookups",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_IncidentAssignment",
+      "inputs": {
+        "rowId": "@{triggerOutputs()?['body/seo_incidentassignmentid']}",
+        "expandQuery": "seo_incidentId($select=seo_incidentid,seo_incidentNumber,_seo_primaryagencyid_value),seo_unitId($select=seo_unitid,seo_name,_seo_agencyid_value)"
+      }
+    },
+    {
+      "stepNumber": 2,
+      "action": "Get a row by ID — Incident Agency",
+      "description": "Get the primary agency of the incident to resolve its BU and team names",
+      "connector": "seo_DataverseConnection",
+      "table": "seo_Agency",
+      "inputs": {
+        "rowId": "@{outputs('Get_Assignment')?['body/seo_incidentId/_seo_primaryagencyid_value']}",
+        "selectColumns": "seo_name,seo_agencyid"
+      }
+    },
+    {
+      "stepNumber": 3,
+      "action": "List rows — Agency Teams",
+      "description": "Find all 4 owner teams for the incident's primary agency by name pattern",
+      "connector": "seo_DataverseConnection",
+      "table": "team",
+      "inputs": {
+        "filterQuery": "startswith(name, '@{outputs('Get_Incident_Agency')?['body/seo_name']}') and teamtype eq 0"
+      },
+      "notes": "This returns up to 4 teams: {Agency} Dispatchers, {Agency} Responders, {Agency} EMS, {Agency} Command"
+    },
+    {
+      "stepNumber": 4,
+      "action": "Apply to each — Share with Agency Teams",
+      "description": "Share the incident record with each of the agency's owner teams",
+      "loop": {
+        "forEach": "@outputs('List_Agency_Teams')?['body/value']",
+        "steps": [
+          {
+            "stepNumber": 401,
+            "action": "Perform an unbound action — GrantAccess",
+            "description": "Grant Read + Write access on the incident to the team",
+            "connector": "seo_DataverseConnection",
+            "inputs": {
+              "actionName": "GrantAccess",
+              "target": {
+                "entityType": "seo_Incident",
+                "id": "@{outputs('Get_Assignment')?['body/_seo_incidentid_value']}"
+              },
+              "principalAccess": {
+                "principal": {
+                  "entityType": "team",
+                  "id": "@{items('Apply_to_each_Teams')?['teamid']}"
+                },
+                "accessMask": "ReadAccess,WriteAccess"
+              }
+            },
+            "notes": "GrantAccess is idempotent — sharing an already-shared record with the same team just updates the access mask. This safely handles multiple assignments to the same incident."
+          }
+        ]
+      }
+    },
+    {
+      "stepNumber": 5,
+      "action": "Condition — Mutual Aid Assignment",
+      "description": "If seo_isMutualAid is true and a unit is assigned, also share with the unit's agency teams",
+      "condition": {
+        "expression": "@and(equals(outputs('Get_Assignment')?['body/seo_isMutualAid'], true), not(empty(outputs('Get_Assignment')?['body/_seo_unitid_value'])))",
+        "ifTrue": [
+          {
+            "stepNumber": 501,
+            "action": "Get a row by ID — Unit Agency",
+            "description": "Get the agency of the assigned mutual aid unit",
+            "connector": "seo_DataverseConnection",
+            "table": "seo_Agency",
+            "inputs": {
+              "rowId": "@{outputs('Get_Assignment')?['body/seo_unitId/_seo_agencyid_value']}",
+              "selectColumns": "seo_name,seo_agencyid"
+            }
+          },
+          {
+            "stepNumber": 502,
+            "action": "List rows — Mutual Aid Agency Teams",
+            "description": "Find all owner teams for the mutual aid unit's agency",
+            "connector": "seo_DataverseConnection",
+            "table": "team",
+            "inputs": {
+              "filterQuery": "startswith(name, '@{outputs('Get_Unit_Agency')?['body/seo_name']}') and teamtype eq 0"
+            }
+          },
+          {
+            "stepNumber": 503,
+            "action": "Apply to each — Share with MA Agency Teams",
+            "description": "Share the incident with the providing agency's teams (Read only for mutual aid)",
+            "loop": {
+              "forEach": "@outputs('List_MA_Agency_Teams')?['body/value']",
+              "steps": [
+                {
+                  "stepNumber": 50301,
+                  "action": "Perform an unbound action — GrantAccess",
+                  "description": "Grant Read access on the incident to the mutual aid agency's team",
+                  "connector": "seo_DataverseConnection",
+                  "inputs": {
+                    "actionName": "GrantAccess",
+                    "target": {
+                      "entityType": "seo_Incident",
+                      "id": "@{outputs('Get_Assignment')?['body/_seo_incidentid_value']}"
+                    },
+                    "principalAccess": {
+                      "principal": {
+                        "entityType": "team",
+                        "id": "@{items('Apply_to_each_MA_Teams')?['teamid']}"
+                      },
+                      "accessMask": "ReadAccess"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "ifFalse": []
+      }
+    }
+  ],
+  "connectionReferences": [
+    "seo_DataverseConnection"
+  ],
+  "environmentVariables": [
+    "seo_ServiceAccountUserId"
+  ],
+  "tables": [
+    "seo_IncidentAssignment",
+    "seo_Incident",
+    "seo_Agency",
+    "seo_Unit",
+    "team"
+  ],
+  "circularTriggerPrevention": {
+    "strategy": "Trigger is row-created on IncidentAssignment; flow only shares Incident records (GrantAccess does not modify rows)",
+    "details": "This flow triggers on seo_IncidentAssignment creation. It uses GrantAccess to share the incident — this is a security operation, not a row update, so it does not trigger the IncidentStatusProgression flow or any other Dataverse-triggered flow.",
+    "relatedFlows": ["seo_IncidentAssignmentAutoName"]
+  },
+  "errorHandling": {
+    "strategy": "TryCatch",
+    "notifyOnFailure": true,
+    "notificationTarget": "seo_FlowErrorNotificationEmail",
+    "retryPolicy": {
+      "type": "exponential",
+      "count": 3,
+      "interval": "PT10S"
+    }
+  },
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "N/A — this flow reads IncidentAssignment, Incident, Agency, and Unit. None contain PHI. GrantAccess does not expose PHI — the field security profile independently blocks PHI column access for non-EMS roles."
+  },
+  "designerNotes": "GrantAccess is idempotent, so this flow safely handles the scenario where multiple units from the same agency are assigned to the same incident — the second GrantAccess call simply confirms the existing share. For mutual aid, we share with Read only (not Write) to the providing agency's teams. The Mutual Aid Partners team privileges (defined in security/teams.json) layer on top of this sharing. Note: This flow runs on EVERY IncidentAssignment creation, including non-mutual-aid ones. The mutual aid branch (step 5) only fires when seo_isMutualAid is true."
+}
