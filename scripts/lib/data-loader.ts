@@ -36,6 +36,7 @@ const FIELD_ALIASES: Record<string, string> = {
   seo_source: "seo_callSource",
   seo_reportedType: "seo_reportedIncidentType",
   seo_unitId: "seo_currentUnitId",
+  seo_hydrantId: "seo_hydrant_name", // auto-renamed to avoid PK collision
 };
 
 // ── Known choice-label aliases (sample data label → spec label) ────────
@@ -54,6 +55,8 @@ const CHOICE_LABEL_ALIASES: Record<string, string> = {
   "Green (Minor)": "Green — Minor",
   "Black (Deceased)": "Black — Deceased",
   "White (Non-Patient)": "White — Non-Patient",
+  "Helipad/LZ": "Helipad/Landing Zone",
+  "Residential (Institutional)": "Institutional",
 };
 
 // ── Deferred update (for unresolvable refs in pass 1) ──────────────────
@@ -78,7 +81,8 @@ interface RefEntry {
 function buildColumnMap(table: TableDef): Map<string, ColumnDef> {
   const map = new Map<string, ColumnDef>();
   for (const col of table.columns) {
-    map.set(col.schemaName, col);
+    // Store by lowercase key so lookups from lowercase fieldName work
+    map.set(col.schemaName.toLowerCase(), col);
   }
   return map;
 }
@@ -177,6 +181,7 @@ export async function importSampleData(
   specs: ProjectSpecs,
   entitySetMap: Map<string, string>,
   dryRun: boolean,
+  entityFilter: string | null = null,
 ): Promise<void> {
   const refMap = new Map<string, RefEntry>();
   const deferred: DeferredUpdate[] = [];
@@ -189,8 +194,14 @@ export async function importSampleData(
   }
 
   console.log("\n--- Phase B: Sample Data Import ---\n");
+  if (entityFilter) {
+    console.log(`  Entity filter: ${entityFilter}\n`);
+  }
 
   for (const entitySchema of IMPORT_ORDER) {
+    // Skip entities not matching the filter
+    if (entityFilter && entitySchema !== entityFilter) continue;
+
     const sampleFile = specs.sampleData.get(entitySchema);
     if (!sampleFile) {
       console.log(`  No sample data for ${entitySchema}. Skipping.`);
@@ -223,8 +234,8 @@ export async function importSampleData(
         // Skip null values
         if (rawValue === null || rawValue === undefined) continue;
 
-        // Apply field aliases
-        const fieldName = FIELD_ALIASES[rawKey] ?? rawKey;
+        // Apply field aliases, then lowercase for Dataverse Web API (logical names)
+        const fieldName = (FIELD_ALIASES[rawKey] ?? rawKey).toLowerCase();
 
         // Look up column definition
         const col = columnMap.get(fieldName);
@@ -234,7 +245,7 @@ export async function importSampleData(
             // Arrays (e.g., seo_assignedUnitIds, seo_certifications as array)
             // If there's a matching String column after alias, convert to CSV
             const aliased = FIELD_ALIASES[rawKey];
-            const aliasedCol = aliased ? columnMap.get(aliased) : null;
+            const aliasedCol = aliased ? columnMap.get(aliased.toLowerCase()) : null;
             if (aliasedCol && aliasedCol.type === "String") {
               apiBody[fieldName] = (rawValue as string[]).join(", ");
               continue;
