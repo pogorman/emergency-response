@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Global choice (option set) definitions for EmergencyResponseCoordination. These are reusable across multiple tables.",
+  "choices": {
+    "seo_IncidentType": {
+      "displayName": "Incident Type",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Structure Fire" },
+        { "value": 100000001, "label": "Wildland Fire" },
+        { "value": 100000002, "label": "Vehicle Fire" },
+        { "value": 100000003, "label": "Medical Emergency" },
+        { "value": 100000004, "label": "Cardiac Arrest" },
+        { "value": 100000005, "label": "Trauma" },
+        { "value": 100000006, "label": "Technical Rescue" },
+        { "value": 100000007, "label": "Water Rescue" },
+        { "value": 100000008, "label": "Hazmat" },
+        { "value": 100000009, "label": "MVA — Motor Vehicle Accident" },
+        { "value": 100000010, "label": "MVA with Entrapment" },
+        { "value": 100000011, "label": "Gas Leak" },
+        { "value": 100000012, "label": "Carbon Monoxide" },
+        { "value": 100000013, "label": "Alarm Activation" },
+        { "value": 100000014, "label": "Public Assist" },
+        { "value": 100000015, "label": "Mutual Aid" },
+        { "value": 100000016, "label": "Other" }
+      ]
+    },
+    "seo_IncidentPriority": {
+      "displayName": "Incident Priority",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Priority 1 — Immediate Life Threat" },
+        { "value": 100000001, "label": "Priority 2 — Urgent" },
+        { "value": 100000002, "label": "Priority 3 — Non-Urgent" },
+        { "value": 100000003, "label": "Priority 4 — Scheduled/Low" }
+      ]
+    },
+    "seo_IncidentStatus": {
+      "displayName": "Incident Status",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Reported" },
+        { "value": 100000001, "label": "Dispatched" },
+        { "value": 100000002, "label": "En Route" },
+        { "value": 100000003, "label": "On Scene" },
+        { "value": 100000004, "label": "Under Control" },
+        { "value": 100000005, "label": "Overhaul" },
+        { "value": 100000006, "label": "Cleared" },
+        { "value": 100000007, "label": "Closed" },
+        { "value": 100000008, "label": "Cancelled" }
+      ]
+    },
+    "seo_UnitStatus": {
+      "displayName": "Unit Status",
+      "isGlobal": true,
+      "description": "Standard NFPA/CAD unit status codes",
+      "options": [
+        { "value": 100000000, "label": "Available" },
+        { "value": 100000001, "label": "Dispatched" },
+        { "value": 100000002, "label": "En Route" },
+        { "value": 100000003, "label": "On Scene" },
+        { "value": 100000004, "label": "Transporting" },
+        { "value": 100000005, "label": "At Hospital" },
+        { "value": 100000006, "label": "Returning" },
+        { "value": 100000007, "label": "Out of Service" },
+        { "value": 100000008, "label": "Staging" }
+      ]
+    },
+    "seo_TriageCategory": {
+      "displayName": "Triage Category",
+      "isGlobal": true,
+      "description": "START triage categories",
+      "options": [
+        { "value": 100000000, "label": "Red — Immediate" },
+        { "value": 100000001, "label": "Yellow — Delayed" },
+        { "value": 100000002, "label": "Green — Minor" },
+        { "value": 100000003, "label": "Black — Deceased" },
+        { "value": 100000004, "label": "White — Non-Patient" }
+      ]
+    },
+    "seo_ApparatusType": {
+      "displayName": "Apparatus Type",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Engine" },
+        { "value": 100000001, "label": "Ladder/Truck" },
+        { "value": 100000002, "label": "Rescue/Squad" },
+        { "value": 100000003, "label": "Ambulance/Medic" },
+        { "value": 100000004, "label": "Battalion Chief" },
+        { "value": 100000005, "label": "Tanker/Tender" },
+        { "value": 100000006, "label": "Brush/Wildland" },
+        { "value": 100000007, "label": "Hazmat Unit" },
+        { "value": 100000008, "label": "Heavy Rescue" },
+        { "value": 100000009, "label": "Boat" },
+        { "value": 100000010, "label": "Air Unit/Helicopter" },
+        { "value": 100000011, "label": "Command Vehicle" },
+        { "value": 100000012, "label": "Utility" },
+        { "value": 100000013, "label": "Other" }
+      ]
+    },
+    "seo_PersonnelRank": {
+      "displayName": "Personnel Rank",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Firefighter" },
+        { "value": 100000001, "label": "Firefighter/Paramedic" },
+        { "value": 100000002, "label": "Engineer/Driver" },
+        { "value": 100000003, "label": "Lieutenant" },
+        { "value": 100000004, "label": "Captain" },
+        { "value": 100000005, "label": "Battalion Chief" },
+        { "value": 100000006, "label": "Division Chief" },
+        { "value": 100000007, "label": "Assistant Chief" },
+        { "value": 100000008, "label": "Deputy Chief" },
+        { "value": 100000009, "label": "Fire Chief" },
+        { "value": 100000010, "label": "EMT-Basic" },
+        { "value": 100000011, "label": "EMT-Advanced" },
+        { "value": 100000012, "label": "Paramedic" },
+        { "value": 100000013, "label": "Dispatcher" },
+        { "value": 100000014, "label": "Volunteer" }
+      ]
+    },
+    "seo_ICSRole": {
+      "displayName": "ICS Role",
+      "isGlobal": true,
+      "description": "NIMS/ICS functional roles",
+      "options": [
+        { "value": 100000000, "label": "Incident Commander" },
+        { "value": 100000001, "label": "Operations Section Chief" },
+        { "value": 100000002, "label": "Planning Section Chief" },
+        { "value": 100000003, "label": "Logistics Section Chief" },
+        { "value": 100000004, "label": "Finance/Admin Section Chief" },
+        { "value": 100000005, "label": "Safety Officer" },
+        { "value": 100000006, "label": "PIO" },
+        { "value": 100000007, "label": "Liaison Officer" },
+        { "value": 100000008, "label": "Division Supervisor" },
+        { "value": 100000009, "label": "Group Supervisor" },
+        { "value": 100000010, "label": "Strike Team Leader" },
+        { "value": 100000011, "label": "Task Force Leader" },
+        { "value": 100000012, "label": "Staging Area Manager" },
+        { "value": 100000013, "label": "EMS Branch Director" },
+        { "value": 100000014, "label": "Fire Attack" },
+        { "value": 100000015, "label": "Search & Rescue" },
+        { "value": 100000016, "label": "Ventilation" },
+        { "value": 100000017, "label": "Water Supply" },
+        { "value": 100000018, "label": "RIT/FAST" }
+      ]
+    },
+    "seo_ResourceRequestStatus": {
+      "displayName": "Resource Request Status",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Requested" },
+        { "value": 100000001, "label": "Approved" },
+        { "value": 100000002, "label": "Dispatched" },
+        { "value": 100000003, "label": "En Route" },
+        { "value": 100000004, "label": "On Scene" },
+        { "value": 100000005, "label": "Released" },
+        { "value": 100000006, "label": "Denied" },
+        { "value": 100000007, "label": "Cancelled" }
+      ]
+    },
+    "seo_MutualAidStatus": {
+      "displayName": "Mutual Aid Request Status",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Requested" },
+        { "value": 100000001, "label": "Approved" },
+        { "value": 100000002, "label": "Deployed" },
+        { "value": 100000003, "label": "Returned" },
+        { "value": 100000004, "label": "Denied" },
+        { "value": 100000005, "label": "Cancelled" }
+      ]
+    },
+    "seo_CallSource": {
+      "displayName": "Call Source",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "911" },
+        { "value": 100000001, "label": "Non-Emergency Line" },
+        { "value": 100000002, "label": "Radio" },
+        { "value": 100000003, "label": "Walk-In" },
+        { "value": 100000004, "label": "Automatic Alarm" },
+        { "value": 100000005, "label": "Mutual Aid Request" },
+        { "value": 100000006, "label": "Transfer from Other PSAP" },
+        { "value": 100000007, "label": "Self-Initiated" }
+      ]
+    },
+    "seo_NoteType": {
+      "displayName": "Incident Note Type",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Dispatch Update" },
+        { "value": 100000001, "label": "On-Scene Report" },
+        { "value": 100000002, "label": "Command Decision" },
+        { "value": 100000003, "label": "Safety Alert" },
+        { "value": 100000004, "label": "EMS Update" },
+        { "value": 100000005, "label": "Resource Update" },
+        { "value": 100000006, "label": "General Note" }
+      ]
+    },
+    "seo_HazardType": {
+      "displayName": "Hazard Type",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Chemical" },
+        { "value": 100000001, "label": "Biological" },
+        { "value": 100000002, "label": "Radiological" },
+        { "value": 100000003, "label": "Explosive" },
+        { "value": 100000004, "label": "Structural Collapse" },
+        { "value": 100000005, "label": "Electrical" },
+        { "value": 100000006, "label": "Natural Gas" },
+        { "value": 100000007, "label": "Flammable Liquid" },
+        { "value": 100000008, "label": "Confined Space" },
+        { "value": 100000009, "label": "Other" }
+      ]
+    },
+    "seo_FacilityType": {
+      "displayName": "Facility Type",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "Hospital" },
+        { "value": 100000001, "label": "Trauma Center" },
+        { "value": 100000002, "label": "Burn Center" },
+        { "value": 100000003, "label": "Pediatric Center" },
+        { "value": 100000004, "label": "Stroke Center" },
+        { "value": 100000005, "label": "STEMI Center" },
+        { "value": 100000006, "label": "Urgent Care" },
+        { "value": 100000007, "label": "Helipad/Landing Zone" },
+        { "value": 100000008, "label": "Staging Area" },
+        { "value": 100000009, "label": "Shelter" },
+        { "value": 100000010, "label": "Other" }
+      ]
+    },
+    "seo_HydrantStatus": {
+      "displayName": "Hydrant Status",
+      "isGlobal": true,
+      "options": [
+        { "value": 100000000, "label": "In Service" },
+        { "value": 100000001, "label": "Out of Service" },
+        { "value": 100000002, "label": "Needs Inspection" },
+        { "value": 100000003, "label": "Buried/Inaccessible" }
+      ]
+    }
+  }
+}

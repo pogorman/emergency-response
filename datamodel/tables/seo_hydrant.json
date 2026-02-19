@@ -1,0 +1,133 @@
+{
+  "schemaName": "seo_Hydrant",
+  "displayName": "Hydrant",
+  "pluralName": "Hydrants",
+  "description": "Fire hydrant inventory. Essential for pre-planning water supply and on-scene water operations. Displayed on mobile app maps.",
+  "primaryColumn": "seo_hydrantId",
+  "ownership": "Organization",
+  "auditEnabled": false,
+  "auditNote": "Audit disabled — reference data, not operational. Bulk imported from GIS.",
+  "columns": [
+    {
+      "schemaName": "seo_hydrantId",
+      "displayName": "Hydrant ID",
+      "type": "String",
+      "maxLength": 50,
+      "required": true,
+      "description": "Hydrant identifier from GIS/water utility"
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Address / Cross Street",
+      "type": "String",
+      "maxLength": 500,
+      "required": false
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": true
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": true
+    },
+    {
+      "schemaName": "seo_status",
+      "displayName": "Hydrant Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_HydrantStatus",
+      "required": true,
+      "default": "In Service"
+    },
+    {
+      "schemaName": "seo_flowRateGPM",
+      "displayName": "Flow Rate (GPM)",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "Rated flow in gallons per minute"
+    },
+    {
+      "schemaName": "seo_staticPressurePSI",
+      "displayName": "Static Pressure (PSI)",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_residualPressurePSI",
+      "displayName": "Residual Pressure (PSI)",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_mainSizeInches",
+      "displayName": "Main Size (inches)",
+      "type": "Decimal",
+      "precision": 1,
+      "required": false,
+      "description": "Water main diameter"
+    },
+    {
+      "schemaName": "seo_hydrantColor",
+      "displayName": "Hydrant Color",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Red (< 500 GPM)" },
+        { "value": 100000001, "label": "Orange (500-999 GPM)" },
+        { "value": 100000002, "label": "Green (1000-1499 GPM)" },
+        { "value": 100000003, "label": "Blue (1500+ GPM)" },
+        { "value": 100000004, "label": "Other/Unknown" }
+      ],
+      "required": false,
+      "description": "NFPA 291 color coding for flow capacity"
+    },
+    {
+      "schemaName": "seo_outletConfiguration",
+      "displayName": "Outlet Configuration",
+      "type": "String",
+      "maxLength": 100,
+      "required": false,
+      "description": "e.g., '2x 2.5\" + 1x 4.5\" steamer'"
+    },
+    {
+      "schemaName": "seo_lastTestedOn",
+      "displayName": "Last Tested On",
+      "type": "DateOnly",
+      "required": false
+    },
+    {
+      "schemaName": "seo_waterUtility",
+      "displayName": "Water Utility",
+      "type": "String",
+      "maxLength": 200,
+      "required": false,
+      "description": "Name of the water utility provider"
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false
+    },
+    {
+      "schemaName": "seo_notes",
+      "displayName": "Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "Access issues, winter freeze concerns, etc."
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Jurisdiction",
+      "foreignKey": "seo_jurisdictionId"
+    }
+  ]
+}

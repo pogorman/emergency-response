@@ -1,0 +1,106 @@
+{
+  "schemaName": "seo_Hazard",
+  "displayName": "Hazard",
+  "pluralName": "Hazards",
+  "description": "Known hazards associated with a pre-plan location or identified during an incident. Can reference NFPA 704 diamond, SDS info, etc.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Hazard Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "e.g., 'Anhydrous Ammonia Storage', 'Underground Fuel Tanks'"
+    },
+    {
+      "schemaName": "seo_hazardType",
+      "displayName": "Hazard Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_HazardType",
+      "required": true
+    },
+    {
+      "schemaName": "seo_prePlanId",
+      "displayName": "Pre-Plan",
+      "type": "Lookup",
+      "target": "seo_PrePlan",
+      "required": false,
+      "description": "Pre-plan this hazard belongs to (if pre-planned)"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": false,
+      "description": "Incident where this hazard was identified (if discovered on-scene)"
+    },
+    {
+      "schemaName": "seo_location",
+      "displayName": "Location Description",
+      "type": "String",
+      "maxLength": 500,
+      "required": false,
+      "description": "Where within the building/site this hazard exists"
+    },
+    {
+      "schemaName": "seo_nfpa704Health",
+      "displayName": "NFPA 704 Health",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "NFPA 704 diamond health rating (0-4)"
+    },
+    {
+      "schemaName": "seo_nfpa704Fire",
+      "displayName": "NFPA 704 Fire",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "NFPA 704 diamond fire rating (0-4)"
+    },
+    {
+      "schemaName": "seo_nfpa704Reactivity",
+      "displayName": "NFPA 704 Reactivity",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "NFPA 704 diamond reactivity rating (0-4)"
+    },
+    {
+      "schemaName": "seo_nfpa704Special",
+      "displayName": "NFPA 704 Special",
+      "type": "String",
+      "maxLength": 10,
+      "required": false,
+      "description": "NFPA 704 special hazard symbol (W, OX, SA)"
+    },
+    {
+      "schemaName": "seo_quantity",
+      "displayName": "Quantity",
+      "type": "String",
+      "maxLength": 100,
+      "required": false,
+      "description": "Estimated quantity (e.g., '500 gal', '2 tons')"
+    },
+    {
+      "schemaName": "seo_mitigationNotes",
+      "displayName": "Mitigation Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "How to mitigate or handle this hazard safely"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_PrePlan",
+      "foreignKey": "seo_prePlanId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schemaName": "seo_IncidentNote",
+  "displayName": "Incident Note",
+  "pluralName": "Incident Notes",
+  "description": "Running communications log for an incident. Includes dispatch updates, on-scene reports, command decisions, safety alerts. Chronological record.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Note Title",
+      "type": "String",
+      "maxLength": 200,
+      "required": true
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_noteType",
+      "displayName": "Note Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_NoteType",
+      "required": true
+    },
+    {
+      "schemaName": "seo_noteBody",
+      "displayName": "Note Body",
+      "type": "Memo",
+      "required": true,
+      "description": "Full text of the note or communication"
+    },
+    {
+      "schemaName": "seo_authorId",
+      "displayName": "Author",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Person who created this note"
+    },
+    {
+      "schemaName": "seo_createdOnOverride",
+      "displayName": "Note Timestamp",
+      "type": "DateTime",
+      "required": true,
+      "description": "Actual time of the note (may differ from system created-on for backdated entries)"
+    },
+    {
+      "schemaName": "seo_isPriority",
+      "displayName": "Priority Note",
+      "type": "Boolean",
+      "default": false,
+      "description": "High-priority flag — surfaces in alerts"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_authorId"
+    }
+  ]
+}

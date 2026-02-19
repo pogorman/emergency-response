@@ -1,0 +1,130 @@
+{
+  "schemaName": "seo_MutualAidRequest",
+  "displayName": "Mutual Aid Request",
+  "pluralName": "Mutual Aid Requests",
+  "description": "Per-incident request for mutual aid. Links an incident to an agreement, tracks resources requested/provided, and optional cost tracking.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Request Title",
+      "type": "String",
+      "maxLength": 200,
+      "required": true
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_agreementId",
+      "displayName": "Under Agreement",
+      "type": "Lookup",
+      "target": "seo_MutualAidAgreement",
+      "required": false,
+      "description": "Which standing agreement this request falls under (if any)"
+    },
+    {
+      "schemaName": "seo_requestingAgencyId",
+      "displayName": "Requesting Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true
+    },
+    {
+      "schemaName": "seo_providingAgencyId",
+      "displayName": "Providing Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true
+    },
+    {
+      "schemaName": "seo_status",
+      "displayName": "Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_MutualAidStatus",
+      "required": true,
+      "default": "Requested",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_resourcesRequested",
+      "displayName": "Resources Requested",
+      "type": "Memo",
+      "required": true,
+      "description": "Description of resources needed"
+    },
+    {
+      "schemaName": "seo_resourcesProvided",
+      "displayName": "Resources Provided",
+      "type": "Memo",
+      "required": false,
+      "description": "What was actually provided"
+    },
+    {
+      "schemaName": "seo_requestedOn",
+      "displayName": "Requested On",
+      "type": "DateTime",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_deployedOn",
+      "displayName": "Deployed On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_returnedOn",
+      "displayName": "Returned On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_estimatedCost",
+      "displayName": "Estimated Cost",
+      "type": "Currency",
+      "required": false,
+      "description": "Estimated cost for cost-recovery agreements"
+    },
+    {
+      "schemaName": "seo_actualCost",
+      "displayName": "Actual Cost",
+      "type": "Currency",
+      "required": false
+    },
+    {
+      "schemaName": "seo_costNotes",
+      "displayName": "Cost Notes",
+      "type": "Memo",
+      "required": false
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_MutualAidAgreement",
+      "foreignKey": "seo_agreementId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_requestingAgencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_providingAgencyId"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "schemaName": "seo_Personnel",
+  "displayName": "Personnel",
+  "pluralName": "Personnel",
+  "description": "Individual fire/EMS personnel. Linked to an agency and optionally to a unit assignment.",
+  "primaryColumn": "seo_fullName",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_fullName",
+      "displayName": "Full Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_badgeNumber",
+      "displayName": "Badge/ID Number",
+      "type": "String",
+      "maxLength": 20,
+      "required": false,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_rank",
+      "displayName": "Rank",
+      "type": "GlobalChoice",
+      "choiceName": "seo_PersonnelRank",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_agencyId",
+      "displayName": "Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true
+    },
+    {
+      "schemaName": "seo_currentUnitId",
+      "displayName": "Current Unit",
+      "type": "Lookup",
+      "target": "seo_Unit",
+      "required": false,
+      "description": "Unit this person is currently assigned to for this shift"
+    },
+    {
+      "schemaName": "seo_certifications",
+      "displayName": "Certifications",
+      "type": "String",
+      "maxLength": 500,
+      "required": false,
+      "description": "Comma-separated list of active certifications"
+    },
+    {
+      "schemaName": "seo_isParamedic",
+      "displayName": "Is Paramedic",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_email",
+      "displayName": "Email",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_phone",
+      "displayName": "Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_systemUserId",
+      "displayName": "System User",
+      "type": "Lookup",
+      "target": "systemuser",
+      "required": false,
+      "description": "Link to the Dataverse system user for auth/security"
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_agencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Unit",
+      "foreignKey": "seo_currentUnitId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentAssignment",
+      "description": "Personnel's history of incident assignments"
+    }
+  ]
+}

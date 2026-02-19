@@ -1,0 +1,88 @@
+{
+  "schemaName": "seo_Station",
+  "displayName": "Station",
+  "pluralName": "Stations",
+  "description": "Fire/EMS stations — physical locations where apparatus and personnel are housed.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Station Name",
+      "type": "String",
+      "maxLength": 100,
+      "required": true,
+      "description": "e.g., Station 1, Firehouse 42",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_stationNumber",
+      "displayName": "Station Number",
+      "type": "String",
+      "maxLength": 10,
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_agencyId",
+      "displayName": "Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true,
+      "description": "Agency that operates this station"
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": true
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    },
+    {
+      "schemaName": "seo_phone",
+      "displayName": "Station Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_agencyId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Apparatus",
+      "description": "A station houses many apparatus"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Unit",
+      "description": "A station is home to many units"
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "schemaName": "seo_Unit",
+  "displayName": "Unit",
+  "pluralName": "Units",
+  "description": "A dispatchable unit — crew + apparatus combination. This is what gets dispatched to incidents. A unit has a current status and is assigned to a station.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Unit Designator",
+      "type": "String",
+      "maxLength": 50,
+      "required": true,
+      "description": "e.g., E1, M7, L3, BC2",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_currentStatus",
+      "displayName": "Current Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_UnitStatus",
+      "required": true,
+      "default": "Available",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_apparatusId",
+      "displayName": "Apparatus",
+      "type": "Lookup",
+      "target": "seo_Apparatus",
+      "required": false,
+      "description": "Apparatus currently assigned to this unit"
+    },
+    {
+      "schemaName": "seo_stationId",
+      "displayName": "Home Station",
+      "type": "Lookup",
+      "target": "seo_Station",
+      "required": true
+    },
+    {
+      "schemaName": "seo_agencyId",
+      "displayName": "Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true
+    },
+    {
+      "schemaName": "seo_currentIncidentId",
+      "displayName": "Current Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": false,
+      "description": "Incident this unit is currently assigned to (null if available)"
+    },
+    {
+      "schemaName": "seo_personnelCount",
+      "displayName": "Personnel Count",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "Current number of crew members on this unit"
+    },
+    {
+      "schemaName": "seo_isALS",
+      "displayName": "ALS Unit",
+      "type": "Boolean",
+      "default": false,
+      "description": "Is this unit staffed for Advanced Life Support?"
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Current Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false,
+      "description": "GPS lat — updated by mobile app"
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Current Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_lastStatusChangeOn",
+      "displayName": "Last Status Change",
+      "type": "DateTime",
+      "required": false,
+      "description": "Timestamp of the most recent status change"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Apparatus",
+      "foreignKey": "seo_apparatusId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Station",
+      "foreignKey": "seo_stationId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_agencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_currentIncidentId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentAssignment",
+      "description": "Unit's history of incident assignments"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_UnitStatusLog",
+      "description": "Full status history for this unit"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "schemaName": "seo_Jurisdiction",
+  "displayName": "Jurisdiction",
+  "pluralName": "Jurisdictions",
+  "description": "Geographic or political jurisdiction (state, county, city, district, fire protection district).",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Jurisdiction Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_jurisdictionLevel",
+      "displayName": "Jurisdiction Level",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "State" },
+        { "value": 100000001, "label": "County" },
+        { "value": 100000002, "label": "City" },
+        { "value": 100000003, "label": "Town/Township" },
+        { "value": 100000004, "label": "Fire Protection District" },
+        { "value": 100000005, "label": "EMS District" },
+        { "value": 100000006, "label": "Other" }
+      ],
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_parentJurisdictionId",
+      "displayName": "Parent Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false,
+      "description": "Hierarchical parent (e.g., city's parent is county)"
+    },
+    {
+      "schemaName": "seo_fipsCode",
+      "displayName": "FIPS Code",
+      "type": "String",
+      "maxLength": 10,
+      "required": false,
+      "description": "Federal Information Processing Standards code"
+    },
+    {
+      "schemaName": "seo_boundaryGeoJSON",
+      "displayName": "Boundary GeoJSON",
+      "type": "Memo",
+      "required": false,
+      "description": "GeoJSON polygon for jurisdiction boundary — used for geo-dispatch"
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Agency",
+      "description": "A jurisdiction has many agencies"
+    },
+    {
+      "type": "Self-Referential",
+      "description": "Hierarchical parent-child jurisdiction structure"
+    }
+  ]
+}

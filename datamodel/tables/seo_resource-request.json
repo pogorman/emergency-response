@@ -1,0 +1,126 @@
+{
+  "schemaName": "seo_ResourceRequest",
+  "displayName": "Resource Request",
+  "pluralName": "Resource Requests",
+  "description": "Request for additional resources at an incident. Tracks the request lifecycle from request through fulfillment or denial.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Request Title",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "Brief description of what's needed"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_requestedById",
+      "displayName": "Requested By",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": true,
+      "description": "Person who initiated the request (usually IC or ops chief)"
+    },
+    {
+      "schemaName": "seo_requestedOn",
+      "displayName": "Requested On",
+      "type": "DateTime",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_status",
+      "displayName": "Request Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_ResourceRequestStatus",
+      "required": true,
+      "default": "Requested",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_resourceType",
+      "displayName": "Resource Type",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "What type of resource is needed (e.g., 'Engine Company', 'ALS Ambulance', 'Hazmat Team')"
+    },
+    {
+      "schemaName": "seo_quantity",
+      "displayName": "Quantity",
+      "type": "WholeNumber",
+      "required": true,
+      "default": 1
+    },
+    {
+      "schemaName": "seo_urgency",
+      "displayName": "Urgency",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Emergency" },
+        { "value": 100000001, "label": "Urgent" },
+        { "value": 100000002, "label": "Routine" }
+      ],
+      "required": true
+    },
+    {
+      "schemaName": "seo_justification",
+      "displayName": "Justification",
+      "type": "Memo",
+      "required": false
+    },
+    {
+      "schemaName": "seo_fulfilledById",
+      "displayName": "Fulfilled By",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Dispatcher or logistics chief who fulfilled the request"
+    },
+    {
+      "schemaName": "seo_fulfilledOn",
+      "displayName": "Fulfilled On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_assignedUnitId",
+      "displayName": "Assigned Unit",
+      "type": "Lookup",
+      "target": "seo_Unit",
+      "required": false,
+      "description": "Unit dispatched to fulfill this request"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_requestedById"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_fulfilledById"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Unit",
+      "foreignKey": "seo_assignedUnitId"
+    }
+  ]
+}

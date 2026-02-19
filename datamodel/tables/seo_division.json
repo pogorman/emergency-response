@@ -1,0 +1,78 @@
+{
+  "schemaName": "seo_Division",
+  "displayName": "Division",
+  "pluralName": "Divisions",
+  "description": "ICS division/group within an incident command. Maps to geographic divisions (A, B, C, D) or functional groups (Ventilation, Search, Water Supply).",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Division Name",
+      "type": "String",
+      "maxLength": 100,
+      "required": true,
+      "description": "e.g., Division A, Division B, Ventilation Group, Search Group"
+    },
+    {
+      "schemaName": "seo_incidentCommandId",
+      "displayName": "Incident Command",
+      "type": "Lookup",
+      "target": "seo_IncidentCommand",
+      "required": true
+    },
+    {
+      "schemaName": "seo_supervisorId",
+      "displayName": "Division/Group Supervisor",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_divisionType",
+      "displayName": "Division Type",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Geographic Division" },
+        { "value": 100000001, "label": "Functional Group" },
+        { "value": 100000002, "label": "Branch" },
+        { "value": 100000003, "label": "Strike Team" },
+        { "value": 100000004, "label": "Task Force" }
+      ],
+      "required": true
+    },
+    {
+      "schemaName": "seo_radioChannel",
+      "displayName": "Radio Channel",
+      "type": "String",
+      "maxLength": 50,
+      "required": false
+    },
+    {
+      "schemaName": "seo_objectives",
+      "displayName": "Objectives",
+      "type": "Memo",
+      "required": false,
+      "description": "Tactical objectives for this division"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_IncidentCommand",
+      "foreignKey": "seo_incidentCommandId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_supervisorId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentAssignment",
+      "description": "Assignments within this division"
+    }
+  ]
+}

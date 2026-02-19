@@ -1,0 +1,175 @@
+{
+  "schemaName": "seo_AfterActionReport",
+  "displayName": "After-Action Report",
+  "pluralName": "After-Action Reports",
+  "description": "Post-incident report capturing timeline, outcomes, injuries, property loss, and lessons learned. One per incident.",
+  "primaryColumn": "seo_reportTitle",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_reportTitle",
+      "displayName": "Report Title",
+      "type": "String",
+      "maxLength": 300,
+      "required": true,
+      "description": "Auto-suggested: 'AAR - Incident Number - Date'"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_authorId",
+      "displayName": "Report Author",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": true
+    },
+    {
+      "schemaName": "seo_completedOn",
+      "displayName": "Completed On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_reportStatus",
+      "displayName": "Report Status",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Draft" },
+        { "value": 100000001, "label": "Under Review" },
+        { "value": 100000002, "label": "Approved" },
+        { "value": 100000003, "label": "Final" }
+      ],
+      "required": true,
+      "default": "Draft",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_incidentSummary",
+      "displayName": "Incident Summary",
+      "type": "Memo",
+      "required": true,
+      "description": "Narrative summary of the incident"
+    },
+    {
+      "schemaName": "seo_timelineOfEvents",
+      "displayName": "Timeline of Events",
+      "type": "Memo",
+      "required": false,
+      "description": "Chronological event timeline (rich text)"
+    },
+    {
+      "schemaName": "seo_outcome",
+      "displayName": "Outcome",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Resolved — No Loss" },
+        { "value": 100000001, "label": "Resolved — Minimal Loss" },
+        { "value": 100000002, "label": "Resolved — Significant Loss" },
+        { "value": 100000003, "label": "Resolved — Total Loss" },
+        { "value": 100000004, "label": "Patient Transported — Stable" },
+        { "value": 100000005, "label": "Patient Transported — Critical" },
+        { "value": 100000006, "label": "Fatality" },
+        { "value": 100000007, "label": "False Alarm" },
+        { "value": 100000008, "label": "Cancelled En Route" }
+      ],
+      "required": false,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_civilianInjuries",
+      "displayName": "Civilian Injuries",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 0
+    },
+    {
+      "schemaName": "seo_civilianFatalities",
+      "displayName": "Civilian Fatalities",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 0
+    },
+    {
+      "schemaName": "seo_responderInjuries",
+      "displayName": "Responder Injuries",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 0,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_responderFatalities",
+      "displayName": "Responder Fatalities",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 0,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_estimatedPropertyLoss",
+      "displayName": "Estimated Property Loss",
+      "type": "Currency",
+      "required": false
+    },
+    {
+      "schemaName": "seo_estimatedContentLoss",
+      "displayName": "Estimated Content Loss",
+      "type": "Currency",
+      "required": false
+    },
+    {
+      "schemaName": "seo_areaOfOrigin",
+      "displayName": "Area of Origin",
+      "type": "String",
+      "maxLength": 200,
+      "required": false,
+      "description": "Fire origin area (fire incidents only)"
+    },
+    {
+      "schemaName": "seo_causeOfFire",
+      "displayName": "Cause",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Accidental" },
+        { "value": 100000001, "label": "Natural" },
+        { "value": 100000002, "label": "Incendiary/Arson" },
+        { "value": 100000003, "label": "Under Investigation" },
+        { "value": 100000004, "label": "Undetermined" },
+        { "value": 100000005, "label": "N/A" }
+      ],
+      "required": false
+    },
+    {
+      "schemaName": "seo_lessonsLearned",
+      "displayName": "Lessons Learned",
+      "type": "Memo",
+      "required": false,
+      "description": "Key takeaways and improvement recommendations"
+    },
+    {
+      "schemaName": "seo_improvementActions",
+      "displayName": "Improvement Actions",
+      "type": "Memo",
+      "required": false,
+      "description": "Specific corrective actions to implement"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_authorId"
+    }
+  ]
+}

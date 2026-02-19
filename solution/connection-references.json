@@ -1,0 +1,33 @@
+{
+  "description": "Connection reference definitions for EmergencyResponseCoordination. Each reference is bound to a specific connection at deployment time.",
+  "connectionReferences": [
+    {
+      "schemaName": "seo_DataverseConnection",
+      "displayName": "Dataverse Connection",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+      "description": "Primary connection to Dataverse for all table operations. Required for all flows and apps.",
+      "required": true
+    },
+    {
+      "schemaName": "seo_Office365UsersConnection",
+      "displayName": "Office 365 Users Connection",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+      "description": "Used to resolve user profiles, photos, and manager hierarchy.",
+      "required": false
+    },
+    {
+      "schemaName": "seo_SharePointConnection",
+      "displayName": "SharePoint Connection",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+      "description": "Document storage for pre-plan attachments, SOPs, and after-action reports.",
+      "required": false
+    },
+    {
+      "schemaName": "seo_OutlookConnection",
+      "displayName": "Office 365 Outlook Connection",
+      "connectorId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+      "description": "Email notifications for critical alerts, mutual aid requests, and report approvals.",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "schemaName": "seo_PrePlan",
+  "displayName": "Pre-Plan",
+  "pluralName": "Pre-Plans",
+  "description": "Pre-incident plan for a building, occupancy, or target hazard. Contains tactical information for first-due response.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Pre-Plan Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "e.g., 'Acme Chemical Plant', 'Lincoln Elementary School'"
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": true
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_occupancyType",
+      "displayName": "Occupancy Type",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Assembly" },
+        { "value": 100000001, "label": "Business" },
+        { "value": 100000002, "label": "Educational" },
+        { "value": 100000003, "label": "Factory/Industrial" },
+        { "value": 100000004, "label": "High Hazard" },
+        { "value": 100000005, "label": "Institutional" },
+        { "value": 100000006, "label": "Mercantile" },
+        { "value": 100000007, "label": "Residential — Single Family" },
+        { "value": 100000008, "label": "Residential — Multi Family" },
+        { "value": 100000009, "label": "Storage" },
+        { "value": 100000010, "label": "Utility/Miscellaneous" }
+      ],
+      "required": true
+    },
+    {
+      "schemaName": "seo_constructionType",
+      "displayName": "Construction Type",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Type I — Fire Resistive" },
+        { "value": 100000001, "label": "Type II — Non-Combustible" },
+        { "value": 100000002, "label": "Type III — Ordinary" },
+        { "value": 100000003, "label": "Type IV — Heavy Timber" },
+        { "value": 100000004, "label": "Type V — Wood Frame" },
+        { "value": 100000005, "label": "Unknown" }
+      ],
+      "required": false
+    },
+    {
+      "schemaName": "seo_stories",
+      "displayName": "Number of Stories",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_squareFootage",
+      "displayName": "Square Footage",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_hasBasement",
+      "displayName": "Has Basement",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasSprinklers",
+      "displayName": "Has Sprinkler System",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasFireAlarm",
+      "displayName": "Has Fire Alarm System",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasStandpipe",
+      "displayName": "Has Standpipe",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasFDC",
+      "displayName": "Has FDC",
+      "type": "Boolean",
+      "default": false,
+      "description": "Fire Department Connection present?"
+    },
+    {
+      "schemaName": "seo_fdcLocation",
+      "displayName": "FDC Location",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_knownHazards",
+      "displayName": "Known Hazards",
+      "type": "Memo",
+      "required": false,
+      "description": "Hazardous materials, processes, or conditions"
+    },
+    {
+      "schemaName": "seo_accessNotes",
+      "displayName": "Access Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "Keys, Knox box locations, gate codes, access roads"
+    },
+    {
+      "schemaName": "seo_tacticalNotes",
+      "displayName": "Tactical Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "Recommended attack strategies, water supply, special considerations"
+    },
+    {
+      "schemaName": "seo_occupantCount",
+      "displayName": "Typical Occupant Count",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "Typical number of occupants during business hours"
+    },
+    {
+      "schemaName": "seo_emergencyContactName",
+      "displayName": "Emergency Contact Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_emergencyContactPhone",
+      "displayName": "Emergency Contact Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_lastInspectedOn",
+      "displayName": "Last Inspected On",
+      "type": "DateOnly",
+      "required": false
+    },
+    {
+      "schemaName": "seo_agencyId",
+      "displayName": "Responsible Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": false
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_agencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Jurisdiction",
+      "foreignKey": "seo_jurisdictionId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Incident",
+      "description": "Incidents linked to this pre-plan"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Hazard",
+      "description": "Specific hazards documented in this pre-plan"
+    }
+  ]
+}

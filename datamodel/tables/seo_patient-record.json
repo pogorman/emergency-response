@@ -1,0 +1,170 @@
+{
+  "schemaName": "seo_PatientRecord",
+  "displayName": "Patient Record",
+  "pluralName": "Patient Records",
+  "description": "EMS patient record for an incident. Contains PHI-sensitive fields that require column-level security in Phase 2. One record per patient.",
+  "primaryColumn": "seo_patientIdentifier",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "phiSensitive": true,
+  "phiNote": "This entity contains Protected Health Information. Column-level security profiles must be applied in Phase 2.",
+  "columns": [
+    {
+      "schemaName": "seo_patientIdentifier",
+      "displayName": "Patient ID",
+      "type": "AutoNumber",
+      "format": "PT-{SEQNUM:7}",
+      "required": true,
+      "description": "System-generated patient identifier (NOT a real-world ID)"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_triageCategory",
+      "displayName": "Triage Category",
+      "type": "GlobalChoice",
+      "choiceName": "seo_TriageCategory",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_patientFirstName",
+      "displayName": "Patient First Name",
+      "type": "String",
+      "maxLength": 100,
+      "required": false,
+      "phi": true,
+      "description": "PHI — requires column-level security"
+    },
+    {
+      "schemaName": "seo_patientLastName",
+      "displayName": "Patient Last Name",
+      "type": "String",
+      "maxLength": 100,
+      "required": false,
+      "phi": true
+    },
+    {
+      "schemaName": "seo_patientAge",
+      "displayName": "Patient Age",
+      "type": "WholeNumber",
+      "required": false,
+      "phi": true
+    },
+    {
+      "schemaName": "seo_patientGender",
+      "displayName": "Patient Gender",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Male" },
+        { "value": 100000001, "label": "Female" },
+        { "value": 100000002, "label": "Other" },
+        { "value": 100000003, "label": "Unknown" }
+      ],
+      "required": false,
+      "phi": true
+    },
+    {
+      "schemaName": "seo_chiefComplaint",
+      "displayName": "Chief Complaint",
+      "type": "String",
+      "maxLength": 500,
+      "required": false,
+      "phi": true,
+      "description": "Primary complaint or injury"
+    },
+    {
+      "schemaName": "seo_assessmentNotes",
+      "displayName": "Assessment Notes",
+      "type": "Memo",
+      "required": false,
+      "phi": true,
+      "description": "Clinical assessment notes"
+    },
+    {
+      "schemaName": "seo_treatmentNotes",
+      "displayName": "Treatment Notes",
+      "type": "Memo",
+      "required": false,
+      "phi": true,
+      "description": "Interventions and treatments provided"
+    },
+    {
+      "schemaName": "seo_isTransported",
+      "displayName": "Transported",
+      "type": "Boolean",
+      "default": false,
+      "description": "Was this patient transported?"
+    },
+    {
+      "schemaName": "seo_refusedCare",
+      "displayName": "Refused Care",
+      "type": "Boolean",
+      "default": false,
+      "description": "Patient refused care (AMA)"
+    },
+    {
+      "schemaName": "seo_transportUnitId",
+      "displayName": "Transport Unit",
+      "type": "Lookup",
+      "target": "seo_Unit",
+      "required": false,
+      "description": "Unit that transported this patient"
+    },
+    {
+      "schemaName": "seo_destinationFacilityId",
+      "displayName": "Destination Facility",
+      "type": "Lookup",
+      "target": "seo_Facility",
+      "required": false,
+      "description": "Hospital or facility patient was transported to"
+    },
+    {
+      "schemaName": "seo_transportStartedOn",
+      "displayName": "Transport Started",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_arrivedAtFacilityOn",
+      "displayName": "Arrived at Facility",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_attendingPersonnelId",
+      "displayName": "Attending Personnel",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Primary EMS provider for this patient"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Unit",
+      "foreignKey": "seo_transportUnitId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Facility",
+      "foreignKey": "seo_destinationFacilityId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_attendingPersonnelId"
+    }
+  ]
+}

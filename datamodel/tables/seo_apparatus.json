@@ -1,0 +1,109 @@
+{
+  "schemaName": "seo_Apparatus",
+  "displayName": "Apparatus",
+  "pluralName": "Apparatus",
+  "description": "Physical vehicles/equipment — engines, ladders, ambulances, etc. An apparatus is assigned to a station and belongs to a unit.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Apparatus Designator",
+      "type": "String",
+      "maxLength": 50,
+      "required": true,
+      "description": "e.g., Engine 1, Medic 7, Ladder 3",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_apparatusType",
+      "displayName": "Apparatus Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_ApparatusType",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_stationId",
+      "displayName": "Home Station",
+      "type": "Lookup",
+      "target": "seo_Station",
+      "required": true,
+      "description": "Station where this apparatus is normally housed"
+    },
+    {
+      "schemaName": "seo_agencyId",
+      "displayName": "Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true,
+      "description": "Owning agency"
+    },
+    {
+      "schemaName": "seo_vin",
+      "displayName": "VIN",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_yearMakeModel",
+      "displayName": "Year/Make/Model",
+      "type": "String",
+      "maxLength": 100,
+      "required": false
+    },
+    {
+      "schemaName": "seo_seatingCapacity",
+      "displayName": "Seating Capacity",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_pumpCapacityGPM",
+      "displayName": "Pump Capacity (GPM)",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "Gallons per minute — fire apparatus only"
+    },
+    {
+      "schemaName": "seo_tankCapacityGal",
+      "displayName": "Tank Capacity (Gal)",
+      "type": "WholeNumber",
+      "required": false
+    },
+    {
+      "schemaName": "seo_isALS",
+      "displayName": "ALS Capable",
+      "type": "Boolean",
+      "default": false,
+      "required": false,
+      "description": "Advanced Life Support capable"
+    },
+    {
+      "schemaName": "seo_isInService",
+      "displayName": "In Service",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Station",
+      "foreignKey": "seo_stationId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_agencyId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Unit",
+      "description": "An apparatus may be assigned to a unit"
+    }
+  ]
+}

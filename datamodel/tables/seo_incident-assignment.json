@@ -1,0 +1,120 @@
+{
+  "schemaName": "seo_IncidentAssignment",
+  "displayName": "Incident Assignment",
+  "pluralName": "Incident Assignments",
+  "description": "Join table linking incidents to units and/or personnel with ICS role, timestamps, and assignment details. Core dispatch/ICS entity.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Assignment Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "Auto-populated: 'Unit X - Incident Y' or 'Personnel Z - Incident Y'"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_unitId",
+      "displayName": "Unit",
+      "type": "Lookup",
+      "target": "seo_Unit",
+      "required": false,
+      "description": "Unit assigned (null for individual personnel assignments)"
+    },
+    {
+      "schemaName": "seo_personnelId",
+      "displayName": "Personnel",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Individual assigned (for ICS roles, chief officers, etc.)"
+    },
+    {
+      "schemaName": "seo_icsRole",
+      "displayName": "ICS Role",
+      "type": "GlobalChoice",
+      "choiceName": "seo_ICSRole",
+      "required": false,
+      "audit": true,
+      "description": "ICS/NIMS role for this assignment"
+    },
+    {
+      "schemaName": "seo_divisionId",
+      "displayName": "Division",
+      "type": "Lookup",
+      "target": "seo_Division",
+      "required": false,
+      "description": "ICS division this assignment belongs to"
+    },
+    {
+      "schemaName": "seo_assignedOn",
+      "displayName": "Assigned On",
+      "type": "DateTime",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_enRouteOn",
+      "displayName": "En Route On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_onSceneOn",
+      "displayName": "On Scene On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_clearedOn",
+      "displayName": "Cleared On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_assignmentNotes",
+      "displayName": "Assignment Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "Tactical assignment details (e.g., 'Fire attack, Side A')"
+    },
+    {
+      "schemaName": "seo_isMutualAid",
+      "displayName": "Mutual Aid",
+      "type": "Boolean",
+      "default": false,
+      "description": "Was this unit/person a mutual aid resource?"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Unit",
+      "foreignKey": "seo_unitId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_personnelId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Division",
+      "foreignKey": "seo_divisionId"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "description": "Environment variable definitions for EmergencyResponseCoordination. Values are set per-environment (Dev/Test/Prod).",
+  "variables": [
+    {
+      "schemaName": "seo_DefaultAgencyId",
+      "displayName": "Default Agency ID",
+      "type": "String",
+      "description": "GUID of the default agency for new records. Set per environment.",
+      "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_DefaultJurisdictionId",
+      "displayName": "Default Jurisdiction ID",
+      "type": "String",
+      "description": "GUID of the default jurisdiction. Set per environment.",
+      "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_MapDefaultLatitude",
+      "displayName": "Map Default Latitude",
+      "type": "String",
+      "description": "Default map center latitude for canvas app.",
+      "defaultValue": "38.9072"
+    },
+    {
+      "schemaName": "seo_MapDefaultLongitude",
+      "displayName": "Map Default Longitude",
+      "type": "String",
+      "description": "Default map center longitude for canvas app.",
+      "defaultValue": "-77.0369"
+    },
+    {
+      "schemaName": "seo_MapDefaultZoom",
+      "displayName": "Map Default Zoom Level",
+      "type": "String",
+      "description": "Default zoom level (1-20) for map controls.",
+      "defaultValue": "12"
+    },
+    {
+      "schemaName": "seo_EnableMutualAidCostTracking",
+      "displayName": "Enable Mutual Aid Cost Tracking",
+      "type": "String",
+      "description": "Set to 'true' to enable cost fields on mutual aid requests. Some agencies don't track costs.",
+      "defaultValue": "true"
+    },
+    {
+      "schemaName": "seo_PatientRecordRetentionDays",
+      "displayName": "Patient Record Retention (Days)",
+      "type": "String",
+      "description": "Number of days to retain PHI data before archival. Compliance-driven.",
+      "defaultValue": "2555"
+    }
+  ]
+}

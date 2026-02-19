@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.2" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CRMCustomizationEditor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>EmergencyResponseCoordination</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Emergency Response Coordination" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="End-to-end emergency response coordination for fire and EMS agencies. Covers call intake, dispatch, ICS command, EMS workflow, mutual aid, and after-action reporting." languagecode="1033" />
+    </Descriptions>
+    <Version>0.1.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>StateEmergencyOps</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="State Emergency Operations" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Publisher for emergency response solutions targeting state, city, and local jurisdictions." languagecode="1033" />
+      </Descriptions>
+      <CustomizationPrefix>seo</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+    </Publisher>
+    <RootComponents />
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

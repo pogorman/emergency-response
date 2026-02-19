@@ -1,0 +1,120 @@
+{
+  "schemaName": "seo_Facility",
+  "displayName": "Facility",
+  "pluralName": "Facilities",
+  "description": "Hospitals, trauma centers, staging areas, helipads, and other fixed facilities relevant to emergency operations.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Facility Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_facilityType",
+      "displayName": "Facility Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_FacilityType",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": true
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_phone",
+      "displayName": "Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_traumaLevel",
+      "displayName": "Trauma Level",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Level I" },
+        { "value": 100000001, "label": "Level II" },
+        { "value": 100000002, "label": "Level III" },
+        { "value": 100000003, "label": "Level IV" },
+        { "value": 100000004, "label": "N/A" }
+      ],
+      "required": false,
+      "description": "Trauma center designation level (hospitals only)"
+    },
+    {
+      "schemaName": "seo_hasBurnUnit",
+      "displayName": "Has Burn Unit",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasPediatric",
+      "displayName": "Has Pediatric ER",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_hasHelipad",
+      "displayName": "Has Helipad",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    },
+    {
+      "schemaName": "seo_capacity",
+      "displayName": "Capacity",
+      "type": "WholeNumber",
+      "required": false,
+      "description": "Bed count or capacity (hospitals) or max occupancy (staging areas)"
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Jurisdiction",
+      "foreignKey": "seo_jurisdictionId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_PatientRecord",
+      "description": "Patients transported to this facility"
+    }
+  ]
+}

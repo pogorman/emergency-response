@@ -1,0 +1,263 @@
+{
+  "schemaName": "seo_Incident",
+  "displayName": "Incident",
+  "pluralName": "Incidents",
+  "description": "Core incident record — the central entity of the system. Created from a call, tracks the full lifecycle from dispatch through close-out.",
+  "primaryColumn": "seo_incidentNumber",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_incidentNumber",
+      "displayName": "Incident Number",
+      "type": "AutoNumber",
+      "format": "INC-{DATEFMT:yyyyMMdd}-{SEQNUM:5}",
+      "required": true,
+      "description": "Auto-generated unique incident ID with date prefix"
+    },
+    {
+      "schemaName": "seo_callId",
+      "displayName": "Originating Call",
+      "type": "Lookup",
+      "target": "seo_Call",
+      "required": false,
+      "description": "The call that created this incident (null for self-initiated)"
+    },
+    {
+      "schemaName": "seo_incidentType",
+      "displayName": "Incident Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_IncidentType",
+      "required": true,
+      "audit": true,
+      "description": "Confirmed incident type — may differ from call's reported type"
+    },
+    {
+      "schemaName": "seo_priority",
+      "displayName": "Priority",
+      "type": "GlobalChoice",
+      "choiceName": "seo_IncidentPriority",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_status",
+      "displayName": "Incident Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_IncidentStatus",
+      "required": true,
+      "default": "Reported",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Incident Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": true
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_crossStreet",
+      "displayName": "Cross Street / Landmark",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_apartment",
+      "displayName": "Apt / Suite / Floor",
+      "type": "String",
+      "maxLength": 50,
+      "required": false
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false
+    },
+    {
+      "schemaName": "seo_primaryAgencyId",
+      "displayName": "Primary Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true,
+      "description": "Agency with primary jurisdiction/responsibility"
+    },
+    {
+      "schemaName": "seo_dispatchedOn",
+      "displayName": "Dispatched On",
+      "type": "DateTime",
+      "required": false,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_firstUnitEnRouteOn",
+      "displayName": "First Unit En Route",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_firstUnitOnSceneOn",
+      "displayName": "First Unit On Scene",
+      "type": "DateTime",
+      "required": false,
+      "description": "Critical for response time metrics"
+    },
+    {
+      "schemaName": "seo_underControlOn",
+      "displayName": "Under Control On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_clearedOn",
+      "displayName": "Cleared On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_closedOn",
+      "displayName": "Closed On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_patientCount",
+      "displayName": "Patient Count",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 0,
+      "description": "Number of patients at this incident"
+    },
+    {
+      "schemaName": "seo_isMCI",
+      "displayName": "Mass Casualty Incident",
+      "type": "Boolean",
+      "default": false,
+      "description": "Flagged if declared MCI"
+    },
+    {
+      "schemaName": "seo_alarmLevel",
+      "displayName": "Alarm Level",
+      "type": "WholeNumber",
+      "required": false,
+      "default": 1,
+      "description": "1st alarm, 2nd alarm, etc. — drives resource escalation"
+    },
+    {
+      "schemaName": "seo_narrativeSummary",
+      "displayName": "Narrative Summary",
+      "type": "Memo",
+      "required": false,
+      "description": "Free-text incident narrative"
+    },
+    {
+      "schemaName": "seo_hazardsOnScene",
+      "displayName": "Hazards on Scene",
+      "type": "Memo",
+      "required": false,
+      "description": "Known hazards — displayed to responding units"
+    },
+    {
+      "schemaName": "seo_prePlanId",
+      "displayName": "Pre-Plan",
+      "type": "Lookup",
+      "target": "seo_PrePlan",
+      "required": false,
+      "description": "Linked pre-plan for this address/occupancy"
+    },
+    {
+      "schemaName": "seo_nfirsCode",
+      "displayName": "NFIRS Incident Type Code",
+      "type": "String",
+      "maxLength": 10,
+      "required": false,
+      "description": "NFIRS code for federal reporting"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Call",
+      "foreignKey": "seo_callId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_primaryAgencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Jurisdiction",
+      "foreignKey": "seo_jurisdictionId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_PrePlan",
+      "foreignKey": "seo_prePlanId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentAssignment",
+      "description": "Units and personnel assigned to this incident"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentNote",
+      "description": "Running log of notes and updates"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_ResourceRequest"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_PatientRecord"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_MutualAidRequest"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_IncidentCommand"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Hazard",
+      "description": "Hazards identified at this incident (N:N via polymorphic lookup)"
+    }
+  ],
+  "calculatedFields": [
+    {
+      "schemaName": "seo_responseTimeMinutes",
+      "displayName": "Response Time (min)",
+      "type": "Calculated",
+      "formula": "DATEDIFF(seo_dispatchedOn, seo_firstUnitOnSceneOn, minutes)",
+      "description": "Minutes from dispatch to first unit on scene"
+    },
+    {
+      "schemaName": "seo_totalDurationMinutes",
+      "displayName": "Total Duration (min)",
+      "type": "Calculated",
+      "formula": "DATEDIFF(seo_dispatchedOn, seo_clearedOn, minutes)",
+      "description": "Total incident duration in minutes"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "schemaName": "seo_IncidentCommand",
+  "displayName": "Incident Command",
+  "pluralName": "Incident Commands",
+  "description": "ICS command structure for an incident. Tracks incident commander, command post location, and command transfer history.",
+  "primaryColumn": "seo_commandName",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_commandName",
+      "displayName": "Command Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "e.g., 'Main St Command', 'Division A'"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": true
+    },
+    {
+      "schemaName": "seo_incidentCommanderId",
+      "displayName": "Incident Commander",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_commandEstablishedOn",
+      "displayName": "Command Established On",
+      "type": "DateTime",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_commandTerminatedOn",
+      "displayName": "Command Terminated On",
+      "type": "DateTime",
+      "required": false
+    },
+    {
+      "schemaName": "seo_commandPostAddress",
+      "displayName": "Command Post Location",
+      "type": "String",
+      "maxLength": 500,
+      "required": false
+    },
+    {
+      "schemaName": "seo_commandPostLatitude",
+      "displayName": "CP Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_commandPostLongitude",
+      "displayName": "CP Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_radioChannel",
+      "displayName": "Radio Channel/Talkgroup",
+      "type": "String",
+      "maxLength": 50,
+      "required": false,
+      "description": "Primary radio channel for this command"
+    },
+    {
+      "schemaName": "seo_strategyMode",
+      "displayName": "Strategy Mode",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Offensive" },
+        { "value": 100000001, "label": "Defensive" },
+        { "value": 100000002, "label": "Transitional" },
+        { "value": 100000003, "label": "Investigation" }
+      ],
+      "required": false,
+      "audit": true,
+      "description": "Current tactical strategy"
+    },
+    {
+      "schemaName": "seo_isUnifiedCommand",
+      "displayName": "Unified Command",
+      "type": "Boolean",
+      "default": false,
+      "description": "Multi-agency unified command structure?"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_incidentCommanderId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Division",
+      "description": "ICS divisions under this command"
+    }
+  ]
+}

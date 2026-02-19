@@ -1,0 +1,104 @@
+{
+  "schemaName": "seo_MutualAidAgreement",
+  "displayName": "Mutual Aid Agreement",
+  "pluralName": "Mutual Aid Agreements",
+  "description": "Standing mutual aid agreements between agencies. Defines terms, scope, and expiration. Separate from per-incident mutual aid requests.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Agreement Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "e.g., 'County Mutual Aid 2025', 'Metro Fire Automatic Aid'"
+    },
+    {
+      "schemaName": "seo_requestingAgencyId",
+      "displayName": "Requesting Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true,
+      "description": "Agency that may request aid under this agreement"
+    },
+    {
+      "schemaName": "seo_providingAgencyId",
+      "displayName": "Providing Agency",
+      "type": "Lookup",
+      "target": "seo_Agency",
+      "required": true,
+      "description": "Agency that provides aid under this agreement"
+    },
+    {
+      "schemaName": "seo_agreementType",
+      "displayName": "Agreement Type",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Mutual Aid" },
+        { "value": 100000001, "label": "Automatic Aid" },
+        { "value": 100000002, "label": "Statewide" },
+        { "value": 100000003, "label": "EMAC (Interstate)" }
+      ],
+      "required": true
+    },
+    {
+      "schemaName": "seo_effectiveDate",
+      "displayName": "Effective Date",
+      "type": "DateOnly",
+      "required": true
+    },
+    {
+      "schemaName": "seo_expirationDate",
+      "displayName": "Expiration Date",
+      "type": "DateOnly",
+      "required": false,
+      "description": "Null = no expiration"
+    },
+    {
+      "schemaName": "seo_terms",
+      "displayName": "Terms",
+      "type": "Memo",
+      "required": false,
+      "description": "Summary of agreement terms and conditions"
+    },
+    {
+      "schemaName": "seo_hasCostSharing",
+      "displayName": "Has Cost Sharing",
+      "type": "Boolean",
+      "default": false
+    },
+    {
+      "schemaName": "seo_costSharingTerms",
+      "displayName": "Cost Sharing Terms",
+      "type": "Memo",
+      "required": false,
+      "description": "Details of cost recovery/sharing arrangements"
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_requestingAgencyId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Agency",
+      "foreignKey": "seo_providingAgencyId"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_MutualAidRequest",
+      "description": "Requests made under this agreement"
+    }
+  ]
+}

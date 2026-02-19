@@ -1,0 +1,109 @@
+{
+  "schemaName": "seo_UnitStatusLog",
+  "displayName": "Unit Status Log",
+  "pluralName": "Unit Status Logs",
+  "description": "Immutable audit trail of unit status changes. Every status transition creates a new record. Critical for response time reporting and accountability.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": false,
+  "auditNote": "Audit disabled — this IS the audit trail. Rows are append-only.",
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Log Entry",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "Auto-populated: 'Unit X - Status - Timestamp'"
+    },
+    {
+      "schemaName": "seo_unitId",
+      "displayName": "Unit",
+      "type": "Lookup",
+      "target": "seo_Unit",
+      "required": true
+    },
+    {
+      "schemaName": "seo_status",
+      "displayName": "Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_UnitStatus",
+      "required": true
+    },
+    {
+      "schemaName": "seo_previousStatus",
+      "displayName": "Previous Status",
+      "type": "GlobalChoice",
+      "choiceName": "seo_UnitStatus",
+      "required": false
+    },
+    {
+      "schemaName": "seo_changedOn",
+      "displayName": "Changed On",
+      "type": "DateTime",
+      "required": true,
+      "description": "Timestamp of the status change"
+    },
+    {
+      "schemaName": "seo_changedById",
+      "displayName": "Changed By",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Who initiated the status change"
+    },
+    {
+      "schemaName": "seo_incidentId",
+      "displayName": "Related Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": false,
+      "description": "Incident associated with this status change (if any)"
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false,
+      "description": "GPS location at time of status change"
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_source",
+      "displayName": "Source",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Mobile App" },
+        { "value": 100000001, "label": "Dispatch Console" },
+        { "value": 100000002, "label": "CAD Interface" },
+        { "value": 100000003, "label": "Automated" }
+      ],
+      "required": false,
+      "description": "How the status change was initiated"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Unit",
+      "foreignKey": "seo_unitId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Incident",
+      "foreignKey": "seo_incidentId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_changedById"
+    }
+  ]
+}

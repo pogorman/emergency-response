@@ -1,0 +1,148 @@
+{
+  "schemaName": "seo_Call",
+  "displayName": "Call",
+  "pluralName": "Calls",
+  "description": "Incoming call record from 911/PSAP or other source. A call may generate one or more incidents.",
+  "primaryColumn": "seo_callNumber",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_callNumber",
+      "displayName": "Call Number",
+      "type": "AutoNumber",
+      "format": "CALL-{SEQNUM:7}",
+      "required": true,
+      "description": "Auto-generated unique call identifier"
+    },
+    {
+      "schemaName": "seo_receivedOn",
+      "displayName": "Received On",
+      "type": "DateTime",
+      "required": true,
+      "audit": true,
+      "description": "Timestamp when the call was received"
+    },
+    {
+      "schemaName": "seo_callSource",
+      "displayName": "Call Source",
+      "type": "GlobalChoice",
+      "choiceName": "seo_CallSource",
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_callerName",
+      "displayName": "Caller Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_callerPhone",
+      "displayName": "Caller Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_callerAddress",
+      "displayName": "Caller Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": false
+    },
+    {
+      "schemaName": "seo_reportedIncidentType",
+      "displayName": "Reported Incident Type",
+      "type": "GlobalChoice",
+      "choiceName": "seo_IncidentType",
+      "required": true,
+      "description": "What the caller reports — may differ from actual"
+    },
+    {
+      "schemaName": "seo_reportedPriority",
+      "displayName": "Reported Priority",
+      "type": "GlobalChoice",
+      "choiceName": "seo_IncidentPriority",
+      "required": true
+    },
+    {
+      "schemaName": "seo_incidentAddress",
+      "displayName": "Incident Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": true,
+      "description": "Address/location of the reported emergency"
+    },
+    {
+      "schemaName": "seo_latitude",
+      "displayName": "Latitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_longitude",
+      "displayName": "Longitude",
+      "type": "Float",
+      "precision": 6,
+      "required": false
+    },
+    {
+      "schemaName": "seo_narrativeNotes",
+      "displayName": "Narrative Notes",
+      "type": "Memo",
+      "required": false,
+      "description": "Dispatcher notes from the call"
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false,
+      "description": "Auto-determined or manually set jurisdiction"
+    },
+    {
+      "schemaName": "seo_dispatcherId",
+      "displayName": "Dispatcher",
+      "type": "Lookup",
+      "target": "seo_Personnel",
+      "required": false,
+      "description": "Personnel who took the call"
+    },
+    {
+      "schemaName": "seo_isDuplicate",
+      "displayName": "Duplicate Call",
+      "type": "Boolean",
+      "default": false,
+      "description": "Flagged if this is a duplicate report for an existing incident"
+    },
+    {
+      "schemaName": "seo_duplicateOfIncidentId",
+      "displayName": "Duplicate Of Incident",
+      "type": "Lookup",
+      "target": "seo_Incident",
+      "required": false,
+      "description": "If duplicate, which incident it maps to"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Incident",
+      "description": "A call can generate one or more incidents"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Jurisdiction",
+      "foreignKey": "seo_jurisdictionId"
+    },
+    {
+      "type": "N:1",
+      "relatedTable": "seo_Personnel",
+      "foreignKey": "seo_dispatcherId"
+    }
+  ]
+}

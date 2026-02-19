@@ -1,0 +1,113 @@
+{
+  "schemaName": "seo_Agency",
+  "displayName": "Agency",
+  "pluralName": "Agencies",
+  "description": "Fire, EMS, or other emergency services agencies. Top-level organizational entity.",
+  "primaryColumn": "seo_name",
+  "ownership": "Organization",
+  "auditEnabled": true,
+  "columns": [
+    {
+      "schemaName": "seo_name",
+      "displayName": "Agency Name",
+      "type": "String",
+      "maxLength": 200,
+      "required": true,
+      "description": "Full legal name of the agency",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_code",
+      "displayName": "Agency Code",
+      "type": "String",
+      "maxLength": 20,
+      "required": true,
+      "description": "Short unique identifier (e.g., FDNY, LAFD, PGFD)",
+      "audit": true
+    },
+    {
+      "schemaName": "seo_agencyType",
+      "displayName": "Agency Type",
+      "type": "Choice",
+      "localOptions": [
+        { "value": 100000000, "label": "Fire Department" },
+        { "value": 100000001, "label": "EMS Agency" },
+        { "value": 100000002, "label": "Combined Fire/EMS" },
+        { "value": 100000003, "label": "Rescue Squad" },
+        { "value": 100000004, "label": "Hazmat Team" },
+        { "value": 100000005, "label": "Law Enforcement" },
+        { "value": 100000006, "label": "Other" }
+      ],
+      "required": true,
+      "audit": true
+    },
+    {
+      "schemaName": "seo_jurisdictionId",
+      "displayName": "Jurisdiction",
+      "type": "Lookup",
+      "target": "seo_Jurisdiction",
+      "required": false,
+      "description": "Primary jurisdiction this agency serves"
+    },
+    {
+      "schemaName": "seo_address",
+      "displayName": "Headquarters Address",
+      "type": "String",
+      "maxLength": 500,
+      "required": false
+    },
+    {
+      "schemaName": "seo_phone",
+      "displayName": "Phone",
+      "type": "String",
+      "maxLength": 20,
+      "required": false
+    },
+    {
+      "schemaName": "seo_email",
+      "displayName": "Email",
+      "type": "String",
+      "maxLength": 200,
+      "required": false
+    },
+    {
+      "schemaName": "seo_isActive",
+      "displayName": "Active",
+      "type": "Boolean",
+      "default": true,
+      "required": true
+    },
+    {
+      "schemaName": "seo_fdid",
+      "displayName": "FDID",
+      "type": "String",
+      "maxLength": 10,
+      "required": false,
+      "description": "NFIRS Fire Department ID — used for federal reporting"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Station",
+      "description": "An agency has many stations"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_Personnel",
+      "description": "An agency employs many personnel"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_MutualAidAgreement",
+      "foreignKey": "seo_requestingAgencyId",
+      "description": "Agreements where this agency is the requestor"
+    },
+    {
+      "type": "1:N",
+      "relatedTable": "seo_MutualAidAgreement",
+      "foreignKey": "seo_providingAgencyId",
+      "description": "Agreements where this agency is the provider"
+    }
+  ]
+}
