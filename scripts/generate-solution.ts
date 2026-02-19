@@ -10,10 +10,15 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as crypto from "node:crypto";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readSpecs } from "./lib/spec-reader.js";
-import type { TableDef, ColumnDef, GlobalChoice, EnvVarDef } from "./lib/spec-reader.js";
+import type {
+  TableDef, ColumnDef, GlobalChoice, EnvVarDef,
+  ViewDef, ViewFilter, ViewFilterCondition,
+  FormDef, FormTab, FormSection, FormField, SubgridDef,
+} from "./lib/spec-reader.js";
 
 // ── Constants ────────────────────────────────────────────────────────────
 
@@ -38,6 +43,11 @@ const XML_HEADER = `<?xml version="1.0" encoding="utf-8"?>`;
 const SOL_ROOT_ATTRS =
   `version="9.2.24.4" SolutionPackageVersion="9.2" languagecode="${LANG}" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"`;
 
+// Control class IDs for form XML
+const CLASSID_STANDARD = "{4273EDBD-AC1D-40d3-9FB2-095C621B552D}";
+const CLASSID_LOOKUP = "{270BD3DB-D9AF-4782-9025-509E298DEC0A}";
+const CLASSID_SUBGRID = "{E7A81278-8635-4D9E-8D4D-59480B391C5B}";
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 
 /** XML-escape a string for use in attribute values and text content. */
@@ -53,6 +63,73 @@ function esc(s: string): string {
 /** Convert a schema name to its Dataverse logical name (lowercase). */
 function ln(schemaName: string): string {
   return schemaName.toLowerCase();
+}
+
+/** Generate a deterministic GUID from a seed string (MD5-based, formatted as GUID). */
+function deterministicGuid(seed: string): string {
+  const hash = crypto.createHash("md5").update(seed).digest("hex");
+  return [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    hash.slice(12, 16),
+    hash.slice(16, 20),
+    hash.slice(20, 32),
+  ].join("-");
+}
+
+// ── Choice Value Map ─────────────────────────────────────────────────────
+
+/**
+ * Build a lookup: entityLogical → columnLogical → label → numericValue
+ * Used to resolve human-readable filter values (e.g. "Closed") to their
+ * numeric option set values (e.g. 100000007).
+ */
+type ChoiceValueMap = Map<string, Map<string, Map<string, number>>>;
+
+function buildChoiceValueMap(tables: TableDef[], globalChoices: GlobalChoice[]): ChoiceValueMap {
+  const gcMap = new Map<string, GlobalChoice>();
+  for (const gc of globalChoices) gcMap.set(gc.schemaName, gc);
+
+  const result: ChoiceValueMap = new Map();
+
+  for (const table of tables) {
+    const entityLogical = ln(table.schemaName);
+    const colMap = new Map<string, Map<string, number>>();
+
+    for (const col of table.columns) {
+      let options: { value: number; label: string }[] | undefined;
+      if (col.type === "GlobalChoice" && col.choiceName) {
+        options = gcMap.get(col.choiceName)?.options;
+      } else if (col.type === "Choice" && col.localOptions) {
+        options = col.localOptions;
+      }
+      if (options) {
+        const labelMap = new Map<string, number>();
+        for (const opt of options) labelMap.set(opt.label, opt.value);
+        colMap.set(ln(col.schemaName), labelMap);
+      }
+    }
+
+    if (colMap.size > 0) result.set(entityLogical, colMap);
+  }
+
+  return result;
+}
+
+/** Resolve a label to its numeric choice value, or return the value as-is if numeric. */
+function resolveChoiceValue(
+  choiceMap: ChoiceValueMap,
+  entityLogical: string,
+  columnLogical: string,
+  label: unknown,
+): string {
+  if (typeof label === "number") return String(label);
+  if (typeof label === "boolean") return label ? "1" : "0";
+  const str = String(label);
+  const numericVal = choiceMap.get(entityLogical)?.get(columnLogical)?.get(str);
+  if (numericVal !== undefined) return String(numericVal);
+  // Return as-is (could be a numeric string)
+  return str;
 }
 
 // ── [Content_Types].xml ──────────────────────────────────────────────────
@@ -496,14 +573,510 @@ function generateAllRelationshipsXml(tables: TableDef[]): string {
   return lines.join("\n");
 }
 
+// ── customizations.xml — SavedQueries (views) ────────────────────────────
+
+function generateSavedQueriesXml(
+  entityLogical: string,
+  primaryColumnLogical: string,
+  views: ViewDef[],
+  choiceMap: ChoiceValueMap,
+): string {
+  const lines: string[] = [];
+  lines.push(`      <SavedQueries>`);
+  lines.push(`        <savedqueries>`);
+
+  for (const view of views) {
+    const viewGuid = deterministicGuid(`view:${entityLogical}:${view.schemaName}`);
+    const pkColumn = `${entityLogical}id`;
+
+    // Build layoutxml
+    const cellsXml = view.columns
+      .map((c) => `              <cell name="${ln(c.name)}" width="${c.width}" />`)
+      .join("\n");
+    const layoutXml = [
+      `            <grid name="resultset" jump="${primaryColumnLogical}" select="1" icon="1" preview="1">`,
+      `              <row name="result" id="${pkColumn}">`,
+      cellsXml,
+      `              </row>`,
+      `            </grid>`,
+    ].join("\n");
+
+    // Build fetchxml
+    const fetchLines: string[] = [];
+    fetchLines.push(`            <fetch version="1.0" mapping="logical">`);
+    fetchLines.push(`              <entity name="${entityLogical}">`);
+    // Always include PK
+    fetchLines.push(`                <attribute name="${pkColumn}" />`);
+    // Add view columns
+    for (const col of view.columns) {
+      const colLogical = ln(col.name);
+      // Skip if it contains a dot (linked entity reference — handled separately)
+      if (!colLogical.includes(".")) {
+        fetchLines.push(`                <attribute name="${colLogical}" />`);
+      }
+    }
+    // Sort orders
+    for (const sort of view.sortOrder) {
+      const desc = sort.direction === "Descending" ? "true" : "false";
+      fetchLines.push(`                <order attribute="${ln(sort.column)}" descending="${desc}" />`);
+    }
+    // Filter
+    if (view.filter) {
+      fetchLines.push(generateFetchFilterXml(view.filter, entityLogical, choiceMap, 16));
+    }
+    fetchLines.push(`              </entity>`);
+    fetchLines.push(`            </fetch>`);
+
+    lines.push(`          <savedquery>`);
+    lines.push(`            <IsCustomizable>1</IsCustomizable>`);
+    lines.push(`            <CanBeDeleted>1</CanBeDeleted>`);
+    lines.push(`            <isquickfindquery>0</isquickfindquery>`);
+    lines.push(`            <isprivate>0</isprivate>`);
+    lines.push(`            <isdefault>${view.isDefault ? "1" : "0"}</isdefault>`);
+    lines.push(`            <savedqueryid>{${viewGuid}}</savedqueryid>`);
+    lines.push(`            <layoutxml>`);
+    lines.push(layoutXml);
+    lines.push(`            </layoutxml>`);
+    lines.push(`            <querytype>0</querytype>`);
+    lines.push(`            <fetchxml>`);
+    lines.push(fetchLines.join("\n"));
+    lines.push(`            </fetchxml>`);
+    lines.push(`            <IntroducedVersion>${SOLUTION_VERSION}</IntroducedVersion>`);
+    lines.push(`            <LocalizedNames>`);
+    lines.push(`              <LocalizedName description="${esc(view.displayName)}" languagecode="${LANG}" />`);
+    lines.push(`            </LocalizedNames>`);
+    if (view.description) {
+      lines.push(`            <Descriptions>`);
+      lines.push(`              <Description description="${esc(view.description)}" languagecode="${LANG}" />`);
+      lines.push(`            </Descriptions>`);
+    }
+    lines.push(`          </savedquery>`);
+  }
+
+  lines.push(`        </savedqueries>`);
+  lines.push(`      </SavedQueries>`);
+  return lines.join("\n");
+}
+
+/** Generate FetchXML filter block from a ViewFilter spec. */
+function generateFetchFilterXml(
+  filter: ViewFilter,
+  entityLogical: string,
+  choiceMap: ChoiceValueMap,
+  indent: number,
+): string {
+  const pad = " ".repeat(indent);
+  const lines: string[] = [];
+  lines.push(`${pad}<filter type="${filter.type}">`);
+
+  for (const cond of filter.conditions) {
+    const colLogical = ln(cond.column);
+
+    // Handle linked entity filters (e.g. "seo_incidentId.seo_status")
+    if (colLogical.includes(".")) {
+      // For cross-entity filters, skip — too complex for initial import.
+      // These views will work but without the linked-entity filter condition.
+      console.warn(`  SKIP FILTER: ${cond.column} (linked entity filter — configure manually)`);
+      continue;
+    }
+
+    const op = cond.operator;
+
+    // Operators that take no value
+    if (op === "null" || op === "not-null") {
+      lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" />`);
+      continue;
+    }
+
+    // Operators that take no explicit value (relative date)
+    if (op === "today" || op === "yesterday" || op === "this-week" || op === "this-month" || op === "this-year") {
+      lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" />`);
+      continue;
+    }
+
+    // eq-businessid — special FetchXML operator, no value needed
+    if (op === "eq-businessid") {
+      lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" />`);
+      continue;
+    }
+
+    // Relative date operators with numeric value (last-x-days, next-x-days, etc.)
+    if (op === "last-x-days" || op === "next-x-days" || op === "last-x-months" ||
+        op === "on-or-before" || op === "on-or-after") {
+      // on-or-before/after with numeric value means relative days
+      const val = cond.value;
+      if (typeof val === "number") {
+        // For on-or-before/on-or-after with numeric value, use next-x-days/last-x-days
+        if (op === "on-or-before" && typeof val === "number") {
+          lines.push(`${pad}  <condition attribute="${colLogical}" operator="next-x-days" value="${val}" />`);
+        } else if (op === "on-or-after" && typeof val === "number") {
+          // on-or-after 0 days = today or later
+          if (val === 0) {
+            lines.push(`${pad}  <condition attribute="${colLogical}" operator="on-or-after" value="\${today}" />`);
+          } else {
+            lines.push(`${pad}  <condition attribute="${colLogical}" operator="last-x-days" value="${val}" />`);
+          }
+        } else {
+          lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" value="${val}" />`);
+        }
+      } else {
+        lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" value="${val}" />`);
+      }
+      continue;
+    }
+
+    // not-in with array of values
+    if (op === "not-in" || op === "in") {
+      const vals = cond.values ?? [];
+      const resolvedVals = vals.map((v) => resolveChoiceValue(choiceMap, entityLogical, colLogical, v));
+      lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}">`);
+      for (const rv of resolvedVals) {
+        lines.push(`${pad}    <value>${rv}</value>`);
+      }
+      lines.push(`${pad}  </condition>`);
+      continue;
+    }
+
+    // Standard eq/ne/gt/lt etc. with single value
+    const resolved = resolveChoiceValue(choiceMap, entityLogical, colLogical, cond.value);
+    lines.push(`${pad}  <condition attribute="${colLogical}" operator="${op}" value="${resolved}" />`);
+  }
+
+  lines.push(`${pad}</filter>`);
+  return lines.join("\n");
+}
+
+// ── customizations.xml — FormXml (forms) ──────────────────────────────────
+
+function generateFormXmlBlock(
+  entityLogical: string,
+  forms: FormDef[],
+  tables: TableDef[],
+): string {
+  const mainForms = forms.filter((f) => f.formType === "Main");
+  const quickForms = forms.filter((f) => f.formType === "QuickCreate");
+
+  const lines: string[] = [];
+  lines.push(`      <FormXml>`);
+
+  // Main forms
+  if (mainForms.length > 0) {
+    lines.push(`        <forms type="main">`);
+    for (const form of mainForms) {
+      lines.push(generateSystemFormXml(form, entityLogical, tables));
+    }
+    lines.push(`        </forms>`);
+  }
+
+  // Quick create forms
+  if (quickForms.length > 0) {
+    lines.push(`        <forms type="quick">`);
+    for (const form of quickForms) {
+      lines.push(generateQuickCreateFormXml(form, entityLogical, tables));
+    }
+    lines.push(`        </forms>`);
+  }
+
+  lines.push(`      </FormXml>`);
+  return lines.join("\n");
+}
+
+/** Determine the control classid based on column type. */
+function getControlClassId(fieldName: string, tables: TableDef[], entityLogical: string): string {
+  // Find the table and column to determine type
+  const table = tables.find((t) => ln(t.schemaName) === entityLogical);
+  if (!table) return CLASSID_STANDARD;
+  const col = table.columns.find((c) => ln(c.schemaName) === ln(fieldName));
+  if (!col) return CLASSID_STANDARD;
+  if (col.type === "Lookup") return CLASSID_LOOKUP;
+  return CLASSID_STANDARD;
+}
+
+/** Generate a main form systemform XML. */
+function generateSystemFormXml(
+  form: FormDef,
+  entityLogical: string,
+  tables: TableDef[],
+): string {
+  const formGuid = deterministicGuid(`form:${entityLogical}:${form.schemaName}`);
+  const lines: string[] = [];
+
+  lines.push(`          <systemform>`);
+  lines.push(`            <formid>{${formGuid}}</formid>`);
+  lines.push(`            <IntroducedVersion>${SOLUTION_VERSION}</IntroducedVersion>`);
+  lines.push(`            <FormPresentation>1</FormPresentation>`);
+  lines.push(`            <FormActivationState>1</FormActivationState>`);
+  lines.push(`            <form headerdensity="HighWithControls">`);
+
+  // Tabs
+  lines.push(`              <tabs>`);
+  const tabs = form.layout.tabs ?? [];
+  for (let tabIdx = 0; tabIdx < tabs.length; tabIdx++) {
+    const tab = tabs[tabIdx];
+    const tabGuid = deterministicGuid(`tab:${entityLogical}:${form.schemaName}:${tab.name}`);
+    lines.push(`                <tab verticallayout="true" id="{${tabGuid}}" IsUserDefined="1" showlabel="true" expanded="true">`);
+    lines.push(`                  <labels>`);
+    lines.push(`                    <label description="${esc(tab.label)}" languagecode="${LANG}" />`);
+    lines.push(`                  </labels>`);
+    lines.push(`                  <columns>`);
+    lines.push(`                    <column width="100%">`);
+    lines.push(`                      <sections>`);
+    for (const section of tab.sections) {
+      lines.push(generateSectionXml(section, entityLogical, form.schemaName, tables));
+    }
+    lines.push(`                      </sections>`);
+    lines.push(`                    </column>`);
+    lines.push(`                  </columns>`);
+    lines.push(`                </tab>`);
+  }
+  lines.push(`              </tabs>`);
+
+  // Header
+  if (form.header && form.header.length > 0) {
+    const headerGuid = deterministicGuid(`header:${entityLogical}:${form.schemaName}`);
+    lines.push(`              <header id="{${headerGuid}}" celllabelposition="Top" columns="1" labelwidth="115">`);
+    lines.push(`                <rows>`);
+    for (const hField of form.header) {
+      const cellGuid = deterministicGuid(`headercell:${entityLogical}:${form.schemaName}:${hField.name}`);
+      const classId = getControlClassId(hField.name, tables, entityLogical);
+      lines.push(`                  <row>`);
+      lines.push(`                    <cell id="{${cellGuid}}" showlabel="true">`);
+      lines.push(`                      <labels>`);
+      lines.push(`                        <label description="${esc(hField.label ?? hField.name)}" languagecode="${LANG}" />`);
+      lines.push(`                      </labels>`);
+      lines.push(`                      <control id="${ln(hField.name)}" classid="${classId}" datafieldname="${ln(hField.name)}" />`);
+      lines.push(`                    </cell>`);
+      lines.push(`                  </row>`);
+    }
+    lines.push(`                </rows>`);
+    lines.push(`              </header>`);
+  }
+
+  // Footer (empty 3-cell, matching reference)
+  const footerGuid = deterministicGuid(`footer:${entityLogical}:${form.schemaName}`);
+  lines.push(`              <footer id="{${footerGuid}}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">`);
+  lines.push(`                <rows>`);
+  lines.push(`                  <row>`);
+  for (let i = 0; i < 3; i++) {
+    const fcGuid = deterministicGuid(`footercell:${entityLogical}:${form.schemaName}:${i}`);
+    lines.push(`                    <cell id="{${fcGuid}}" showlabel="false">`);
+    lines.push(`                      <labels>`);
+    lines.push(`                        <label description="" languagecode="${LANG}" />`);
+    lines.push(`                      </labels>`);
+    lines.push(`                    </cell>`);
+  }
+  lines.push(`                  </row>`);
+  lines.push(`                </rows>`);
+  lines.push(`              </footer>`);
+
+  lines.push(`            </form>`);
+  lines.push(`            <IsCustomizable>1</IsCustomizable>`);
+  lines.push(`            <CanBeDeleted>1</CanBeDeleted>`);
+  lines.push(`            <LocalizedNames>`);
+  lines.push(`              <LocalizedName description="${esc(form.displayName)}" languagecode="${LANG}" />`);
+  lines.push(`            </LocalizedNames>`);
+  if (form.description) {
+    lines.push(`            <Descriptions>`);
+    lines.push(`              <Description description="${esc(form.description)}" languagecode="${LANG}" />`);
+    lines.push(`            </Descriptions>`);
+  }
+  lines.push(`          </systemform>`);
+
+  return lines.join("\n");
+}
+
+/** Generate a quick create form systemform XML. */
+function generateQuickCreateFormXml(
+  form: FormDef,
+  entityLogical: string,
+  tables: TableDef[],
+): string {
+  const formGuid = deterministicGuid(`form:${entityLogical}:${form.schemaName}`);
+  const tabGuid = deterministicGuid(`tab:${entityLogical}:${form.schemaName}:quicktab`);
+  const lines: string[] = [];
+
+  lines.push(`          <systemform>`);
+  lines.push(`            <formid>{${formGuid}}</formid>`);
+  lines.push(`            <IntroducedVersion>${SOLUTION_VERSION}</IntroducedVersion>`);
+  lines.push(`            <FormPresentation>1</FormPresentation>`);
+  lines.push(`            <FormActivationState>1</FormActivationState>`);
+  lines.push(`            <form>`);
+  lines.push(`              <tabs>`);
+  lines.push(`                <tab verticallayout="true" id="{${tabGuid}}" IsUserDefined="1">`);
+  lines.push(`                  <labels>`);
+  lines.push(`                    <label description="" languagecode="${LANG}" />`);
+  lines.push(`                  </labels>`);
+  lines.push(`                  <columns>`);
+  lines.push(`                    <column width="100%">`);
+  lines.push(`                      <sections>`);
+
+  const sections = form.layout.sections ?? [];
+  for (const section of sections) {
+    lines.push(generateSectionXml(section, entityLogical, form.schemaName, tables));
+  }
+
+  lines.push(`                      </sections>`);
+  lines.push(`                    </column>`);
+  lines.push(`                  </columns>`);
+  lines.push(`                </tab>`);
+  lines.push(`              </tabs>`);
+  lines.push(`            </form>`);
+  lines.push(`            <IsCustomizable>1</IsCustomizable>`);
+  lines.push(`            <CanBeDeleted>1</CanBeDeleted>`);
+  lines.push(`            <LocalizedNames>`);
+  lines.push(`              <LocalizedName description="${esc(form.displayName)}" languagecode="${LANG}" />`);
+  lines.push(`            </LocalizedNames>`);
+  if (form.description) {
+    lines.push(`            <Descriptions>`);
+    lines.push(`              <Description description="${esc(form.description)}" languagecode="${LANG}" />`);
+    lines.push(`            </Descriptions>`);
+  }
+  lines.push(`          </systemform>`);
+
+  return lines.join("\n");
+}
+
+/** Generate a form section XML with fields and subgrids, arranged in rows based on column count. */
+function generateSectionXml(
+  section: FormSection,
+  entityLogical: string,
+  formSchemaName: string,
+  tables: TableDef[],
+): string {
+  const sectionGuid = deterministicGuid(`section:${entityLogical}:${formSchemaName}:${section.name}`);
+  const numCols = section.columns || 1;
+  const lines: string[] = [];
+
+  lines.push(`                        <section showlabel="true" showbar="false" IsUserDefined="0" id="{${sectionGuid}}" columns="${numCols}">`);
+  lines.push(`                          <labels>`);
+  lines.push(`                            <label description="${esc(section.label)}" languagecode="${LANG}" />`);
+  lines.push(`                          </labels>`);
+  lines.push(`                          <rows>`);
+
+  // Emit field cells arranged into rows (numCols cells per row)
+  const fields = section.fields || [];
+  const cellQueue: string[] = [];
+
+  for (const field of fields) {
+    cellQueue.push(generateFieldCellXml(field, entityLogical, formSchemaName, tables));
+  }
+
+  // Pad to fill last row if needed
+  while (cellQueue.length > 0 && cellQueue.length % numCols !== 0) {
+    // Empty spacer cell
+    const spacerGuid = deterministicGuid(`spacer:${entityLogical}:${formSchemaName}:${section.name}:${cellQueue.length}`);
+    cellQueue.push([
+      `                              <cell id="{${spacerGuid}}" showlabel="false">`,
+      `                                <labels>`,
+      `                                  <label description="" languagecode="${LANG}" />`,
+      `                                </labels>`,
+      `                              </cell>`,
+    ].join("\n"));
+  }
+
+  // Output rows
+  for (let i = 0; i < cellQueue.length; i += numCols) {
+    lines.push(`                            <row>`);
+    for (let j = i; j < i + numCols && j < cellQueue.length; j++) {
+      lines.push(cellQueue[j]);
+    }
+    lines.push(`                            </row>`);
+  }
+
+  // Subgrids
+  const subgrids = section.subgrids || [];
+  for (const sg of subgrids) {
+    lines.push(`                            <row>`);
+    lines.push(generateSubgridCellXml(sg, entityLogical, formSchemaName));
+    lines.push(`                            </row>`);
+  }
+
+  lines.push(`                          </rows>`);
+  lines.push(`                        </section>`);
+  return lines.join("\n");
+}
+
+/** Generate a standard field cell XML. */
+function generateFieldCellXml(
+  field: FormField,
+  entityLogical: string,
+  formSchemaName: string,
+  tables: TableDef[],
+): string {
+  const cellGuid = deterministicGuid(`cell:${entityLogical}:${formSchemaName}:${field.name}`);
+  const classId = getControlClassId(field.name, tables, entityLogical);
+  const disabled = field.isReadOnly ? "true" : "false";
+  const fieldLogical = ln(field.name);
+
+  // Resolve display label — prefer explicit label, otherwise look up from table
+  let label = field.label ?? "";
+  if (!label) {
+    const table = tables.find((t) => ln(t.schemaName) === entityLogical);
+    const col = table?.columns.find((c) => ln(c.schemaName) === fieldLogical);
+    label = col?.displayName ?? field.name;
+  }
+
+  const lines: string[] = [];
+  lines.push(`                              <cell id="{${cellGuid}}" showlabel="true">`);
+  lines.push(`                                <labels>`);
+  lines.push(`                                  <label description="${esc(label)}" languagecode="${LANG}" />`);
+  lines.push(`                                </labels>`);
+  lines.push(`                                <control id="${fieldLogical}" classid="${classId}" datafieldname="${fieldLogical}" disabled="${disabled}" />`);
+  lines.push(`                              </cell>`);
+  return lines.join("\n");
+}
+
+/** Generate a subgrid cell XML. */
+function generateSubgridCellXml(
+  sg: SubgridDef,
+  entityLogical: string,
+  formSchemaName: string,
+): string {
+  const cellGuid = deterministicGuid(`subgrid:${entityLogical}:${formSchemaName}:${sg.name}`);
+  const targetEntity = ln(sg.entity);
+  const rowSpan = Math.max(Math.ceil(sg.maxRows / 2), 2);
+
+  const lines: string[] = [];
+  lines.push(`                              <cell id="{${cellGuid}}" rowspan="${rowSpan}" colspan="1" auto="false">`);
+  lines.push(`                                <labels>`);
+  lines.push(`                                  <label description="${esc(sg.label)}" languagecode="${LANG}" />`);
+  lines.push(`                                </labels>`);
+  lines.push(`                                <control indicationOfSubgrid="true" id="${sg.name}" classid="${CLASSID_SUBGRID}">`);
+  lines.push(`                                  <parameters>`);
+  lines.push(`                                    <RecordsPerPage>${sg.maxRows}</RecordsPerPage>`);
+  lines.push(`                                    <AutoExpand>Fixed</AutoExpand>`);
+  lines.push(`                                    <EnableQuickFind>false</EnableQuickFind>`);
+  lines.push(`                                    <EnableViewPicker>true</EnableViewPicker>`);
+  lines.push(`                                    <RelationshipName>${sg.relationship}</RelationshipName>`);
+  lines.push(`                                    <TargetEntityType>${targetEntity}</TargetEntityType>`);
+  lines.push(`                                  </parameters>`);
+  lines.push(`                                </control>`);
+  lines.push(`                              </cell>`);
+  return lines.join("\n");
+}
+
 // ── customizations.xml — full entity ─────────────────────────────────────
 
-function generateEntityXml(table: TableDef, globalChoicesMap: Map<string, GlobalChoice>): string {
+function generateEntityXml(
+  table: TableDef,
+  globalChoicesMap: Map<string, GlobalChoice>,
+  views: ViewDef[] | undefined,
+  forms: FormDef[] | undefined,
+  choiceMap: ChoiceValueMap,
+  allTables: TableDef[],
+): string {
   const entityLogical = ln(table.schemaName);
   const primaryCol = table.columns.find((c) => c.schemaName === table.primaryColumn);
   if (!primaryCol) {
     throw new Error(`Primary column ${table.primaryColumn} not found in ${table.schemaName}`);
   }
+
+  // Resolve the effective primary column logical name (handle PK collision)
+  const primaryPhysName = ln(primaryCol.schemaName);
+  const autoGeneratedPkName = `${entityLogical}id`;
+  const primaryColumnLogical = primaryPhysName === autoGeneratedPkName
+    ? `${entityLogical}_name`
+    : primaryPhysName;
 
   // Build attribute XML: primary first, then remaining
   const attrParts: string[] = [];
@@ -521,6 +1094,8 @@ function generateEntityXml(table: TableDef, globalChoicesMap: Map<string, Global
 
   // EntitySetName: entity logical name + "s" (matching Dataverse convention, e.g., seo_jurisdictions)
   const entitySetNameFinal = `${entityLogical}s`;
+
+  const hasQuickCreate = forms?.some((f) => f.formType === "QuickCreate") ?? false;
 
   const lines: string[] = [];
   lines.push(`    <Entity>`);
@@ -576,7 +1151,7 @@ function generateEntityXml(table: TableDef, globalChoicesMap: Map<string, Global
   lines.push(`          <MobileOfflineFilters></MobileOfflineFilters>`);
   lines.push(`          <IsMapiGridEnabled>0</IsMapiGridEnabled>`);
   lines.push(`          <IsReadingPaneEnabled>0</IsReadingPaneEnabled>`);
-  lines.push(`          <IsQuickCreateEnabled>0</IsQuickCreateEnabled>`);
+  lines.push(`          <IsQuickCreateEnabled>${hasQuickCreate ? "1" : "0"}</IsQuickCreateEnabled>`);
   lines.push(`          <SyncToExternalSearchIndex>0</SyncToExternalSearchIndex>`);
   lines.push(`          <IntroducedVersion>${SOLUTION_VERSION}</IntroducedVersion>`);
   lines.push(`          <IsCustomizable>1</IsCustomizable>`);
@@ -607,6 +1182,17 @@ function generateEntityXml(table: TableDef, globalChoicesMap: Map<string, Global
   lines.push(`          <HasRelatedNotes>True</HasRelatedNotes>`);
   lines.push(`        </entity>`);
   lines.push(`      </EntityInfo>`);
+
+  // FormXml — between EntityInfo and SavedQueries (matching reference order)
+  if (forms && forms.length > 0) {
+    lines.push(generateFormXmlBlock(entityLogical, forms, allTables));
+  }
+
+  // SavedQueries (custom views)
+  if (views && views.length > 0) {
+    lines.push(generateSavedQueriesXml(entityLogical, primaryColumnLogical, views, choiceMap));
+  }
+
   lines.push(`    </Entity>`);
 
   return lines.join("\n");
@@ -684,6 +1270,8 @@ function generateCustomizationsXml(
   tables: TableDef[],
   globalChoices: GlobalChoice[],
   envVars: EnvVarDef[],
+  views: Map<string, ViewDef[]>,
+  forms: Map<string, FormDef[]>,
 ): string {
   // Build globalChoicesMap for inline option set expansion
   const globalChoicesMap = new Map<string, GlobalChoice>();
@@ -691,7 +1279,16 @@ function generateCustomizationsXml(
     globalChoicesMap.set(gc.schemaName, gc);
   }
 
-  const entitiesXml = tables.map((t) => generateEntityXml(t, globalChoicesMap)).join("\n");
+  // Build choice value map for resolving filter labels to numeric values
+  const choiceMap = buildChoiceValueMap(tables, globalChoices);
+
+  const entitiesXml = tables
+    .map((t) => {
+      const entityViews = views.get(t.schemaName);
+      const entityForms = forms.get(t.schemaName);
+      return generateEntityXml(t, globalChoicesMap, entityViews, entityForms, choiceMap, tables);
+    })
+    .join("\n");
   const relationshipsXml = generateAllRelationshipsXml(tables);
   const envVarDefsXml = generateEnvVarDefinitionsXml(envVars);
 
@@ -832,6 +1429,14 @@ function main(): void {
   console.log(`  ${colCount} columns`);
   console.log(`  ${relCount} relationships (${skippedSystemUser} systemuser lookups skipped)`);
 
+  // Count views and forms
+  let viewCount = 0;
+  let formCount = 0;
+  for (const views of specs.views.values()) viewCount += views.length;
+  for (const forms of specs.forms.values()) formCount += forms.length;
+  console.log(`  ${viewCount} custom views (${specs.views.size} entities)`);
+  console.log(`  ${formCount} custom forms (${specs.forms.size} entities)`);
+
   // ── Generate XML ──
   console.log("\nGenerating XML ...");
   const contentTypesXml = generateContentTypes();
@@ -840,6 +1445,8 @@ function main(): void {
     specs.tables,
     specs.globalChoices,
     specs.envVars,
+    specs.views,
+    specs.forms,
   );
 
   // ── Write to temp build directory ──
@@ -898,13 +1505,15 @@ function main(): void {
     console.log(`  Review .solution-checker-results/ before importing.`);
   }
   console.log(`${"=".repeat(60)}`);
+  console.log(`\nContents: ${specs.tables.length} tables, ${colCount} columns, ${relCount} relationships, ${viewCount} views, ${formCount} forms`);
   console.log(`\nNext steps:`);
   console.log(`  1. Open make.powerapps.com -> Solutions -> Import`);
   console.log(`  2. Upload ${SOLUTION_UNIQUE_NAME}.zip`);
   console.log(`  3. Post-import: configure calculated fields (seo_responseTimeMinutes, seo_totalDurationMinutes)`);
-  console.log(`  4. Verify auto-number formats are active (CALL-, INC-, PT- prefixes)`);
-  console.log(`  5. Set environment variable values per environment`);
-  console.log(`  6. Create security roles per spec`);
+  console.log(`  4. Post-import: configure business rules (MCI visual alert, lock closed incident, etc.)`);
+  console.log(`  5. Verify auto-number formats are active (CALL-, INC-, PT- prefixes)`);
+  console.log(`  6. Set environment variable values per environment`);
+  console.log(`  7. Create security roles per spec`);
 
   if (!checkPassed) {
     process.exitCode = 1;

@@ -19,7 +19,7 @@ A complete Power Platform solution for state, city, and local fire/EMS jurisdict
 │  ┌────────────────────────────────────────────────────┐  │
 │  │       EmergencyResponseCoordination Solution        │  │
 │  │                                                    │  │
-│  │  22 Tables  ·  15 Choice Sets  ·  8 Security Roles │  │
+│  │  22 Tables · 28 Views · 19 Forms · 8 Security Roles│  │
 │  │  10 Power Automate Flows  ·  18 Env Variables      │  │
 │  │  5 Connection References  ·  1 Field Security Prof │  │
 │  └────────────────────────────────────────────────────┘  │
@@ -61,11 +61,19 @@ pac auth create --name "GCC-Dev" --cloud UsGov \
 pac solution import --path EmergencyResponseCoordination.zip --publish-changes --async
 ```
 
+### What's in the .zip
+- 22 tables with 276 columns and 53 relationships
+- 28 custom views with FetchXML filters and layoutxml columns
+- 19 forms (main + quick create) with tabs, sections, fields, subgrids
+- Deterministic GUIDs for idempotent re-imports
+
 ### Post-Import Steps
 1. **Environment variables** — create 18 env vars manually (not in solution .zip, see `solution/environment-variables.json`)
 2. **Calculated fields** — configure `seo_responseTimeMinutes` and `seo_totalDurationMinutes` formulas
 3. **Security roles** — create 8 roles per security specs
 4. **PHI field security** — configure `seo_PHIAccess` profile on PatientRecord
+5. **Linked entity filters** — configure cross-table view filters (e.g., Open Calls by incident status)
+6. **Business rules** — configure form-level rules (e.g., MCI Visual Alert, Locked When Closed)
 
 ### Dataverse XML Lessons Learned
 See [`docs/DATAVERSE-SOLUTION-XML-GUIDE.md`](docs/DATAVERSE-SOLUTION-XML-GUIDE.md) for 19 documented issues and resolutions from the initial GCC deployment.

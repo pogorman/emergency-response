@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 10)
+## Last Updated: 2026-02-19 (Session 11)
 
 ## Session Log
 
@@ -21,6 +21,7 @@
 | 8 | 2026-02-18 | ~45 min | Dev provisioning script — 6 TS files in scripts/, device-code auth, Dataverse Web API metadata + data import, dry-run support |
 | 9 | 2026-02-18 | ~120 min | Solution .zip generator — debugged 19 XML format issues, successfully imported to GCC Dataverse (22 tables, 276 columns, 53 relationships) |
 | 10 | 2026-02-18 | ~30 min | Documentation — created DATAVERSE-SOLUTION-XML-GUIDE.md, updated MEMORY.md, CLAUDE.md, README, SESSION-MEMORY, PROMPT-LOG, RELEASE-NOTES |
+| 11 | 2026-02-19 | ~45 min | Extended solution generator with 28 views + 19 forms (FetchXML, layoutxml, form tabs/sections/subgrids, deterministic GUIDs, choice value resolution) |
 
 ## Current Project State
 
@@ -39,6 +40,7 @@
 - **Solution .zip generator:** `scripts/generate-solution.ts` reads JSON specs → outputs `EmergencyResponseCoordination.zip`
 - **Successfully imported** to GCC Dataverse via `pac solution import`
 - **22 tables, 276 columns, 53 relationships** deployed
+- **28 views, 19 forms** now included in solution .zip (added session 11)
 - **19 XML format issues** documented in `docs/DATAVERSE-SOLUTION-XML-GUIDE.md`
 
 ### What's NOT in the Solution .zip
@@ -50,6 +52,8 @@
 - **Power Automate flows** — build manually from flow specs
 - **Canvas app / MDA** — build manually from app specs
 - **Power BI reports** — build manually from report specs
+- **Linked entity filters** — cross-table view filters (e.g., Open Calls by incident status); configure manually
+- **Business rules** — form-level business rules (e.g., MCI Visual Alert); configure manually
 
 ### GCC Environment
 - **URL:** `https://emergency-response.crm9.dynamics.com/`
@@ -60,23 +64,25 @@
 - **Solution checker:** `pac solution check --geo USGovernment`
 
 ## Key Decisions
-1-42. (See previous sessions — all still current)
-43. **Solution .zip generator** — TypeScript script generates Dataverse solution XML from JSON specs
-44. **Local inline option sets** — all choice columns use local option sets to avoid name collisions with global option sets
-45. **Entity primary key collision detection** — auto-rename columns that collide with `{entity}id` auto-generated PK
-46. **Environment variables excluded** — GCC import fails with generic error when env var definitions are in customizations.xml
-47. **Root-level relationships** — all EntityRelationship definitions must be in root-level section, not inside individual entities
-48. **Reference solution as format guide** — used CaseManagement_1_0_7.zip from Downloads as authoritative XML format reference
+1-48. (See previous sessions — all still current)
+49. **Deterministic GUIDs** — MD5-based GUIDs for views/forms ensure re-import updates existing records instead of creating duplicates
+50. **Choice value resolution** — 3-level Map (entity → column → label → numeric) resolves filter condition labels to Dataverse option set values
+51. **XML element ordering** — `<EntityInfo>` → `<FormXml>` → `<SavedQueries>` inside `<Entity>` (validated against CaseManagement reference)
+52. **Linked entity filters skipped** — cross-table FetchXML (`<link-entity>`) too complex for initial generation; skipped with warning
+53. **Control ClassIDs** — Standard `{4273EDBD-...}`, Lookup `{270BD3DB-...}`, Subgrid `{E7A81278-...}`
 
 ## Open Questions / Blockers
-- None — schema deployed, documentation complete
+- Need to test import of views + forms to GCC (tables/columns verified, views/forms not yet)
 
 ## Next Steps
-1. Create security roles in Dataverse (from `security/roles/*.json` specs)
-2. Configure PHI field security profile on PatientRecord
-3. Create 18 environment variables (from `solution/environment-variables.json`)
-4. Build Power Automate flows from `flows/` specs
-5. Build canvas app from `apps/seo_responder-mobile/` specs
-6. Build model-driven app from `model-driven-apps/seo_dispatch-console/` specs
-7. Build Power BI reports from `reporting/` specs
-8. Import sample data
+1. Import updated solution .zip to GCC and verify views/forms render correctly
+2. Configure linked entity filters manually for Open Calls view
+3. Configure business rules manually (MCI Visual Alert, Locked When Closed)
+4. Create security roles in Dataverse (from `security/roles/*.json` specs)
+5. Configure PHI field security profile on PatientRecord
+6. Create 18 environment variables (from `solution/environment-variables.json`)
+7. Build Power Automate flows from `flows/` specs
+8. Build canvas app from `apps/seo_responder-mobile/` specs
+9. Build model-driven app shell/sitemap from `model-driven-apps/seo_dispatch-console/` specs
+10. Build Power BI reports from `reporting/` specs
+11. Import sample data

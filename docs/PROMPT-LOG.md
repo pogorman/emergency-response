@@ -362,3 +362,32 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/SESSION-MEMORY.md` — session 9+10 logged, deployment state documented, GCC environment details, next steps
 - Updated `docs/PROMPT-LOG.md` — sessions 9+10 logged
 - Updated `docs/RELEASE-NOTES.md` — v0.9.0 entry for solution generator + GCC deployment
+
+## 2026-02-19 — Session 11: Views + Forms in Solution Generator
+
+**Prompt Summary:** Extend the solution .zip generator to include custom views (28 views from 13 spec files) and forms (19 forms from 14 spec files) in the generated Dataverse solution. Views generate `<SavedQueries>` XML with FetchXML filters and layoutxml columns. Forms generate `<FormXml>` XML with tabs, sections, fields, subgrids, headers, and footers.
+
+**Actions Taken:**
+- Extended `scripts/lib/spec-reader.ts`:
+  - Added 12 new TypeScript interfaces: `ViewColumn`, `ViewFilterCondition`, `ViewFilter`, `ViewSortOrder`, `ViewDef`, `FormField`, `SubgridDef`, `FormSection`, `FormTab`, `FormDef`
+  - Added `readViewSpecs()` — loads 13 JSON files from `model-driven-apps/seo_dispatch-console/views/`
+  - Added `readFormSpecs()` — loads 14 JSON files from `model-driven-apps/seo_dispatch-console/forms/`
+  - Extended `ProjectSpecs` with `views: Map<string, ViewDef[]>` and `forms: Map<string, FormDef[]>`
+- Extended `scripts/generate-solution.ts` (~700 → ~1050 lines):
+  - Added `deterministicGuid(seed)` — MD5-based GUID for idempotent re-imports
+  - Added `buildChoiceValueMap()` — 3-level Map resolving choice labels to numeric values
+  - Added `generateSavedQueriesXml()` — `<SavedQueries>` with fetchxml, layoutxml, sort, filters
+  - Added `generateFetchFilterXml()` — handles eq, not-in, in, null, not-null, today, last-x-days, eq-businessid, on-or-before, on-or-after operators
+  - Added `generateFormXmlBlock()` — wraps main + quick create forms in `<FormXml>`
+  - Added `generateSystemFormXml()` — main forms with tabs, header, footer
+  - Added `generateQuickCreateFormXml()` — quick create with single wrapper tab
+  - Added `generateSectionXml()` — multi-column layout with subgrids
+  - Added `generateFieldCellXml()` — field cells with label resolution from table defs
+  - Added `generateSubgridCellXml()` — subgrid cells with relationship parameters
+  - Added control ClassIDs: Standard, Lookup, Subgrid
+  - Modified `generateEntityXml()` to insert FormXml + SavedQueries after `</EntityInfo>`
+  - Sets `IsQuickCreateEnabled=1` for entities with quick create form specs
+- Verified output: 22 tables, 276 columns, 53 relationships, 28 views, 19 forms
+- Extracted zip and verified XML structure for views (fetchxml filters, layoutxml) and forms (tabs, sections, cells, subgrids)
+- Linked entity filters (e.g., `seo_incidentId.seo_status` in call-views.json) skipped with warning — requires manual post-import configuration
+- Updated all documentation files, committed, and pushed

@@ -1,5 +1,48 @@
 # Release Notes
 
+## v0.10.0 — Views + Forms in Solution Generator (2026-02-19)
+
+### Summary
+Extended the solution .zip generator to include 28 custom views and 19 forms in the Dataverse solution. Views generate `<SavedQueries>` XML with FetchXML queries and layoutxml grid columns. Forms generate `<FormXml>` XML with tabs, sections, fields, subgrids, headers, and footers. Uses deterministic GUIDs for idempotent re-imports.
+
+### What's Included
+- **28 views** across 13 entities with:
+  - FetchXML filters (eq, not-in, null, today, last-x-days, eq-businessid, etc.)
+  - layoutxml grid column definitions with configurable widths
+  - Sort orders (ascending/descending)
+  - Choice value resolution (label → numeric) for filter conditions
+- **19 forms** (main + quick create) across 14 entities with:
+  - Multi-tab layouts with labeled sections
+  - Multi-column section support (1, 2, or 3 columns)
+  - Header fields and 3-cell footer
+  - Subgrids with relationship parameters, records per page, view picker
+  - Control ClassIDs: Standard, Lookup, Subgrid
+  - Field label resolution from table definitions
+  - `IsQuickCreateEnabled` flag auto-set for entities with quick create forms
+- **Deterministic GUIDs** via MD5 hash — ensures re-import updates existing views/forms
+- **Choice value map** — 3-level Map resolving human-readable labels to Dataverse numeric option values
+
+### Key Design Decisions
+- Deterministic GUID seeds: `view:{entity}:{schemaName}`, `form:{entity}:{schemaName}`, etc.
+- XML element order inside `<Entity>`: `<EntityInfo>` → `<FormXml>` → `<SavedQueries>` (matches reference)
+- Linked entity filters (cross-table FetchXML) skipped with warning — configure manually post-import
+- Quick create forms wrapped in single tab with `verticallayout="true"` and empty label
+- Main forms include empty 3-cell footer matching Dataverse reference format
+
+### Known Limitations
+- **Linked entity filters** (e.g., Open Calls view filtering by related incident status) not generated — requires `<link-entity>` FetchXML; configure manually
+- **Business rules** from form specs (e.g., MCI Visual Alert) are Processes/Workflows — not form XML; configure manually
+- All previous limitations (env vars, calculated fields, security roles) still apply
+
+### Breaking Changes
+None (additive — existing tables/columns/relationships unchanged).
+
+### Dependencies
+- v0.9.0 (solution .zip generator must exist)
+- v0.5.0 (view + form spec files must exist)
+
+---
+
 ## v0.9.0 — Solution .zip Generator + GCC Deployment (2026-02-18)
 
 ### Summary

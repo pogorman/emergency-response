@@ -33,10 +33,19 @@ Output: `EmergencyResponseCoordination.zip` in project root. Import via make.pow
 pac solution import --path EmergencyResponseCoordination.zip --publish-changes --async
 ```
 
+### What's Generated
+- 22 tables with 276 columns and 53 relationships
+- 28 custom views with FetchXML filters and layoutxml columns
+- 19 forms (main + quick create) with tabs, sections, fields, subgrids
+- Deterministic GUIDs for idempotent re-imports
+- Choice value resolution for view filter conditions
+
 ### Known Limitations
 - **Environment variables** are NOT in the solution .zip (cause generic import errors in GCC). Create manually post-import.
 - **Calculated fields** (seo_responseTimeMinutes, seo_totalDurationMinutes) must be configured in maker portal post-import.
 - **seo_Hydrant.seo_hydrantId** was auto-renamed to `seo_hydrant_name` to avoid collision with auto-generated primary key.
+- **Linked entity filters** (cross-table FetchXML) not generated — configure manually post-import.
+- **Business rules** from form specs are Processes/Workflows — configure manually post-import.
 
 ### Dataverse XML Reference
 See `docs/DATAVERSE-SOLUTION-XML-GUIDE.md` for 19 documented issues and resolutions from the initial deployment.
