@@ -1,0 +1,106 @@
+name: Promote to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (preview only)'
+        required: false
+        default: 'true'
+        type: boolean
+      confirm_production:
+        description: 'Type DEPLOY-PROD to confirm'
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Pre-Production Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Confirm production deployment
+        if: inputs.confirm_production != 'DEPLOY-PROD'
+        run: |
+          echo "::error::Production deployment not confirmed. Type DEPLOY-PROD to proceed."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: deployment/scripts
+        run: npm ci
+
+      - name: TypeScript compile check
+        working-directory: deployment/scripts
+        run: npx tsc --noEmit
+
+      - name: Validate all specs
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-specs.ts
+
+      - name: GCC compliance check (prod)
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-gcc.ts --env ../config/prod.json
+
+  deploy:
+    name: Deploy to Production
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Power Platform CLI
+        run: |
+          npm install -g @microsoft/powerplatform-cli@latest
+
+      - name: Install dependencies
+        working-directory: deployment/scripts
+        run: npm ci
+
+      - name: Deploy to Production
+        working-directory: deployment/scripts
+        env:
+          SEO_CLIENT_SECRET: ${{ secrets.SEO_CLIENT_SECRET }}
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+
+          npx tsx src/deploy/deploy-all.ts \
+            --env ../config/prod.json \
+            --skip-step sample-data-import \
+            --verbose \
+            $DRY_RUN_FLAG
+
+      - name: Post-deployment summary
+        if: always()
+        run: |
+          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- Dry run: ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Sample data: SKIPPED (production)" >> $GITHUB_STEP_SUMMARY
+          echo "- PHI data: BLOCKED (ADR-027)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Post-Deployment Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify solution components in Power Platform Admin Center" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Test login as each security role" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify Power Automate flows are enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Configure Power BI RLS role assignments" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Run GCC compliance check on live environment" >> $GITHUB_STEP_SUMMARY

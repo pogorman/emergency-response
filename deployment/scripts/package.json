@@ -1,0 +1,31 @@
+{
+  "name": "seo-deployment-scripts",
+  "version": "0.7.0",
+  "description": "Deployment automation for EmergencyResponseCoordination (GCC Dataverse)",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "deploy": "tsx src/deploy/deploy-all.ts",
+    "validate:specs": "tsx src/validate/validate-specs.ts",
+    "validate:gcc": "tsx src/validate/validate-gcc.ts",
+    "rollback:solution": "tsx src/rollback/rollback-solution.ts",
+    "rollback:security": "tsx src/rollback/rollback-security.ts",
+    "rollback:data": "tsx src/rollback/rollback-data.ts",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@azure/identity": "4.7.0",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "tsx": "4.19.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.4",
+    "eslint": "9.20.0",
+    "typescript": "5.7.3"
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "seo-deployment-definition-v1",
+  "title": "EmergencyResponseCoordination Deployment Definition",
+  "description": "JSON Schema for environment configuration files used by deployment scripts. Each config defines a target Dataverse environment with its settings, credentials, and deployment parameters.",
+  "type": "object",
+  "required": [
+    "environmentName",
+    "environmentType",
+    "environmentUrl",
+    "tenantId",
+    "cloudType",
+    "authentication",
+    "solution",
+    "environmentVariables",
+    "connectionReferences",
+    "agencies",
+    "sampleData",
+    "powerBI"
+  ],
+  "properties": {
+    "environmentName": {
+      "type": "string",
+      "description": "Human-readable environment name (e.g., 'SEO Dev', 'SEO Test', 'SEO Production')"
+    },
+    "environmentType": {
+      "type": "string",
+      "enum": ["Sandbox", "Production"],
+      "description": "Dataverse environment type. Sandbox for dev/test, Production for prod."
+    },
+    "environmentUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Dataverse environment URL (e.g., https://seo-dev.crm9.dynamics.com)"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Azure AD (Entra ID) tenant GUID"
+    },
+    "cloudType": {
+      "type": "string",
+      "enum": ["GCC", "GCCHigh"],
+      "description": "Government cloud type. Determines API endpoints."
+    },
+    "authentication": {
+      "type": "object",
+      "required": ["clientId", "authority"],
+      "properties": {
+        "clientId": {
+          "type": "string",
+          "description": "Entra ID app registration client ID. Value resolved from environment variable SEO_CLIENT_ID."
+        },
+        "authority": {
+          "type": "string",
+          "format": "uri",
+          "description": "MSAL authority URL (e.g., https://login.microsoftonline.us/{tenantId})"
+        },
+        "clientSecretEnvVar": {
+          "type": "string",
+          "default": "SEO_CLIENT_SECRET",
+          "description": "Name of the environment variable holding the client secret. Never stored in config."
+        },
+        "certificateThumbprintEnvVar": {
+          "type": "string",
+          "description": "Name of the environment variable holding the certificate thumbprint (alternative to secret)."
+        }
+      },
+      "description": "Service principal authentication configuration"
+    },
+    "solution": {
+      "type": "object",
+      "required": ["uniqueName", "importType"],
+      "properties": {
+        "uniqueName": {
+          "type": "string",
+          "default": "EmergencyResponseCoordination",
+          "description": "Solution unique name"
+        },
+        "importType": {
+          "type": "string",
+          "enum": ["Managed", "Unmanaged"],
+          "description": "Managed for test/prod, Unmanaged for dev"
+        },
+        "solutionFilePath": {
+          "type": "string",
+          "description": "Relative path to the solution .zip file"
+        },
+        "publishOnImport": {
+          "type": "boolean",
+          "default": true,
+          "description": "Publish all customizations after import"
+        },
+        "overwriteUnmanagedCustomizations": {
+          "type": "boolean",
+          "default": false,
+          "description": "Overwrite unmanaged customizations on import"
+        }
+      },
+      "description": "Solution import configuration"
+    },
+    "environmentVariables": {
+      "type": "object",
+      "required": [
+        "seo_DefaultAgencyId",
+        "seo_DefaultJurisdictionId",
+        "seo_MapDefaultLatitude",
+        "seo_MapDefaultLongitude",
+        "seo_MapDefaultZoom",
+        "seo_EnableMutualAidCostTracking",
+        "seo_PatientRecordRetentionDays",
+        "seo_MCIPatientThreshold",
+        "seo_MutualAidExpiryWarningDays",
+        "seo_DispatchSupervisorEmail",
+        "seo_FlowErrorNotificationEmail",
+        "seo_ServiceAccountUserId",
+        "seo_GPSUpdateIntervalSeconds",
+        "seo_OfflineSyncIntervalMinutes",
+        "seo_DefaultDashboardId",
+        "seo_PowerBIWorkspaceId",
+        "seo_PowerBIDatasetRefreshHours",
+        "seo_NFPAResponseTimeBenchmarkMinutes"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "All 18 environment variable values keyed by schema name"
+    },
+    "connectionReferences": {
+      "type": "object",
+      "required": [
+        "seo_DataverseConnection",
+        "seo_Office365UsersConnection",
+        "seo_SharePointConnection",
+        "seo_OutlookConnection",
+        "seo_PowerBIConnection"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Connection reference binding IDs (connection GUID per reference)"
+    },
+    "agencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "code"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Agency name — becomes the Business Unit name"
+          },
+          "code": {
+            "type": "string",
+            "description": "Agency code (e.g., MCFD)"
+          },
+          "agencyType": {
+            "type": "string",
+            "description": "Agency type from seo_AgencyType choice"
+          }
+        }
+      },
+      "description": "Agencies to provision as Business Units with owner teams"
+    },
+    "sampleData": {
+      "type": "object",
+      "required": ["importSampleData", "includePhiRecords"],
+      "properties": {
+        "importSampleData": {
+          "type": "boolean",
+          "description": "Whether to import the 22 sample data files"
+        },
+        "includePhiRecords": {
+          "type": "boolean",
+          "description": "Whether to include patient-records.json (PHI). Must be false for Production."
+        },
+        "sampleDataPath": {
+          "type": "string",
+          "default": "../../sample-data",
+          "description": "Relative path to sample-data/ directory"
+        }
+      },
+      "description": "Sample data import configuration"
+    },
+    "powerBI": {
+      "type": "object",
+      "required": ["workspaceId"],
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "description": "Power BI workspace GUID (must match seo_PowerBIWorkspaceId env var)"
+        },
+        "gatewayId": {
+          "type": "string",
+          "description": "On-premises data gateway GUID for Dataverse connector"
+        },
+        "refreshScheduleHours": {
+          "type": "number",
+          "default": 4,
+          "description": "Dataset refresh interval in hours"
+        },
+        "configureRLS": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to configure RLS role assignments"
+        }
+      },
+      "description": "Power BI workspace and refresh configuration"
+    }
+  },
+  "if": {
+    "properties": {
+      "environmentType": { "const": "Production" }
+    }
+  },
+  "then": {
+    "properties": {
+      "sampleData": {
+        "properties": {
+          "includePhiRecords": { "const": false }
+        }
+      },
+      "solution": {
+        "properties": {
+          "importType": { "const": "Managed" }
+        }
+      }
+    }
+  }
+}

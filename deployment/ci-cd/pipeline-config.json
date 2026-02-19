@@ -1,0 +1,45 @@
+{
+  "description": "Shared CI/CD configuration for EmergencyResponseCoordination pipelines. Secrets are stored in GitHub repository settings — never in this file.",
+  "secrets": {
+    "description": "Required GitHub Secrets (repository-level)",
+    "required": [
+      {
+        "name": "SEO_TENANT_ID",
+        "description": "Azure AD (Entra ID) tenant GUID for the GCC tenant"
+      },
+      {
+        "name": "SEO_CLIENT_ID",
+        "description": "Service principal (app registration) client ID"
+      },
+      {
+        "name": "SEO_CLIENT_SECRET",
+        "description": "Service principal client secret — rotate every 90 days"
+      }
+    ]
+  },
+  "environments": {
+    "dev": {
+      "configPath": "deployment/config/dev.json",
+      "branch": "main",
+      "autoDeployOnMerge": true,
+      "approvalRequired": false
+    },
+    "test": {
+      "configPath": "deployment/config/test.json",
+      "branch": "main",
+      "autoDeployOnMerge": false,
+      "approvalRequired": true,
+      "approvers": ["dispatch-supervisor-team"]
+    },
+    "prod": {
+      "configPath": "deployment/config/prod.json",
+      "branch": "main",
+      "autoDeployOnMerge": false,
+      "approvalRequired": true,
+      "approvers": ["seo-admin-team", "security-officer"]
+    }
+  },
+  "nodeVersion": "20",
+  "pacVersion": "latest",
+  "timeoutMinutes": 30
+}

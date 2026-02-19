@@ -1,0 +1,63 @@
+{
+  "$schema": "environments.schema.json",
+  "environmentName": "SEO Dev",
+  "environmentType": "Sandbox",
+  "environmentUrl": "https://seo-dev.crm9.dynamics.com",
+  "tenantId": "00000000-0000-0000-0000-000000000000",
+  "cloudType": "GCC",
+  "authentication": {
+    "clientId": "00000000-0000-0000-0000-000000000000",
+    "authority": "https://login.microsoftonline.us/00000000-0000-0000-0000-000000000000",
+    "clientSecretEnvVar": "SEO_CLIENT_SECRET"
+  },
+  "solution": {
+    "uniqueName": "EmergencyResponseCoordination",
+    "importType": "Unmanaged",
+    "solutionFilePath": "../../solution/EmergencyResponseCoordination.zip",
+    "publishOnImport": true,
+    "overwriteUnmanagedCustomizations": true
+  },
+  "environmentVariables": {
+    "seo_DefaultAgencyId": "",
+    "seo_DefaultJurisdictionId": "",
+    "seo_MapDefaultLatitude": "38.9072",
+    "seo_MapDefaultLongitude": "-77.0369",
+    "seo_MapDefaultZoom": "12",
+    "seo_EnableMutualAidCostTracking": "true",
+    "seo_PatientRecordRetentionDays": "2555",
+    "seo_MCIPatientThreshold": "5",
+    "seo_MutualAidExpiryWarningDays": "30",
+    "seo_DispatchSupervisorEmail": "seo-dev-supervisor@agency.gov",
+    "seo_FlowErrorNotificationEmail": "seo-dev-admins@agency.gov",
+    "seo_ServiceAccountUserId": "",
+    "seo_GPSUpdateIntervalSeconds": "30",
+    "seo_OfflineSyncIntervalMinutes": "5",
+    "seo_DefaultDashboardId": "",
+    "seo_PowerBIWorkspaceId": "",
+    "seo_PowerBIDatasetRefreshHours": "4",
+    "seo_NFPAResponseTimeBenchmarkMinutes": "6.33"
+  },
+  "connectionReferences": {
+    "seo_DataverseConnection": "",
+    "seo_Office365UsersConnection": "",
+    "seo_SharePointConnection": "",
+    "seo_OutlookConnection": "",
+    "seo_PowerBIConnection": ""
+  },
+  "agencies": [
+    { "name": "Metro City Fire Department", "code": "MCFD", "agencyType": "Combined Fire/EMS" },
+    { "name": "County Fire Protection District", "code": "CFPD", "agencyType": "Fire Department" },
+    { "name": "City EMS Authority", "code": "CEMS", "agencyType": "EMS Agency" }
+  ],
+  "sampleData": {
+    "importSampleData": true,
+    "includePhiRecords": true,
+    "sampleDataPath": "../../sample-data"
+  },
+  "powerBI": {
+    "workspaceId": "",
+    "gatewayId": "",
+    "refreshScheduleHours": 4,
+    "configureRLS": true
+  }
+}

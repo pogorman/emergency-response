@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 6)
+## Last Updated: 2026-02-18 (Session 8)
 
 ## Session Log
 
@@ -17,10 +17,12 @@
 | 4 | 2026-02-18 | ~50 min | Phase 4 Canvas app (8 screens, 3 components, schema, 2 env vars, full docs update) |
 | 5 | 2026-02-18 | ~60 min | Phase 5 Model-driven app (27 views, 19 forms, 4 dashboards, BPF, command bar, 22 sample data files, schema, 1 env var, full docs update) |
 | 6 | 2026-02-18 | ~45 min | Phase 6 Power BI reporting (5 datasets, 8 reports, shared measures, RLS, schema, 3 env vars, 1 conn ref, full docs update) |
+| 7 | 2026-02-18 | ~60 min | Phase 7 Deployment automation (21 TS scripts, 4 env configs, 4 CI/CD workflows, 3 deployment docs, 4 ADRs, full docs update) |
+| 8 | 2026-02-18 | ~45 min | Dev provisioning script — 6 TS files in scripts/, device-code auth, Dataverse Web API metadata + data import, dry-run support |
 
 ## Current Project State
 
-### What's Built
+### What's Built — ALL 7 PHASES COMPLETE
 - Git repo initialized
 - Documentation scaffolding complete (CLAUDE.md + 5 docs files)
 - **Phase 1 COMPLETE:** Data model (22 tables across 6 operational domains)
@@ -77,9 +79,34 @@
   - 1 new connection reference (seo_PowerBIConnection)
   - ADR-019 (Import mode), ADR-020 (PHI exclusion), ADR-021 (RLS), ADR-022 (GCC constraints), ADR-023 (PBI vs MDA)
   - USER-GUIDE.md "For Analysts / Report Consumers" section populated
+- **Phase 7 COMPLETE:** Deployment + GCC auth scripts
+  - Deployment definition JSON Schema in `/deployment/_schema/`
+  - Deployment README with translation guide in `/deployment/README.md`
+  - 3 environment config templates in `/deployment/config/` (dev, test, prod)
+  - Project scaffolding: `package.json` + `tsconfig.json` in `/deployment/scripts/`
+  - 3 TypeScript type files in `/deployment/scripts/src/types/`
+  - 5 utility files in `/deployment/scripts/src/utils/` (logger, pac-wrapper, dataverse-client, config-loader, ref-resolver)
+  - 2 validation scripts in `/deployment/scripts/src/validate/` (spec validator, GCC compliance checker)
+  - 7 deployment step scripts in `/deployment/scripts/src/deploy/` (01-07 + orchestrator)
+  - 3 rollback scripts in `/deployment/scripts/src/rollback/` (solution, security, data)
+  - CI/CD pipeline config + 4 GitHub Actions workflows in `/deployment/ci-cd/`
+  - 3 deployment docs in `/deployment/docs/` (DEPLOYMENT.md, GCC-SETUP.md, ROLLBACK.md)
+  - ADR-024 (pac CLI + Web API), ADR-025 (interactive deployment), ADR-026 (GCC endpoints), ADR-027 (PHI prod guard)
+  - TECHNICAL.md Deployment Automation section added
+  - USER-GUIDE.md Deployment Scripts section for administrators added
+
+- **Session 8 COMPLETE:** Dev provisioning script (direct Dataverse Web API)
+  - 6 TypeScript files in `/scripts/` (package.json, tsconfig.json, auth.ts, spec-reader.ts, metadata.ts, data-loader.ts, provision-dev.ts)
+  - Device-code auth via `@azure/identity` (GCC + commercial)
+  - 14-step orchestration: publisher → solution → global option sets → tables → columns → relationships → AutoNumber → solution components → env vars → PublishAllXml → sample data
+  - Sample data import with @ref: symbolic FK resolution, two-pass for circular refs
+  - Field alias mapping + choice label fuzzy matching for sample data mismatches
+  - Supports `--dry-run`, `--skip-data`, `--commercial` flags
+  - No app registration needed — uses interactive device-code flow
 
 ### What's Pending
-- Phase 7: Deployment + GCC auth scripts
+- All 7 phases complete + dev provisioning script ready to run
+- Next: O'G provides a Dataverse dev environment URL and tenant ID to run the script
 
 ## Key Decisions
 1. **20+ entity model** covering all six operational domains per O'G's requirements
@@ -115,10 +142,22 @@
 31. **Power BI for analytics, MDA for real-time** — no dashboard duplication — ADR-023
 32. **NFPA 1710 benchmark configurable** — 6.33 min default via env var
 33. **Role-playing dimensions** — Mutual Aid dataset uses separate RequestingAgency/ProvidingAgency tables
+34. **pac CLI + Dataverse Web API** — pac for solution ALM, Web API for BU/team/record operations — ADR-024
+35. **Interactive deployment, not zero-touch** — admin-run scripts with --dry-run, manual approval gates — ADR-025
+36. **GCC endpoint strategy** — cloudType-driven endpoint selection, no commercial endpoints — ADR-026
+37. **PHI hard block for Production** — code-level block on patient-records.json import to prod — ADR-027
+
+38. **Device-code auth for dev provisioning** — no Entra app registration needed, interactive login
+39. **Direct Web API for dev provisioning** — bypasses pac CLI, creates schema + data via Metadata API + OData
+40. **Two-pass sample data import** — handles circular FKs (Unit↔Incident) via deferred lookup resolution
+41. **Field alias mapping** — bridges sample data field names to table definition schema names
+42. **Choice label fuzzy matching** — exact → prefix → contains matching for sample data choice labels
 
 ## Open Questions / Blockers
-- None currently — ready for Phase 7 (Deployment + GCC auth scripts)
+- None — all 7 phases complete + dev provisioning script ready
 
 ## Next Steps
-1. O'G reviews Phase 6 Power BI reporting specifications
-2. Begin Phase 7: Deployment + GCC auth scripts
+1. O'G provides Dataverse dev environment URL + tenant ID
+2. Run `npx tsx provision-dev.ts --url <URL> --tenant-id <GUID>` to create schema + sample data
+3. Verify in make.powerapps.com: 22 tables, columns, relationships, sample data
+4. Begin building model-driven app and canvas app from specs

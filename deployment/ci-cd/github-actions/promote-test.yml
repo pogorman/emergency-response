@@ -1,0 +1,72 @@
+name: Promote to Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_sample_data:
+        description: 'Skip sample data import'
+        required: false
+        default: 'false'
+        type: boolean
+      dry_run:
+        description: 'Dry run (preview only)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  promote-test:
+    name: Promote Dev → Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Power Platform CLI
+        run: |
+          npm install -g @microsoft/powerplatform-cli@latest
+
+      - name: Install dependencies
+        working-directory: deployment/scripts
+        run: npm ci
+
+      - name: GCC compliance check (test)
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-gcc.ts --env ../config/test.json
+
+      - name: Deploy to Test
+        working-directory: deployment/scripts
+        env:
+          SEO_CLIENT_SECRET: ${{ secrets.SEO_CLIENT_SECRET }}
+        run: |
+          SKIP_FLAGS=""
+          if [ "${{ inputs.skip_sample_data }}" = "true" ]; then
+            SKIP_FLAGS="--skip-step sample-data-import"
+          fi
+
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+
+          npx tsx src/deploy/deploy-all.ts \
+            --env ../config/test.json \
+            --verbose \
+            $SKIP_FLAGS \
+            $DRY_RUN_FLAG
+
+      - name: Post-deployment summary
+        if: always()
+        run: |
+          echo "## Promote to Test" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: SEO Test" >> $GITHUB_STEP_SUMMARY
+          echo "- Dry run: ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Skip sample data: ${{ inputs.skip_sample_data }}" >> $GITHUB_STEP_SUMMARY

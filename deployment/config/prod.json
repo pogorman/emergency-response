@@ -1,0 +1,59 @@
+{
+  "$schema": "environments.schema.json",
+  "environmentName": "SEO Production",
+  "environmentType": "Production",
+  "environmentUrl": "https://seo-prod.crm9.dynamics.com",
+  "tenantId": "00000000-0000-0000-0000-000000000000",
+  "cloudType": "GCC",
+  "authentication": {
+    "clientId": "00000000-0000-0000-0000-000000000000",
+    "authority": "https://login.microsoftonline.us/00000000-0000-0000-0000-000000000000",
+    "clientSecretEnvVar": "SEO_CLIENT_SECRET"
+  },
+  "solution": {
+    "uniqueName": "EmergencyResponseCoordination",
+    "importType": "Managed",
+    "solutionFilePath": "../../solution/EmergencyResponseCoordination_managed.zip",
+    "publishOnImport": true,
+    "overwriteUnmanagedCustomizations": false
+  },
+  "environmentVariables": {
+    "seo_DefaultAgencyId": "",
+    "seo_DefaultJurisdictionId": "",
+    "seo_MapDefaultLatitude": "38.9072",
+    "seo_MapDefaultLongitude": "-77.0369",
+    "seo_MapDefaultZoom": "12",
+    "seo_EnableMutualAidCostTracking": "true",
+    "seo_PatientRecordRetentionDays": "2555",
+    "seo_MCIPatientThreshold": "5",
+    "seo_MutualAidExpiryWarningDays": "30",
+    "seo_DispatchSupervisorEmail": "dispatch-supervisors@agency.gov",
+    "seo_FlowErrorNotificationEmail": "seo-prod-admins@agency.gov",
+    "seo_ServiceAccountUserId": "",
+    "seo_GPSUpdateIntervalSeconds": "30",
+    "seo_OfflineSyncIntervalMinutes": "5",
+    "seo_DefaultDashboardId": "",
+    "seo_PowerBIWorkspaceId": "",
+    "seo_PowerBIDatasetRefreshHours": "4",
+    "seo_NFPAResponseTimeBenchmarkMinutes": "6.33"
+  },
+  "connectionReferences": {
+    "seo_DataverseConnection": "",
+    "seo_Office365UsersConnection": "",
+    "seo_SharePointConnection": "",
+    "seo_OutlookConnection": "",
+    "seo_PowerBIConnection": ""
+  },
+  "agencies": [],
+  "sampleData": {
+    "importSampleData": false,
+    "includePhiRecords": false,
+    "sampleDataPath": "../../sample-data"
+  },
+  "powerBI": {
+    "workspaceId": "",
+    "gatewayId": "",
+    "refreshScheduleHours": 4,
+    "configureRLS": true
+  }
+}

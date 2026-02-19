@@ -16,7 +16,7 @@
 | 4 | Canvas app (mobile responder) | **COMPLETE** |
 | 5 | Model-driven app (dispatch/supervisor) | **COMPLETE** |
 | 6 | Reporting / Power BI layer | **COMPLETE** |
-| 7 | Deployment + GCC auth scripts | Pending |
+| 7 | Deployment + GCC auth scripts | **COMPLETE** |
 
 **Rule:** Build incrementally. Do NOT scaffold future phases prematurely.
 

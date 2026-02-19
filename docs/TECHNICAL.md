@@ -1312,3 +1312,193 @@ Each dataset includes a shared Date dimension (3-year rolling calendar) and Agen
 - No custom connectors without security review
 - Azure AD (Entra ID) for authentication — GCC tenant
 - Power Platform environment must be GCC type
+
+---
+
+## Deployment Automation (Phase 7)
+
+### Overview
+
+Phase 7 provides a TypeScript-based deployment automation layer for GCC Dataverse environments. Scripts are admin-run CLI tools with `--dry-run` support — interactive, not zero-touch (ADR-025).
+
+- **Spec location:** `/deployment/`
+- **Runtime:** Node.js 18+, TypeScript via `tsx`
+- **Auth:** MSAL via `@azure/identity` + `pac` CLI (both use same service principal)
+- **Validation:** JSON Schema (Ajv) + 12-point GCC compliance checker
+
+### Deployment Pipeline (7 Steps)
+
+| Step | Script | What It Does |
+|------|--------|-------------|
+| 1 | `01-environment-setup.ts` | Authenticates pac CLI + Dataverse Web API, verifies environment |
+| 2 | `02-solution-import.ts` | Backs up existing solution, imports .zip (managed or unmanaged) |
+| 3 | `03-environment-variables.ts` | Sets all 18 env var values per target environment |
+| 4 | `04-connection-references.ts` | Binds 5 connection references to target connections |
+| 5 | `05-security-provision.ts` | Creates BUs, 4 owner teams per agency, Mutual Aid Partners team, role assignments |
+| 6 | `06-sample-data-import.ts` | Imports 22 files with @ref: resolution, two-pass for circular FKs |
+| 7 | `07-powerbi-setup.ts` | Configures workspace, refresh schedule, documents RLS setup |
+
+### Rollback Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `rollback-solution.ts` | Uninstall solution or restore from backup .zip |
+| `rollback-security.ts` | Deactivate BUs/teams, warn about orphaned records |
+| `rollback-data.ts` | Delete sample data in reverse dependency order (dev/test only) |
+
+### Environment Configs
+
+| Config | Type | Solution | Sample Data | PHI |
+|--------|------|----------|-------------|-----|
+| `dev.json` | Sandbox | Unmanaged | Yes | Yes |
+| `test.json` | Sandbox | Managed | Yes | Yes |
+| `prod.json` | Production | Managed | No | **Blocked** |
+
+### GCC Compliance Matrix
+
+12-point automated check via `validate-gcc.ts`:
+
+| # | Check | Severity |
+|---|-------|----------|
+| 1 | Cloud type is GCC/GCCHigh | ERROR |
+| 2 | API endpoint matches cloud type | ERROR |
+| 3 | Auth endpoint is `login.microsoftonline.us` | ERROR |
+| 4 | All connectors FedRAMP authorized | ERROR |
+| 5 | No unapproved custom connectors | WARNING |
+| 6 | Environment type matches config | WARNING |
+| 7 | Data residency = US Government | ERROR |
+| 8 | PHI blocked for Production | ERROR |
+| 9 | Power BI endpoint is `api.powerbigov.us` | WARNING |
+| 10 | Audit enabled | WARNING |
+| 11 | TLS 1.2+ | ERROR |
+| 12 | Service account has seo_SystemAdmin | ERROR |
+
+### CI/CD Pipelines (GitHub Actions)
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `validate-pr.yml` | PR to main | Build TS, validate specs, GCC check |
+| `deploy-dev.yml` | Merge to main | Auto-deploy to Dev |
+| `promote-test.yml` | Manual + approval | Promote to Test |
+| `promote-prod.yml` | Manual + dual approval + confirmation | Promote to Production |
+
+### GCC Endpoint Map
+
+| Service | GCC | GCC High |
+|---------|-----|----------|
+| Dataverse | `.crm9.dynamics.com` | `.crm.microsoftdynamics.us` |
+| Auth | `login.microsoftonline.us` | `login.microsoftonline.us` |
+| Power BI | `api.powerbigov.us` | `api.powerbigov.us` |
+| Graph | `graph.microsoft.us` | `graph.microsoft.us` |
+
+No commercial endpoints (`.dynamics.com`, `login.microsoftonline.com`, `api.powerbi.com`) exist in any script file.
+
+---
+
+## Architecture Decisions (continued)
+
+### ADR-024: Prefer pac CLI over Raw Dataverse Web API
+**Decision:** Use `pac` for solution import/export, auth, environment management. Fall back to Dataverse Web API for BU creation, team management, GrantAccess, field security, record CRUD.
+**Rationale:** pac is Microsoft's official ALM tool, supports GCC via `--cloud UsGov`, handles solution packaging. Web API fills gaps pac doesn't cover.
+**Trade-off:** Two auth mechanisms (pac auth + MSAL), both use the same service principal.
+
+### ADR-025: Interactive Deployment, Not Zero-Touch
+**Decision:** Scripts are admin-run CLI tools with `--dry-run` support, not fully automated. CI/CD provides structure but requires manual approval gates.
+**Rationale:** GCC deployments involve sensitive operations (security provisioning, PHI handling) requiring human oversight. Scripts automate mechanics; admin retains control.
+**Trade-off:** Slower than full automation. Acceptable for GCC compliance.
+
+### ADR-026: GCC Endpoint Strategy
+**Decision:** All scripts use `cloudType` config value (GCC/GCCHigh) to select API endpoints. No hardcoded commercial endpoints.
+**Rationale:** GCC/GCC High use different URLs — Dataverse (`.crm9`/`.microsoftdynamics.us`), Auth (`login.microsoftonline.us`), Power BI (`api.powerbigov.us`), Graph (`graph.microsoft.us`).
+**Trade-off:** Cannot test against commercial environments (by design).
+
+### ADR-027: PHI Sample Data Guard for Production
+**Decision:** `06-sample-data-import.ts` enforces a hard code-level block on `patient-records.json` when the target is Production, regardless of config.
+**Rationale:** Even fictional PHI in a prod GCC environment creates compliance risk. Admin must use Dataverse Import Wizard manually with explicit awareness.
+**Trade-off:** No automated PHI data import to prod, even for demos.
+
+---
+
+## Dev Provisioning Script (Session 8)
+
+### Overview
+
+A standalone TypeScript script that reads all project JSON spec files and provisions a Dataverse dev environment directly via Web API — no pac CLI, no solution .zip export, no app registration required.
+
+- **Location:** `/scripts/`
+- **Runtime:** Node.js 22+ (native fetch), TypeScript via `tsx`
+- **Auth:** `@azure/identity` DeviceCodeCredential (interactive device-code flow)
+- **Endpoints:** GCC (`login.microsoftonline.us`, `.crm9.dynamics.com`) or commercial (`--commercial` flag)
+
+### File Structure
+
+```
+scripts/
+├── package.json                 # @azure/identity 4.7.0, tsx 4.19.3
+├── tsconfig.json                # ES2022, strict
+├── provision-dev.ts             # CLI entry point + 14-step orchestrator
+└── lib/
+    ├── auth.ts                  # Device-code auth, DataverseClient wrapper
+    ├── spec-reader.ts           # Reads JSON specs → typed ProjectSpecs
+    ├── metadata.ts              # Metadata API: publisher, solution, option sets, tables, columns, relationships, env vars
+    └── data-loader.ts           # Sample data import with @ref: FK resolution
+```
+
+### What It Creates
+
+| Component | Count | API |
+|-----------|-------|-----|
+| Publisher (StateEmergencyOps, prefix: seo) | 1 | `publishers` |
+| Solution (EmergencyResponseCoordination) | 1 | `solutions` |
+| Global Option Sets | 14 | `GlobalOptionSetDefinitions` |
+| Tables (with primary column) | 22 | `EntityDefinitions` |
+| Non-lookup columns | ~200 | `EntityDefinitions({id})/Attributes` |
+| Lookup relationships | ~35 | `RelationshipDefinitions` |
+| AutoNumber formats | 3 | PATCH `EntityDefinitions/Attributes` |
+| Environment variables | 18 | `environmentvariabledefinitions` + `environmentvariablevalues` |
+| Sample data records | ~178 | Entity collection POSTs |
+
+### 14-Step Execution Flow
+
+| Step | What It Does |
+|------|-------------|
+| 1 | Read all project specs from JSON files |
+| 2 | Authenticate via device-code flow |
+| 3 | WhoAmI — verify connectivity |
+| 4 | Ensure publisher (create or find existing) |
+| 5 | Ensure solution (create or find existing) |
+| 6 | Create 14 global option sets |
+| 7 | Create 22 tables with primary column only |
+| 8 | Add remaining columns to each table |
+| 9 | Create ~35 lookup relationships |
+| 10 | Set AutoNumber formats (CALL-, INC-, PT-) |
+| 11 | Add all components to solution |
+| 12 | Create 18 environment variables |
+| 13 | PublishAllXml |
+| 14 | Import ~178 sample data records |
+
+### Column Type Mapping
+
+| Spec Type | Dataverse OData Type | Notes |
+|-----------|---------------------|-------|
+| String | `StringAttributeMetadata` | maxLength maps to MaxLength |
+| Memo | `MemoAttributeMetadata` | Multi-line text |
+| WholeNumber | `IntegerAttributeMetadata` | Format: None |
+| Float | `DoubleAttributeMetadata` | Precision maps |
+| Boolean | `BooleanAttributeMetadata` | TrueOption/FalseOption labels |
+| DateTime | `DateTimeAttributeMetadata` | Format: DateAndTime |
+| DateOnly | `DateTimeAttributeMetadata` | Format: DateOnly |
+| AutoNumber | `StringAttributeMetadata` | + AutoNumberFormat post-create |
+| GlobalChoice | `PicklistAttributeMetadata` | References existing GlobalOptionSet |
+| Choice | `PicklistAttributeMetadata` | Inline OptionSet definition |
+| Lookup | Created via relationship | OneToManyRelationshipMetadata |
+| Calculated | Skipped | Must be configured in maker portal |
+
+### Sample Data Import Strategy
+
+- **Import order:** 22 entities in FK dependency order (agencies → jurisdictions → ... → unit-status-logs)
+- **@ref: resolution:** Symbolic references (e.g., `@ref:agency-metro`) resolved to Dataverse GUIDs at import time
+- **Two-pass import:** Pass 1 creates records, queues unresolvable refs. Pass 2 PATCHes deferred lookups.
+- **Field aliases:** Maps known sample data field mismatches (e.g., `seo_gpsLatitude` → `seo_latitude`)
+- **Choice label matching:** Exact → prefix → contains fuzzy matching with explicit alias map
+- **Array handling:** Array values (e.g., certifications) converted to comma-separated strings

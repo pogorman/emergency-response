@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "../_schema/deployment-definition-schema.json",
+  "description": "This schema file enables IDE auto-completion for environment config files. Each config file (dev.json, test.json, prod.json) should reference this schema."
+}

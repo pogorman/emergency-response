@@ -449,6 +449,102 @@ Key settings configurable per environment:
 
 Configure in Power Platform Admin Center → Environments → Environment Variables.
 
+### Deployment Scripts
+
+Phase 7 provides TypeScript deployment scripts in `/deployment/scripts/`. These automate the solution deployment pipeline.
+
+#### Quick Start
+
+```bash
+cd deployment/scripts
+npm install
+export SEO_CLIENT_SECRET="your-service-principal-secret"
+
+# Preview deployment (no changes)
+npx tsx src/deploy/deploy-all.ts --env ../config/dev.json --dry-run
+
+# Deploy to Dev
+npx tsx src/deploy/deploy-all.ts --env ../config/dev.json --verbose
+```
+
+#### Deployment Steps
+
+| Step | What It Does |
+|------|-------------|
+| 1. Environment Setup | Authenticates and verifies the target Dataverse environment |
+| 2. Solution Import | Imports the solution .zip (backs up existing first) |
+| 3. Environment Variables | Sets all 18 env var values from the config file |
+| 4. Connection References | Binds connections to the solution's 5 connection references |
+| 5. Security Provisioning | Creates Business Units and teams for each agency |
+| 6. Sample Data Import | Loads the 22 sample data files (dev/test only) |
+| 7. Power BI Setup | Configures workspace and documents RLS setup |
+
+#### Skipping Steps
+
+```bash
+# Skip sample data for a clean environment
+npx tsx src/deploy/deploy-all.ts --env ../config/dev.json --skip-step sample-data-import
+
+# Re-run only env vars after config change
+npx tsx src/deploy/deploy-all.ts --env ../config/dev.json \
+  --skip-step environment-setup --skip-step solution-import \
+  --skip-step connection-references --skip-step security-provision \
+  --skip-step sample-data-import --skip-step powerbi-setup
+```
+
+#### Rollback
+
+```bash
+# Uninstall solution
+npx tsx src/rollback/rollback-solution.ts --env ../config/dev.json
+
+# Delete sample data (dev/test only)
+npx tsx src/rollback/rollback-data.ts --env ../config/dev.json
+```
+
+See `deployment/docs/DEPLOYMENT.md` for the full runbook and `deployment/docs/GCC-SETUP.md` for infrastructure setup.
+
+### Dev Provisioning Script (Quick Setup)
+
+For quickly standing up a dev environment without the full deployment pipeline, use the standalone provisioning script. It creates all schema and sample data directly via the Dataverse Web API with interactive login (no app registration needed).
+
+#### Prerequisites
+- Node.js 22+
+- A Dataverse dev environment URL (e.g., `https://org-name.crm9.dynamics.com`)
+- Your Entra tenant ID (GUID)
+- An admin account with Dataverse System Administrator role
+
+#### Running the Script
+
+```bash
+cd scripts
+npm install
+npx tsx provision-dev.ts --url https://org-name.crm9.dynamics.com --tenant-id <GUID>
+```
+
+The script will prompt you to visit a URL and enter a device code to authenticate. After login, it creates:
+- Publisher and solution
+- 14 global option sets
+- 22 tables with all columns and relationships
+- 18 environment variables
+- ~178 sample data records
+
+#### Flags
+
+| Flag | Effect |
+|------|--------|
+| `--dry-run` | Log all actions without creating anything in Dataverse |
+| `--skip-data` | Create schema only, skip sample data import |
+| `--commercial` | Use commercial auth endpoints (default: GCC) |
+
+#### Verification
+
+After the script completes:
+1. Open make.powerapps.com → Solutions → EmergencyResponseCoordination
+2. Verify all 22 tables are present with columns and relationships
+3. Open a table's data tab to see sample records
+4. Check environment variables are populated with default values
+
 ### Managing Stations & Apparatus
 
 1. **Administration → Stations & Equipment → Stations** — add/edit fire/EMS stations

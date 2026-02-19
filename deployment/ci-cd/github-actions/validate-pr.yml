@@ -1,0 +1,50 @@
+name: Validate PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'deployment/**'
+      - 'datamodel/**'
+      - 'security/**'
+      - 'flows/**'
+      - 'apps/**'
+      - 'model-driven-apps/**'
+      - 'reporting/**'
+      - 'sample-data/**'
+      - 'solution/**'
+
+jobs:
+  validate:
+    name: Build & Validate Specs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: deployment/scripts
+        run: npm ci
+
+      - name: TypeScript compile check
+        working-directory: deployment/scripts
+        run: npx tsc --noEmit
+
+      - name: Validate all spec files
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-specs.ts
+
+      - name: GCC compliance check (dev config)
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-gcc.ts --env ../config/dev.json
+
+      - name: GCC compliance check (prod config)
+        working-directory: deployment/scripts
+        run: npx tsx src/validate/validate-gcc.ts --env ../config/prod.json

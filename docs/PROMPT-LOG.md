@@ -222,3 +222,98 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/RELEASE-NOTES.md` — added v0.6.0
 - Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
 - Updated `CLAUDE.md` — Phase 6 → COMPLETE
+
+## 2026-02-18 — Session 7: Phase 7 — Deployment + GCC Auth Scripts
+
+**Prompt Summary:** Implement Phase 7 — create TypeScript deployment automation scripts for GCC Dataverse environments. 7-step deployment pipeline, 3 rollback scripts, 2 validation scripts, environment configs (Dev/Test/Prod), 4 GitHub Actions CI/CD workflows, deployment documentation, 4 new ADRs, and full documentation updates.
+
+**Actions Taken:**
+- Created `deployment/_schema/deployment-definition-schema.json` — JSON Schema for environment config validation with PHI guard for Production
+- Created `deployment/README.md` — translation guide, GCC endpoint strategy, compliance matrix, quick start
+- Created `deployment/scripts/package.json` — npm deps (@azure/identity 4.7.0, ajv 8.17.1, tsx 4.19.3, typescript 5.7.3)
+- Created `deployment/scripts/tsconfig.json` — strict TypeScript config (ES2022, Node16)
+- Created 3 type files in `deployment/scripts/src/types/`:
+  - `environment-config.ts` — config interfaces, GCC endpoint map, env var/conn ref constants
+  - `deployment-context.ts` — shared context, endpoint resolution, context factory
+  - `dataverse-api.ts` — Dataverse Web API response types (30+ interfaces)
+- Created 5 utility files in `deployment/scripts/src/utils/`:
+  - `logger.ts` — structured logging [STEP] [LEVEL] [timestamp] with colors
+  - `pac-wrapper.ts` — typed pac CLI wrapper (auth, org, solution, publish)
+  - `dataverse-client.ts` — MSAL auth via @azure/identity, Dataverse Web API CRUD
+  - `config-loader.ts` — JSON Schema validation, endpoint consistency check, PHI guard
+  - `ref-resolver.ts` — @ref: resolution, entity set map, import order (1-22), circular refs
+- Created 2 validation scripts in `deployment/scripts/src/validate/`:
+  - `validate-specs.ts` — validates all Phase 1-6 JSON specs against their schemas
+  - `validate-gcc.ts` — 12-point GCC compliance checker with commercial endpoint scanner
+- Created `deployment/config/environments.schema.json` — IDE auto-completion schema
+- Created 3 environment config templates:
+  - `dev.json` — Sandbox, Unmanaged, sample data + PHI, 3 agencies
+  - `test.json` — Sandbox, Managed, sample data + PHI, 3 agencies
+  - `prod.json` — Production, Managed, no sample data, PHI blocked, empty agencies
+- Created 7 deployment step scripts in `deployment/scripts/src/deploy/`:
+  - `01-environment-setup.ts` — pac auth + WhoAmI verification
+  - `02-solution-import.ts` — backup existing + import with pac
+  - `03-environment-variables.ts` — query definitions + create/update values
+  - `04-connection-references.ts` — query refs + bind connection IDs
+  - `05-security-provision.ts` — create BUs, 4 teams per agency, Mutual Aid Partners, role assignment
+  - `06-sample-data-import.ts` — 22-file import with @ref: resolution, two-pass circular FK, PHI hard block
+  - `07-powerbi-setup.ts` — workspace verification, refresh config, RLS instructions
+- Created `deployment/scripts/src/deploy/deploy-all.ts` — orchestrator with --env, --dry-run, --skip-step, --verbose
+- Created 3 rollback scripts in `deployment/scripts/src/rollback/`:
+  - `rollback-solution.ts` — uninstall or restore from backup
+  - `rollback-security.ts` — deactivate BUs/teams with orphan warnings
+  - `rollback-data.ts` — delete sample data in reverse order (dev/test only, prod blocked)
+- Created `deployment/ci-cd/pipeline-config.json` — shared CI/CD settings
+- Created 4 GitHub Actions workflows in `deployment/ci-cd/github-actions/`:
+  - `validate-pr.yml` — PR validation (build, specs, GCC check)
+  - `deploy-dev.yml` — auto-deploy to Dev on merge
+  - `promote-test.yml` — manual + approval to Test
+  - `promote-prod.yml` — manual + dual approval + DEPLOY-PROD confirmation to Prod
+- Created 3 deployment docs in `deployment/docs/`:
+  - `DEPLOYMENT.md` — prerequisites, runbook, verification checklist, troubleshooting
+  - `GCC-SETUP.md` — tenant, Entra ID app reg, licenses, firewall, gateway, connections
+  - `ROLLBACK.md` — decision framework, per-component rollback, post-rollback verification
+- Updated `docs/TECHNICAL.md`:
+  - Added Deployment Automation section (overview, pipeline, rollback, configs, compliance matrix, CI/CD, endpoint map)
+  - Added ADR-024 (pac CLI + Web API), ADR-025 (interactive deployment), ADR-026 (GCC endpoints), ADR-027 (PHI prod guard)
+- Updated `docs/USER-GUIDE.md` — added Deployment Scripts section for administrators
+- Updated `docs/RELEASE-NOTES.md` — added v0.7.0
+- Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
+- Updated `CLAUDE.md` — Phase 7 → COMPLETE
+
+## 2026-02-18 — Session 8: Dev Provisioning Script (Direct Dataverse Web API)
+
+**Prompt Summary:** Create a TypeScript provisioning script that reads the project's JSON spec files and creates everything (publisher, solution, global option sets, 22 tables with columns, ~35 lookup relationships, 18 environment variables, ~178 sample data records) in a live Dataverse dev environment via Web API Metadata endpoints and data APIs. Uses device-code auth (no app registration needed). Supports --dry-run, --skip-data, --commercial flags.
+
+**Actions Taken:**
+- Created `scripts/package.json` — npm project with @azure/identity 4.7.0, tsx 4.19.3, exact versions
+- Created `scripts/tsconfig.json` — ES2022, strict, bundler module resolution
+- Created `scripts/lib/auth.ts` — Device-code auth via DeviceCodeCredential, GCC + commercial endpoints, returns DataverseClient with auto-token fetch wrapper
+- Created `scripts/lib/spec-reader.ts` — Reads all JSON specs (15 global choices, 22 tables, 18 env vars, 22 sample data files), returns typed ProjectSpecs
+- Created `scripts/lib/metadata.ts` (~380 lines) — Dataverse Metadata API helpers:
+  - whoAmI, ensurePublisher, ensureSolution (idempotent create-or-find)
+  - createGlobalOptionSet (OptionSetMetadata with check-first)
+  - buildColumnMetadata (13 type mappings: String→StringAttributeMetadata, Memo→MemoAttributeMetadata, etc.)
+  - createTable (entity with primary name column only)
+  - createTableColumns (non-lookup, non-calculated columns)
+  - createRelationship (OneToManyRelationshipMetadata with CascadeConfiguration)
+  - setAutoNumberFormat (PATCH after creation)
+  - addComponentToSolution (AddSolutionComponent action)
+  - createEnvironmentVariable (definition + value)
+  - getEntitySetNames (query for data API URLs)
+  - publishAll (PublishAllXml)
+- Created `scripts/lib/data-loader.ts` (~290 lines) — Sample data import:
+  - IMPORT_ORDER: 22 entities in FK dependency order
+  - FIELD_ALIASES: maps sample data field mismatches (seo_gpsLatitude→seo_latitude, etc.)
+  - CHOICE_LABEL_ALIASES: maps short labels to full option labels (Priority 1→Priority 1 — Immediate Life Threat, etc.)
+  - resolveChoiceValue: exact → prefix → contains fuzzy matching
+  - importSampleData: two-pass (create records, then PATCH deferred lookups for circular refs)
+  - Handles @ref: symbolic FK resolution, array→CSV conversion, null skipping
+- Created `scripts/provision-dev.ts` (~182 lines) — CLI orchestrator:
+  - 14-step execution: read specs → auth → WhoAmI → publisher → solution → global option sets → tables → columns → relationships → AutoNumber → solution components → env vars → PublishAllXml → sample data
+  - Flags: --url, --tenant-id, --dry-run, --skip-data, --commercial
+- Fixed orphaned Lookup columns: Step 9 rewritten to iterate ALL Lookup columns (not just explicit N:1 relationships), since some table specs define Lookup columns without matching N:1 entries
+- Fixed misleading variable name: `unresolvedDeferred` → `readyDeferred`
+- Verified TypeScript compilation (tsc --noEmit, zero errors)
+- Verified spec reader loads all specs correctly (15 choices, 22 tables, 18 env vars, 22 sample data files)
+- Updated all documentation files (SESSION-MEMORY, PROMPT-LOG, RELEASE-NOTES, TECHNICAL, USER-GUIDE)

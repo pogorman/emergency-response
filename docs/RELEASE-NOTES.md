@@ -1,5 +1,139 @@
 # Release Notes
 
+## v0.8.0 — Dev Provisioning Script (2026-02-18)
+
+### Summary
+Standalone TypeScript provisioning script that reads the project's JSON spec files and creates everything in a live Dataverse dev environment via Web API. Uses device-code auth (no Entra app registration needed). Creates publisher, solution, 14 global option sets, 22 tables with all columns, ~35 lookup relationships, 18 environment variables, and imports ~178 sample data records. Supports `--dry-run`, `--skip-data`, and `--commercial` flags.
+
+### What's Included
+- **6 TypeScript files** in `scripts/`:
+  - `package.json` + `tsconfig.json` — minimal deps (@azure/identity, tsx)
+  - `lib/auth.ts` — Device-code auth for GCC + commercial, returns DataverseClient
+  - `lib/spec-reader.ts` — Reads all project JSON specs into typed ProjectSpecs
+  - `lib/metadata.ts` — Dataverse Metadata API: publisher, solution, option sets, tables, columns, relationships, AutoNumber, env vars, PublishAllXml
+  - `lib/data-loader.ts` — Sample data import with @ref: FK resolution, field aliases, choice label fuzzy matching, two-pass circular ref handling
+  - `provision-dev.ts` — 14-step CLI orchestrator
+
+### Usage
+```bash
+cd scripts && npm install
+npx tsx provision-dev.ts --url https://org.crm9.dynamics.com --tenant-id <GUID>
+```
+
+Optional flags:
+- `--dry-run` — log actions without creating anything
+- `--skip-data` — schema only, skip sample data import
+- `--commercial` — use commercial auth endpoints (default: GCC)
+
+### Key Design Decisions
+- Device-code auth — no Entra app registration needed for dev use
+- Direct Web API — bypasses pac CLI for schema creation, uses Metadata API endpoints
+- 14-step sequential orchestration with detailed console logging
+- Two-pass sample data import handles circular FK dependencies (Unit↔Incident)
+- Field alias mapping bridges sample data field name mismatches to table definitions
+- Choice label fuzzy matching (exact → prefix → contains) handles label variations
+- Relationship creation iterates all Lookup columns, not just explicit N:1 entries
+
+### Breaking Changes
+None (additive — new scripts/ directory).
+
+### Dependencies
+- Node.js 22+ (native fetch)
+- @azure/identity 4.7.0
+- tsx 4.19.3
+- v0.1.0 (data model JSON specs must exist)
+- v0.5.0 (sample data files must exist)
+
+---
+
+## v0.7.0 — Phase 7: Deployment + GCC Auth Scripts (2026-02-18)
+
+### Summary
+Complete deployment automation layer: TypeScript scripts for 7-step deployment pipeline, 3 rollback scripts, 2 validation scripts, environment configs for Dev/Test/Prod, 4 GitHub Actions CI/CD workflows, and deployment documentation. Scripts are admin-run CLI tools with `--dry-run` support, not zero-touch automation. GCC compliance validated via a 12-point automated checker.
+
+### What's Included
+- **Deployment definition schema** (`deployment/_schema/deployment-definition-schema.json`):
+  - JSON Schema for environment config validation
+  - Enforces PHI guard: Production must have `includePhiRecords = false`
+- **Deployment README** (`deployment/README.md`):
+  - Translation guide: config → Power Platform
+  - GCC endpoint strategy, compliance matrix, quick start
+- **3 environment config templates** (`deployment/config/`):
+  - `dev.json` — Sandbox, Unmanaged, sample data + PHI
+  - `test.json` — Sandbox, Managed, sample data + PHI
+  - `prod.json` — Production, Managed, no sample data, PHI blocked
+  - All 18 env vars + 5 connection refs in each config
+- **Project scaffolding** (`deployment/scripts/`):
+  - `package.json` — npm deps with exact versions (@azure/identity, ajv, tsx, typescript)
+  - `tsconfig.json` — Strict TypeScript config
+- **3 type files** (`deployment/scripts/src/types/`):
+  - `environment-config.ts` — Config interfaces, GCC endpoint map, env var/conn ref constants
+  - `deployment-context.ts` — Shared context, endpoint resolution, context factory
+  - `dataverse-api.ts` — Dataverse Web API response types (OData, WhoAmI, entities)
+- **5 utility files** (`deployment/scripts/src/utils/`):
+  - `logger.ts` — Structured logging with `[STEP] [LEVEL] [timestamp]` format
+  - `pac-wrapper.ts` — Typed wrapper for pac CLI with `--cloud UsGov`
+  - `dataverse-client.ts` — MSAL auth + Dataverse Web API client (GET/POST/PATCH/DELETE)
+  - `config-loader.ts` — Config loading with JSON Schema validation
+  - `ref-resolver.ts` — @ref: symbolic FK resolution, import order, circular ref handling
+- **2 validation scripts** (`deployment/scripts/src/validate/`):
+  - `validate-specs.ts` — Validates all Phase 1-6 JSON specs against their schemas
+  - `validate-gcc.ts` — 12-point GCC compliance checker
+- **7 deployment step scripts** (`deployment/scripts/src/deploy/`):
+  - `01-environment-setup.ts` — Authenticate pac + Web API, verify environment
+  - `02-solution-import.ts` — Backup existing, import solution .zip
+  - `03-environment-variables.ts` — Set all 18 env var values
+  - `04-connection-references.ts` — Bind 5 connection references
+  - `05-security-provision.ts` — Create BUs, 4 teams per agency, Mutual Aid Partners team
+  - `06-sample-data-import.ts` — Import 22 files with @ref: resolution, two-pass circular FK
+  - `07-powerbi-setup.ts` — Workspace config, refresh schedule, RLS instructions
+- **Orchestrator** (`deployment/scripts/src/deploy/deploy-all.ts`):
+  - CLI with `--env`, `--dry-run`, `--skip-step`, `--verbose` flags
+  - Runs steps 01-07 sequentially, aborts on failure, prints summary
+- **3 rollback scripts** (`deployment/scripts/src/rollback/`):
+  - `rollback-solution.ts` — Uninstall or restore from backup
+  - `rollback-security.ts` — Deactivate BUs/teams with orphan warnings
+  - `rollback-data.ts` — Delete sample data in reverse dependency order (dev/test only)
+- **CI/CD pipeline config** (`deployment/ci-cd/pipeline-config.json`):
+  - Shared config: secrets, environments, approval gates
+- **4 GitHub Actions workflows** (`deployment/ci-cd/github-actions/`):
+  - `validate-pr.yml` — PR: build TS, validate specs, GCC check
+  - `deploy-dev.yml` — Merge to main: auto-deploy to Dev
+  - `promote-test.yml` — Manual + approval: promote to Test
+  - `promote-prod.yml` — Manual + dual approval + confirmation: promote to Prod
+- **3 deployment docs** (`deployment/docs/`):
+  - `DEPLOYMENT.md` — Prerequisites, step-by-step runbook, verification checklist, troubleshooting
+  - `GCC-SETUP.md` — Tenant provisioning, Entra ID app reg, licenses, firewall URLs, gateway
+  - `ROLLBACK.md` — Decision framework, per-component rollback, post-rollback verification
+- **4 new ADRs** in TECHNICAL.md:
+  - ADR-024: Prefer pac CLI over Raw Dataverse Web API
+  - ADR-025: Interactive Deployment, Not Zero-Touch
+  - ADR-026: GCC Endpoint Strategy
+  - ADR-027: PHI Sample Data Guard for Production
+- **TECHNICAL.md updated** with Deployment Automation section
+- **USER-GUIDE.md updated** with Deployment Scripts section for administrators
+
+### Key Design Decisions
+- pac CLI for solution ALM, Dataverse Web API for BU/team/record operations (ADR-024)
+- Interactive admin-run scripts, not zero-touch CI/CD (ADR-025)
+- GCC endpoint selection via `cloudType` config — no commercial endpoints in any file (ADR-026)
+- Hard code-level block on PHI data import to Production (ADR-027)
+- Two-pass import for circular references (personnel→units→incidents→calls)
+- Orchestrator supports `--dry-run`, `--skip-step`, `--verbose` for operational flexibility
+- GitHub Actions with manual approval gates for Test and Prod promotion
+
+### Breaking Changes
+None (additive — new deployment scripts, configs, and documentation).
+
+### Dependencies
+- Node.js 18+ (native fetch, TLS 1.2+)
+- Power Platform CLI (`pac`) installed globally
+- v0.1.0-v0.6.0 (all phases — deployment scripts deploy the complete solution)
+- Service principal with seo_SystemAdmin role in target environments
+- GCC Dataverse environments provisioned (Dev, Test, Prod)
+
+---
+
 ## v0.6.0 — Phase 6: Reporting / Power BI Layer (2026-02-18)
 
 ### Summary
