@@ -580,7 +580,26 @@ function generateSavedQueriesXml(
   primaryColumnLogical: string,
   views: ViewDef[],
   choiceMap: ChoiceValueMap,
+  allTables: TableDef[],
 ): string {
+  // Build set of valid column names for this entity (for validation)
+  const table = allTables.find((t) => ln(t.schemaName) === entityLogical);
+  const validColumns = new Set<string>();
+  if (table) {
+    for (const col of table.columns) {
+      validColumns.add(ln(col.schemaName));
+    }
+  }
+  // Always include auto-generated PK and primary name
+  validColumns.add(`${entityLogical}id`);
+  validColumns.add(primaryColumnLogical);
+  // Standard system columns
+  validColumns.add("createdon");
+  validColumns.add("modifiedon");
+  validColumns.add("statecode");
+  validColumns.add("statuscode");
+  validColumns.add("ownerid");
+
   const lines: string[] = [];
   lines.push(`      <SavedQueries>`);
   lines.push(`        <savedqueries>`);
@@ -589,8 +608,19 @@ function generateSavedQueriesXml(
     const viewGuid = deterministicGuid(`view:${entityLogical}:${view.schemaName}`);
     const pkColumn = `${entityLogical}id`;
 
+    // Filter view columns to only valid attributes
+    const validViewCols = view.columns.filter((c) => {
+      const colLog = ln(c.name);
+      if (colLog.includes(".")) return false; // linked entity
+      if (!validColumns.has(colLog)) {
+        console.warn(`  SKIP COLUMN: ${c.name} on ${entityLogical} (column not found in table def)`);
+        return false;
+      }
+      return true;
+    });
+
     // Build layoutxml
-    const cellsXml = view.columns
+    const cellsXml = validViewCols
       .map((c) => `              <cell name="${ln(c.name)}" width="${c.width}" />`)
       .join("\n");
     const layoutXml = [
@@ -607,22 +637,24 @@ function generateSavedQueriesXml(
     fetchLines.push(`              <entity name="${entityLogical}">`);
     // Always include PK
     fetchLines.push(`                <attribute name="${pkColumn}" />`);
-    // Add view columns
-    for (const col of view.columns) {
+    // Add view columns (only valid ones)
+    for (const col of validViewCols) {
       const colLogical = ln(col.name);
-      // Skip if it contains a dot (linked entity reference — handled separately)
-      if (!colLogical.includes(".")) {
-        fetchLines.push(`                <attribute name="${colLogical}" />`);
-      }
+      fetchLines.push(`                <attribute name="${colLogical}" />`);
     }
-    // Sort orders
+    // Sort orders (skip invalid columns)
     for (const sort of view.sortOrder) {
+      const sortCol = ln(sort.column);
+      if (!validColumns.has(sortCol)) {
+        console.warn(`  SKIP SORT: ${sort.column} on ${entityLogical} (column not found)`);
+        continue;
+      }
       const desc = sort.direction === "Descending" ? "true" : "false";
-      fetchLines.push(`                <order attribute="${ln(sort.column)}" descending="${desc}" />`);
+      fetchLines.push(`                <order attribute="${sortCol}" descending="${desc}" />`);
     }
-    // Filter
+    // Filter (with column validation)
     if (view.filter) {
-      fetchLines.push(generateFetchFilterXml(view.filter, entityLogical, choiceMap, 16));
+      fetchLines.push(generateFetchFilterXml(view.filter, entityLogical, choiceMap, 16, validColumns));
     }
     fetchLines.push(`              </entity>`);
     fetchLines.push(`            </fetch>`);
@@ -664,6 +696,7 @@ function generateFetchFilterXml(
   entityLogical: string,
   choiceMap: ChoiceValueMap,
   indent: number,
+  validColumns?: Set<string>,
 ): string {
   const pad = " ".repeat(indent);
   const lines: string[] = [];
@@ -674,9 +707,13 @@ function generateFetchFilterXml(
 
     // Handle linked entity filters (e.g. "seo_incidentId.seo_status")
     if (colLogical.includes(".")) {
-      // For cross-entity filters, skip — too complex for initial import.
-      // These views will work but without the linked-entity filter condition.
       console.warn(`  SKIP FILTER: ${cond.column} (linked entity filter — configure manually)`);
+      continue;
+    }
+
+    // Skip columns that don't exist on this entity
+    if (validColumns && !validColumns.has(colLogical)) {
+      console.warn(`  SKIP FILTER: ${cond.column} on ${entityLogical} (column not found in table def)`);
       continue;
     }
 
@@ -700,19 +737,39 @@ function generateFetchFilterXml(
       continue;
     }
 
+    // Handle relative date objects: { type: "relative", unit: "days", offset: N }
+    if (typeof cond.value === "object" && cond.value !== null && (cond.value as Record<string, unknown>).type === "relative") {
+      const relObj = cond.value as Record<string, unknown>;
+      const offset = relObj.offset as number;
+      // on-or-before with relative days → next-x-days (within next N days)
+      if (op === "on-or-before") {
+        lines.push(`${pad}  <condition attribute="${colLogical}" operator="next-x-days" value="${offset}" />`);
+      }
+      // on-or-after with offset 0 → today or later
+      else if (op === "on-or-after" && offset === 0) {
+        lines.push(`${pad}  <condition attribute="${colLogical}" operator="today" />`);
+      }
+      // on-or-after with offset N → last-x-days
+      else if (op === "on-or-after") {
+        lines.push(`${pad}  <condition attribute="${colLogical}" operator="last-x-days" value="${offset}" />`);
+      }
+      // Generic: use next-x-days
+      else {
+        lines.push(`${pad}  <condition attribute="${colLogical}" operator="next-x-days" value="${offset}" />`);
+      }
+      continue;
+    }
+
     // Relative date operators with numeric value (last-x-days, next-x-days, etc.)
     if (op === "last-x-days" || op === "next-x-days" || op === "last-x-months" ||
         op === "on-or-before" || op === "on-or-after") {
-      // on-or-before/after with numeric value means relative days
       const val = cond.value;
       if (typeof val === "number") {
-        // For on-or-before/on-or-after with numeric value, use next-x-days/last-x-days
-        if (op === "on-or-before" && typeof val === "number") {
+        if (op === "on-or-before") {
           lines.push(`${pad}  <condition attribute="${colLogical}" operator="next-x-days" value="${val}" />`);
-        } else if (op === "on-or-after" && typeof val === "number") {
-          // on-or-after 0 days = today or later
+        } else if (op === "on-or-after") {
           if (val === 0) {
-            lines.push(`${pad}  <condition attribute="${colLogical}" operator="on-or-after" value="\${today}" />`);
+            lines.push(`${pad}  <condition attribute="${colLogical}" operator="today" />`);
           } else {
             lines.push(`${pad}  <condition attribute="${colLogical}" operator="last-x-days" value="${val}" />`);
           }
@@ -944,42 +1001,21 @@ function generateSectionXml(
   tables: TableDef[],
 ): string {
   const sectionGuid = deterministicGuid(`section:${entityLogical}:${formSchemaName}:${section.name}`);
-  const numCols = section.columns || 1;
+  // Dataverse Unified Interface requires sections columns="1" — multi-column layout
+  // is done at the tab level. We emit one field per row.
   const lines: string[] = [];
 
-  lines.push(`                        <section showlabel="true" showbar="false" IsUserDefined="0" id="{${sectionGuid}}" columns="${numCols}">`);
+  lines.push(`                        <section showlabel="true" showbar="false" IsUserDefined="0" id="{${sectionGuid}}" columns="1">`);
   lines.push(`                          <labels>`);
   lines.push(`                            <label description="${esc(section.label)}" languagecode="${LANG}" />`);
   lines.push(`                          </labels>`);
   lines.push(`                          <rows>`);
 
-  // Emit field cells arranged into rows (numCols cells per row)
+  // Emit field cells — one field per row (columns="1" constraint)
   const fields = section.fields || [];
-  const cellQueue: string[] = [];
-
   for (const field of fields) {
-    cellQueue.push(generateFieldCellXml(field, entityLogical, formSchemaName, tables));
-  }
-
-  // Pad to fill last row if needed
-  while (cellQueue.length > 0 && cellQueue.length % numCols !== 0) {
-    // Empty spacer cell
-    const spacerGuid = deterministicGuid(`spacer:${entityLogical}:${formSchemaName}:${section.name}:${cellQueue.length}`);
-    cellQueue.push([
-      `                              <cell id="{${spacerGuid}}" showlabel="false">`,
-      `                                <labels>`,
-      `                                  <label description="" languagecode="${LANG}" />`,
-      `                                </labels>`,
-      `                              </cell>`,
-    ].join("\n"));
-  }
-
-  // Output rows
-  for (let i = 0; i < cellQueue.length; i += numCols) {
     lines.push(`                            <row>`);
-    for (let j = i; j < i + numCols && j < cellQueue.length; j++) {
-      lines.push(cellQueue[j]);
-    }
+    lines.push(generateFieldCellXml(field, entityLogical, formSchemaName, tables));
     lines.push(`                            </row>`);
   }
 
@@ -987,7 +1023,7 @@ function generateSectionXml(
   const subgrids = section.subgrids || [];
   for (const sg of subgrids) {
     lines.push(`                            <row>`);
-    lines.push(generateSubgridCellXml(sg, entityLogical, formSchemaName));
+    lines.push(generateSubgridCellXml(sg, entityLogical, formSchemaName, tables));
     lines.push(`                            </row>`);
   }
 
@@ -1026,15 +1062,58 @@ function generateFieldCellXml(
   return lines.join("\n");
 }
 
+/**
+ * Resolve a subgrid relationship name from spec format (seo_Parent_Child) to
+ * the actual generated relationship name (seo_ChildTable_fkColumn).
+ */
+function resolveRelationshipName(
+  specRelName: string,
+  parentEntityLogical: string,
+  childEntityLogical: string,
+  allTables: TableDef[],
+): string {
+  const childTable = allTables.find((t) => ln(t.schemaName) === childEntityLogical);
+  if (!childTable) return specRelName;
+
+  // Find Lookup columns on the child table that target the parent table
+  const lookupCols = childTable.columns.filter(
+    (c) => c.type === "Lookup" && c.target && ln(c.target) === parentEntityLogical,
+  );
+
+  if (lookupCols.length === 1) {
+    // Unambiguous: seo_{ChildSchemaName}_{fkSchemaName}
+    const relName = `seo_${childTable.schemaName.replace("seo_", "")}_${lookupCols[0].schemaName.replace("seo_", "")}`;
+    return relName;
+  }
+
+  // Multiple lookups to same parent — try to match by FK name convention
+  // The spec typically uses seo_Parent_Child, so the FK would be seo_{parentName}Id
+  const expectedFk = `seo_${parentEntityLogical.replace("seo_", "")}id`;
+  const match = lookupCols.find((c) => ln(c.schemaName) === expectedFk);
+  if (match) {
+    return `seo_${childTable.schemaName.replace("seo_", "")}_${match.schemaName.replace("seo_", "")}`;
+  }
+
+  // Fallback: return spec name as-is
+  return specRelName;
+}
+
 /** Generate a subgrid cell XML. */
 function generateSubgridCellXml(
   sg: SubgridDef,
   entityLogical: string,
   formSchemaName: string,
+  allTables: TableDef[],
 ): string {
   const cellGuid = deterministicGuid(`subgrid:${entityLogical}:${formSchemaName}:${sg.name}`);
   const targetEntity = ln(sg.entity);
   const rowSpan = Math.max(Math.ceil(sg.maxRows / 2), 2);
+
+  // Resolve the relationship name from spec format to actual generated name
+  const relName = resolveRelationshipName(sg.relationship, entityLogical, targetEntity, allTables);
+  if (relName !== sg.relationship) {
+    console.log(`  RESOLVE REL: ${sg.relationship} → ${relName}`);
+  }
 
   const lines: string[] = [];
   lines.push(`                              <cell id="{${cellGuid}}" rowspan="${rowSpan}" colspan="1" auto="false">`);
@@ -1047,7 +1126,7 @@ function generateSubgridCellXml(
   lines.push(`                                    <AutoExpand>Fixed</AutoExpand>`);
   lines.push(`                                    <EnableQuickFind>false</EnableQuickFind>`);
   lines.push(`                                    <EnableViewPicker>true</EnableViewPicker>`);
-  lines.push(`                                    <RelationshipName>${sg.relationship}</RelationshipName>`);
+  lines.push(`                                    <RelationshipName>${relName}</RelationshipName>`);
   lines.push(`                                    <TargetEntityType>${targetEntity}</TargetEntityType>`);
   lines.push(`                                  </parameters>`);
   lines.push(`                                </control>`);
@@ -1190,7 +1269,7 @@ function generateEntityXml(
 
   // SavedQueries (custom views)
   if (views && views.length > 0) {
-    lines.push(generateSavedQueriesXml(entityLogical, primaryColumnLogical, views, choiceMap));
+    lines.push(generateSavedQueriesXml(entityLogical, primaryColumnLogical, views, choiceMap, allTables));
   }
 
   lines.push(`    </Entity>`);
