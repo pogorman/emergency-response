@@ -12,6 +12,10 @@ export interface DataverseClient {
   baseUrl: string;
 }
 
+// Well-known first-party client IDs that support device-code flow
+// without requiring an Entra app registration.
+const DYNAMICS_CLIENT_ID = "51f81489-12ee-4a9e-aaae-a2591f45987d";
+
 export async function authenticate(config: AuthConfig): Promise<DataverseClient> {
   const authorityHost = config.isCommercial
     ? "https://login.microsoftonline.com"
@@ -19,9 +23,10 @@ export async function authenticate(config: AuthConfig): Promise<DataverseClient>
 
   const credential = new DeviceCodeCredential({
     tenantId: config.tenantId,
+    clientId: DYNAMICS_CLIENT_ID,
     authorityHost,
     userPromptCallback: (info: DeviceCodeInfo) => {
-      console.log(`\nTo sign in, open ${info.verificationUri} and enter code: ${info.userCode}\n`);
+      console.log(`\n${info.message}\n`);
     },
   });
 

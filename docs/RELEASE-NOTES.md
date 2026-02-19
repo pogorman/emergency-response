@@ -1,5 +1,51 @@
 # Release Notes
 
+## v0.9.0 — Solution .zip Generator + GCC Deployment (2026-02-18)
+
+### Summary
+TypeScript generator that reads the project's JSON spec files and produces a valid Dataverse unmanaged solution `.zip` file. Successfully imported to GCC Dataverse with 22 tables, 276 columns, and 53 relationships. Includes comprehensive documentation of 19 XML format issues encountered and resolved during the initial deployment.
+
+### What's Included
+- **Solution generator** (`scripts/generate-solution.ts`, ~700 lines):
+  - Reads specs via `lib/spec-reader.ts` (tables, choices, env vars)
+  - Generates `[Content_Types].xml`, `solution.xml`, `customizations.xml`
+  - Zips output as `EmergencyResponseCoordination.zip`
+  - Supports `--skip-check` flag to bypass solution checker
+- **XML format guide** (`docs/DATAVERSE-SOLUTION-XML-GUIDE.md`):
+  - 19 documented issues with root causes, error messages, and correct XML examples
+  - Covers entity format, attribute format, relationship placement, option set naming, GCC-specific issues
+
+### Usage
+```bash
+cd scripts && npx tsx generate-solution.ts
+pac solution import --path EmergencyResponseCoordination.zip --publish-changes --async
+```
+
+### Key Design Decisions
+- Local inline option sets instead of global — avoids name collision errors
+- Auto-detect and rename columns that collide with auto-generated `{entity}id` primary key
+- Environment variables excluded from solution XML — cause generic import errors in GCC
+- All relationships at root-level `<EntityRelationships>`, not inside individual entities
+- Used CaseManagement reference solution as authoritative XML format guide
+- Minimal 1-entity test before full 22-entity generation for faster debugging
+
+### Known Limitations
+- Environment variables not deployed via solution .zip — create manually post-import
+- Calculated fields (responseTimeMinutes, totalDurationMinutes) — configure in maker portal
+- Security roles, PHI field security, flows, apps — build manually from spec files
+
+### Breaking Changes
+None (additive — new generator script and documentation).
+
+### Dependencies
+- Node.js 22+ (native fetch)
+- tsx 4.19.3
+- PowerShell (for Compress-Archive)
+- pac CLI for import and solution check (optional)
+- v0.1.0 (data model JSON specs must exist)
+
+---
+
 ## v0.8.0 — Dev Provisioning Script (2026-02-18)
 
 ### Summary

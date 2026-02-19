@@ -20,6 +20,27 @@
 
 **Rule:** Build incrementally. Do NOT scaffold future phases prematurely.
 
+## Solution Generator
+The solution .zip generator creates a valid Dataverse unmanaged solution from the JSON spec files:
+
+```bash
+cd scripts && npx tsx generate-solution.ts          # with solution checker
+cd scripts && npx tsx generate-solution.ts --skip-check  # without checker
+```
+
+Output: `EmergencyResponseCoordination.zip` in project root. Import via make.powerapps.com or:
+```bash
+pac solution import --path EmergencyResponseCoordination.zip --publish-changes --async
+```
+
+### Known Limitations
+- **Environment variables** are NOT in the solution .zip (cause generic import errors in GCC). Create manually post-import.
+- **Calculated fields** (seo_responseTimeMinutes, seo_totalDurationMinutes) must be configured in maker portal post-import.
+- **seo_Hydrant.seo_hydrantId** was auto-renamed to `seo_hydrant_name` to avoid collision with auto-generated primary key.
+
+### Dataverse XML Reference
+See `docs/DATAVERSE-SOLUTION-XML-GUIDE.md` for 19 documented issues and resolutions from the initial deployment.
+
 ## Documentation Standards
 
 ### Living Documents (in /docs)

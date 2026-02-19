@@ -317,3 +317,48 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Verified TypeScript compilation (tsc --noEmit, zero errors)
 - Verified spec reader loads all specs correctly (15 choices, 22 tables, 18 env vars, 22 sample data files)
 - Updated all documentation files (SESSION-MEMORY, PROMPT-LOG, RELEASE-NOTES, TECHNICAL, USER-GUIDE)
+
+## 2026-02-18 — Session 9: Solution .zip Generator + GCC Deployment
+
+**Prompt Summary:** Generate a valid Dataverse unmanaged solution .zip from JSON specs and import it to GCC Dataverse. Debugged 19 XML format issues through iterative import attempts. Used CaseManagement reference solution from Downloads as authoritative XML format guide.
+
+**Actions Taken:**
+- Created `scripts/generate-solution.ts` (~700 lines) — reads JSON specs via `lib/spec-reader.ts`, generates 3 XML files (`[Content_Types].xml`, `solution.xml`, `customizations.xml`), zips with PowerShell
+- Authenticated pac CLI to GCC: `pac auth create --cloud UsGov --deviceCode`
+- Ran solution checker: `pac solution check --geo USGovernment` — 0 issues
+- Debugged 19 XML format issues through iterative import/fix cycles:
+  - Entity `<Name>` must contain logical name as text content (not child elements)
+  - `<ObjectTypeCode>` must be omitted for new entities (0 is invalid)
+  - Every `<attribute>` needs `<Name>` child element
+  - `OrgOwned` not `OrganizationOwned` for OwnershipTypeMask
+  - `<LocalizedCollectionName>` not `<LocalizedName>` inside `<LocalizedCollectionNames>`
+  - `<EntitySetName>` required after `<attributes>`
+  - `<HasRelatedNotes>True</HasRelatedNotes>` not `<HasNotes>1</HasNotes>`
+  - Format values lowercase: `text`, `datetime`, `date`, `none`
+  - Extensive entity and attribute properties required (Is*, CanModify*, CanCreate*)
+  - customizations.xml root attributes differ from solution.xml
+  - Required empty sections: `<Roles>`, `<Workflows>`, `<FieldSecurityProfiles>`, etc.
+  - Environment variables cause generic "Unexpected Error" in GCC — removed
+  - Relationships must be in root-level `<EntityRelationships>`, not inside entities
+  - Global option set name collision with column names — converted to local inline option sets
+  - Column name collision with auto-generated primary key — auto-rename detection
+  - Boolean columns need full option set structure with bit OptionSetType
+  - Publisher address fields use explicit close tags
+  - GCC auth requires `--cloud UsGov`, solution checker requires `--geo USGovernment`
+- Used CaseManagement_1_0_7.zip from Downloads as reference for correct XML format
+- Tested with minimal 1-entity solution before full 22-entity generation
+- **Successfully imported** solution to GCC Dataverse: 22 tables, 276 columns, 53 relationships
+- Solution published with `--publish-changes`
+
+## 2026-02-18 — Session 10: Documentation Update
+
+**Prompt Summary:** Document all Dataverse XML issues and update all project documentation (MEMORY.md, CLAUDE.md, README, SESSION-MEMORY, PROMPT-LOG, RELEASE-NOTES) for future reference and reproducibility.
+
+**Actions Taken:**
+- Created `docs/DATAVERSE-SOLUTION-XML-GUIDE.md` — 19 documented issues with root causes, error messages, and XML examples
+- Updated `MEMORY.md` with Dataverse patterns, deployment state, and key patterns for future projects
+- Updated `CLAUDE.md` with Solution Generator section and known limitations
+- Updated `README.md` — all phases marked Complete, added Deployment section with generator instructions, post-import steps, repo structure updated with new directories
+- Updated `docs/SESSION-MEMORY.md` — session 9+10 logged, deployment state documented, GCC environment details, next steps
+- Updated `docs/PROMPT-LOG.md` — sessions 9+10 logged
+- Updated `docs/RELEASE-NOTES.md` — v0.9.0 entry for solution generator + GCC deployment
