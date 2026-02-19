@@ -67,6 +67,21 @@ pac solution import --path EmergencyResponseCoordination.zip --publish-changes -
 - 19 forms (main + quick create) with tabs, sections, fields, subgrids
 - Deterministic GUIDs for idempotent re-imports
 
+### Sample Data Loader
+
+Load 184 sample records across 22 entities into a live Dataverse environment:
+
+```bash
+cd scripts && npm install
+npx tsx load-sample-data.ts --url https://org.crm9.dynamics.com \
+  --tenant-id <GUID> --commercial
+```
+
+Optional flags:
+- `--dry-run` — preview what would be created without making changes
+- `--entity seo_TableName` — import only one entity (useful for re-runs)
+- `--commercial` — use commercial auth endpoints (required for some GCC tenants)
+
 ### Post-Import Steps
 1. **Environment variables** — create 18 env vars manually (not in solution .zip, see `solution/environment-variables.json`)
 2. **Calculated fields** — configure `seo_responseTimeMinutes` and `seo_totalDurationMinutes` formulas
@@ -116,8 +131,9 @@ See [`docs/DATAVERSE-SOLUTION-XML-GUIDE.md`](docs/DATAVERSE-SOLUTION-XML-GUIDE.m
 │   └── docs/                    # Deployment, GCC setup, rollback guides
 ├── scripts/
 │   ├── generate-solution.ts     # Solution .zip generator
+│   ├── load-sample-data.ts      # Sample data loader (device-code auth)
 │   ├── provision-dev.ts         # Direct Web API provisioning
-│   └── lib/                     # Shared libraries (auth, spec-reader, metadata)
+│   └── lib/                     # Shared libraries (auth, spec-reader, metadata, data-loader)
 ├── sample-data/                 # 22 sample data files (~178 records)
 ├── solution/
 │   ├── solution.xml             # Solution manifest

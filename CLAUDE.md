@@ -47,6 +47,21 @@ pac solution import --path EmergencyResponseCoordination.zip --publish-changes -
 - **Linked entity filters** (cross-table FetchXML) not generated — configure manually post-import.
 - **Business rules** from form specs are Processes/Workflows — configure manually post-import.
 
+## Sample Data Loader
+Load sample data into a live Dataverse environment via Web API with device-code auth:
+
+```bash
+cd scripts && npm install
+npx tsx load-sample-data.ts --url https://org.crm9.dynamics.com --tenant-id <GUID> --commercial
+npx tsx load-sample-data.ts --url ... --tenant-id ... --entity seo_Hydrant  # single entity
+npx tsx load-sample-data.ts --url ... --tenant-id ... --dry-run             # preview only
+```
+
+- 184 records across 22 entities in FK dependency order
+- Raw device-code OAuth (no @azure/identity — works on Node 18)
+- `--commercial` flag required for this tenant (login.microsoftonline.com)
+- `--entity` flag for targeted re-imports
+
 ### Dataverse XML Reference
 See `docs/DATAVERSE-SOLUTION-XML-GUIDE.md` for 19 documented issues and resolutions from the initial deployment.
 

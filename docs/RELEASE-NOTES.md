@@ -1,5 +1,56 @@
 # Release Notes
 
+## v0.11.0 — Sample Data Loader + Views/Forms GCC Import Fixes (2026-02-19)
+
+### Summary
+Fixed 4 import errors in views/forms XML generation and successfully imported 28 views + 19 forms to GCC Dataverse. Created a standalone sample data loader script with raw device-code OAuth (no @azure/identity) and loaded all 184 records across 22 entities into the live environment.
+
+### What's Included
+- **4 views/forms import fixes** in `scripts/generate-solution.ts`:
+  - Section columns forced to `"1"` (Unified Interface requirement)
+  - Column validation — skip view columns/filters referencing non-existent attributes
+  - Relative date object handling in FetchXML filters (`next-x-days`, `today`)
+  - Subgrid relationship name resolution (`seo_Parent_Child` → `seo_ChildTable_fkColumn`)
+- **Sample data loader** (`scripts/load-sample-data.ts`):
+  - Raw device-code OAuth flow — no @azure/identity dependency (works on Node 18)
+  - Token caching with refresh token support
+  - Entity set name query using `LogicalName eq` with single-entity fallback
+  - `--entity` filter flag for targeted re-imports (e.g., `--entity seo_Hydrant`)
+  - `--commercial` flag for tenants using commercial auth endpoints
+- **Data loader fixes** (`scripts/lib/data-loader.ts`):
+  - Lowercase all property names for Dataverse Web API compatibility
+  - Hydrant PK collision fix: `seo_hydrantId` → `seo_hydrant_name` alias
+  - Choice label aliases: `"Helipad/LZ"` → `"Helipad/Landing Zone"`, `"Residential (Institutional)"` → `"Institutional"`
+
+### Usage
+```bash
+cd scripts && npm install
+npx tsx load-sample-data.ts --url https://org.crm9.dynamics.com --tenant-id <GUID> --commercial
+npx tsx load-sample-data.ts --url ... --tenant-id ... --entity seo_Hydrant  # single entity
+npx tsx load-sample-data.ts --url ... --tenant-id ... --dry-run             # preview only
+```
+
+### Key Findings
+- Dataverse Web API requires all property names in lowercase (logical names, not schema names)
+- `startswith()` function not supported for Metadata Entity queries — use `LogicalName eq`
+- Unified Interface forms: `<section columns="1">` is mandatory; multi-column layouts at tab level only
+- Tenant `426a6ef4-...` is COMMERCIAL despite GCC Dataverse URL (`crm9.dynamics.com`)
+- Node 18 incompatible with `@azure/identity` v4.x — raw fetch device-code flow as workaround
+
+### Known Gaps
+- 2 phantom unit references (`unit-brush-12`, `unit-medic-3`) in sample data don't have matching unit records
+- Hydrant jurisdiction lookups not linked when using `--entity` filter (refMap empty for other entities)
+
+### Breaking Changes
+None (additive).
+
+### Dependencies
+- Node.js 18+ (native fetch)
+- tsx 4.19.3
+- v0.10.0 (views/forms in solution .zip)
+
+---
+
 ## v0.10.0 — Views + Forms in Solution Generator (2026-02-19)
 
 ### Summary

@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-19 (Session 11)
+## Last Updated: 2026-02-19 (Session 12)
 
 ## Session Log
 
@@ -22,10 +22,11 @@
 | 9 | 2026-02-18 | ~120 min | Solution .zip generator — debugged 19 XML format issues, successfully imported to GCC Dataverse (22 tables, 276 columns, 53 relationships) |
 | 10 | 2026-02-18 | ~30 min | Documentation — created DATAVERSE-SOLUTION-XML-GUIDE.md, updated MEMORY.md, CLAUDE.md, README, SESSION-MEMORY, PROMPT-LOG, RELEASE-NOTES |
 | 11 | 2026-02-19 | ~45 min | Extended solution generator with 28 views + 19 forms (FetchXML, layoutxml, form tabs/sections/subgrids, deterministic GUIDs, choice value resolution) |
+| 12 | 2026-02-19 | ~90 min | Views/forms GCC import (4 bug fixes) + sample data loader (raw device-code OAuth) + 184/184 records loaded |
 
 ## Current Project State
 
-### What's Built — ALL 7 PHASES COMPLETE + DEPLOYED
+### What's Built — ALL 7 PHASES COMPLETE + DEPLOYED + DATA LOADED
 - Git repo initialized
 - Documentation scaffolding complete (CLAUDE.md + 5 docs files)
 - **Phase 1 COMPLETE:** Data model (22 tables across 6 operational domains)
@@ -40,49 +41,62 @@
 - **Solution .zip generator:** `scripts/generate-solution.ts` reads JSON specs → outputs `EmergencyResponseCoordination.zip`
 - **Successfully imported** to GCC Dataverse via `pac solution import`
 - **22 tables, 276 columns, 53 relationships** deployed
-- **28 views, 19 forms** now included in solution .zip (added session 11)
+- **28 views, 19 forms** deployed and verified
 - **19 XML format issues** documented in `docs/DATAVERSE-SOLUTION-XML-GUIDE.md`
+- **4 additional import fixes** for views/forms (section columns, column validation, relative dates, relationship names)
+
+### Sample Data Loaded
+- **184/184 records** loaded across 22 entities via `scripts/load-sample-data.ts`
+- Raw device-code OAuth (no @azure/identity dependency — works on Node 18)
+- Deferred lookups: 10/12 resolved (2 phantom unit refs don't exist in sample data)
+- Hydrant jurisdiction lookups not linked when using `--entity` filter
 
 ### What's NOT in the Solution .zip
 - **Environment variables** — cause generic import errors in GCC; create manually post-import
 - **Calculated fields** — `seo_responseTimeMinutes`, `seo_totalDurationMinutes`; configure in maker portal
 - **Security roles** — not yet created in Dataverse
 - **PHI field security** — not yet configured
-- **Sample data** — not imported via solution; use provisioning script or Dataverse import wizard
 - **Power Automate flows** — build manually from flow specs
-- **Canvas app / MDA** — build manually from app specs
+- **Canvas app** — build manually from app specs
+- **Model-driven app** — O'G built this manually from specs
 - **Power BI reports** — build manually from report specs
-- **Linked entity filters** — cross-table view filters (e.g., Open Calls by incident status); configure manually
-- **Business rules** — form-level business rules (e.g., MCI Visual Alert); configure manually
+- **Linked entity filters** — cross-table view filters; configure manually
+- **Business rules** — form-level business rules; configure manually
 
 ### GCC Environment
 - **URL:** `https://emergency-response.crm9.dynamics.com/`
 - **Org:** `og-emergency-response`
 - **User:** `patrick.ogorman@testtestmsftgccfo.onmicrosoft.com`
+- **Tenant ID:** `426a6ef4-2476-4eab-ae1c-1c9dc2bfca80` (COMMERCIAL tenant, not GCC)
+- **Auth:** Use `--commercial` flag (login.microsoftonline.com, not login.microsoftonline.us)
 - **pac CLI:** `C:\Users\pogorman\AppData\Local\Microsoft\PowerAppsCLI\pac.cmd` (v1.49.3)
-- **Auth:** `pac auth create --cloud UsGov --deviceCode`
+- **pac auth:** `pac auth create --cloud UsGov --deviceCode`
 - **Solution checker:** `pac solution check --geo USGovernment`
 
+### Dataverse Web API Notes
+- Property names must be ALL LOWERCASE (logical names, not schema names)
+- `startswith()` not supported for Metadata Entity queries — use `LogicalName eq`
+- EntityDefinitions query: batch `LogicalName eq '...'` with single-entity fallback
+- Dynamics first-party client ID for device code: `51f81489-12ee-4a9e-aaae-a2591f45987d`
+- Node 18 on this machine — `@azure/identity` v4.x requires Node 20+
+
 ## Key Decisions
-1-48. (See previous sessions — all still current)
-49. **Deterministic GUIDs** — MD5-based GUIDs for views/forms ensure re-import updates existing records instead of creating duplicates
-50. **Choice value resolution** — 3-level Map (entity → column → label → numeric) resolves filter condition labels to Dataverse option set values
-51. **XML element ordering** — `<EntityInfo>` → `<FormXml>` → `<SavedQueries>` inside `<Entity>` (validated against CaseManagement reference)
-52. **Linked entity filters skipped** — cross-table FetchXML (`<link-entity>`) too complex for initial generation; skipped with warning
-53. **Control ClassIDs** — Standard `{4273EDBD-...}`, Lookup `{270BD3DB-...}`, Subgrid `{E7A81278-...}`
+1-53. (See previous sessions — all still current)
+54. **Raw device-code OAuth** — no @azure/identity dependency; raw fetch calls to Azure AD endpoints work on Node 18
+55. **Commercial auth for GCC tenant** — tenant uses `login.microsoftonline.com` despite GCC Dataverse URL
+56. **Lowercase all Web API property names** — Dataverse rejects camelCase field names
+57. **Hydrant PK alias** — `seo_hydrantId` → `seo_hydrant_name` to avoid collision with auto-generated GUID primary key
+58. **Entity filter flag** — `--entity seo_TableName` for targeted re-imports without re-running all 184 records
 
 ## Open Questions / Blockers
-- Need to test import of views + forms to GCC (tables/columns verified, views/forms not yet)
+- None critical
 
 ## Next Steps
-1. Import updated solution .zip to GCC and verify views/forms render correctly
-2. Configure linked entity filters manually for Open Calls view
-3. Configure business rules manually (MCI Visual Alert, Locked When Closed)
-4. Create security roles in Dataverse (from `security/roles/*.json` specs)
-5. Configure PHI field security profile on PatientRecord
-6. Create 18 environment variables (from `solution/environment-variables.json`)
-7. Build Power Automate flows from `flows/` specs
-8. Build canvas app from `apps/seo_responder-mobile/` specs
-9. Build model-driven app shell/sitemap from `model-driven-apps/seo_dispatch-console/` specs
-10. Build Power BI reports from `reporting/` specs
-11. Import sample data
+1. Configure linked entity filters manually for Open Calls view
+2. Configure business rules manually (MCI Visual Alert, Locked When Closed)
+3. Create security roles in Dataverse (from `security/roles/*.json` specs)
+4. Configure PHI field security profile on PatientRecord
+5. Create 18 environment variables (from `solution/environment-variables.json`)
+6. Build Power Automate flows from `flows/` specs
+7. Build canvas app from `apps/seo_responder-mobile/` specs
+8. Build Power BI reports from `reporting/` specs

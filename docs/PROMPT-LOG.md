@@ -391,3 +391,47 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Extracted zip and verified XML structure for views (fetchxml filters, layoutxml) and forms (tabs, sections, cells, subgrids)
 - Linked entity filters (e.g., `seo_incidentId.seo_status` in call-views.json) skipped with warning — requires manual post-import configuration
 - Updated all documentation files, committed, and pushed
+
+## 2026-02-19 — Session 12: Views/Forms GCC Import + Sample Data Loader
+
+**Prompt Summary:** Import the updated solution .zip (with views + forms) to GCC Dataverse, debug 4 import errors, then create a sample data loader script and load all 184 records across 22 entities into the live environment.
+
+**Actions Taken:**
+
+### Part 1: Views/Forms GCC Import (4 bug fixes)
+- Generated updated solution .zip with `--skip-check`
+- **Import attempt 1 FAILED** — "Columns in a section must be set to '1'. Found '2'."
+  - Fix: Unified Interface requires `columns="1"` on all `<section>` elements; changed all form sections to single-column layout with one field per row
+- **Import attempt 2 FAILED** — "seo_call entity doesn't contain attribute seo_incidentid"
+  - Fix: Added column validation — build `validColumns` set per entity, skip missing columns in view columns, sort orders, and filter conditions with warnings
+- **Import attempt 3 FAILED** — "[object Object]" in FetchXML date filters
+  - Fix: Handle relative date objects `{type:"relative", unit:"days", offset:N}` → FetchXML operators (`next-x-days`, `today`)
+- **Import attempt 4 FAILED** — "dependent component EntityRelationship seo_IncidentCommand_Division does not exist"
+  - Fix: Added `resolveRelationshipName()` to map spec relationship names to actual generated names (`seo_ChildTable_fkColumn`)
+- **Import attempt 5 — SUCCESS** — 28 views + 19 forms imported and published
+- Verified by exporting solution back and checking for custom view names and form elements
+- Committed fix: `42cf9fd`
+
+### Part 2: Sample Data Loader
+- Created `scripts/load-sample-data.ts` — standalone data loader with raw device-code OAuth (no @azure/identity dependency — Node 18 on this machine)
+- Auth flow: POST `/oauth2/v2.0/devicecode` → poll `/oauth2/v2.0/token` → token caching with refresh
+- Discovered tenant `426a6ef4-...` is COMMERCIAL despite GCC Dataverse URL (`crm9.dynamics.com`) — added `--commercial` flag
+- Fixed entity set name query: `startswith()` not supported for Metadata Entities → use `LogicalName eq` with single-entity fallback
+- Fixed `data-loader.ts`: Dataverse Web API requires lowercase logical names for all property names
+  - Lowercased all field names in API body construction
+  - Changed `buildColumnMap()` to store by lowercase key
+- **First full run: 169/184 records created** — 15 Hydrant records failed (PK collision: `seo_hydrantId` interpreted as GUID primary key)
+- Fixed Hydrant import: added `seo_hydrantId` → `seo_hydrant_name` alias in `FIELD_ALIASES`
+- Added 2 choice label aliases: `"Helipad/LZ"` → `"Helipad/Landing Zone"`, `"Residential (Institutional)"` → `"Institutional"`
+- Added `--entity` filter flag for targeted re-imports
+- **Re-ran with `--entity seo_Hydrant`: 15/15 Hydrant records created**
+- **Final tally: 184/184 records loaded across 22 entities**
+- Deferred lookups: 10/12 resolved (2 phantom unit refs: `unit-brush-12`, `unit-medic-3` don't exist in sample data)
+- Committed: `933928b`
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `scripts/generate-solution.ts` | 4 import error fixes (section columns, column validation, relative dates, relationship names) |
+| `scripts/lib/data-loader.ts` | Lowercase field names, hydrantId alias, choice label aliases, --entity filter |
+| `scripts/load-sample-data.ts` | NEW — standalone data loader with raw device-code OAuth |
