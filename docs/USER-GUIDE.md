@@ -101,7 +101,116 @@ Supervisors receive a daily email (7:00 AM ET) listing any mutual aid agreements
 
 ## For Responders
 
-> *Content will be added in Phase 4.*
+The **Responder Mobile** app is your primary tool for managing unit status, viewing incident details, and communicating on-scene. It works on your phone in portrait mode and is designed for one-hand use with gloves.
+
+### Getting Started
+
+1. Open the **Responder Mobile** app from your device's Power Apps app
+2. The app resolves your identity automatically — your name, rank, and unit assignment display on the Home screen
+3. If you see "Not assigned" for your unit, contact your station officer to update your Personnel record
+
+### Home Screen
+
+Your dashboard shows:
+- **Unit designator** (e.g., E1, M7) in the header
+- **Status banner** — large colored banner showing your current status. Tap to change.
+- **Active incident card** — if you're assigned to an incident, it shows here. Tap for details.
+- **Quick action buttons** — Notes, Pre-Plan (if available), and Map
+
+The green globe icon (top right) means you're online. An orange warning icon means you're offline — the app still works, and changes sync when you reconnect.
+
+### Changing Your Status
+
+Tap the status banner on Home, or navigate to the Status screen. You'll see large color-coded buttons:
+
+| Status | Color | When to Use |
+|--------|-------|-------------|
+| **Available** | Green | Ready for dispatch |
+| **En Route** | Yellow | Responding to an incident |
+| **On Scene** | Red | Arrived at incident |
+| **Transporting** | Purple | Transporting a patient (EMS) |
+| **At Hospital** | Blue | At the hospital (EMS) |
+| **Returning** | Teal | Heading back to station |
+| **Out of Service** | Gray | Unavailable (mechanical, training, etc.) |
+| **Staging** | Light Orange | At a staging area awaiting assignment |
+
+**What happens when you change status:**
+- Your GPS location is captured automatically (if GPS is enabled in Settings)
+- The system creates a permanent log entry — this is your official record
+- If dispatch has already set you to "Dispatched," you'll see that status; tap "En Route" when you start responding
+
+### Viewing Incident Details
+
+Tap the active incident card on Home to see:
+- **Hazard banner** (red) — if hazards are reported, they appear at the top. Read these first!
+- **Address and cross street** — tap "Open in Maps" for turn-by-turn directions
+- **Timestamps** — dispatched, en route, on scene, under control
+- **Assigned units** — all units on this incident, with ICS roles and mutual aid badges
+- **ICS command** — command name, incident commander, radio channel, strategy (Offensive/Defensive/Transitional)
+- **Action buttons** — Add Note, view Pre-Plan
+
+### Using the Map
+
+The Map screen shows:
+- **Red pin** — incident location
+- **Colored hydrant pins** — NFPA 291 color coding: Blue (1500+ GPM), Green (1000-1499), Orange (500-999), Red (<500 GPM)
+- **Purple pins** — pre-plan building locations
+- **Blue dot** — your current GPS position
+
+Tap a hydrant pin to see flow rate, outlet configuration, and status. Toggle hydrant and pre-plan layers on/off with the switches in the header.
+
+### Adding Incident Notes
+
+Navigate to Notes from the bottom bar or the quick action on Home:
+1. Tap **+ Note**
+2. Select a note type (On-Scene Report, Safety Alert, Command Decision, etc.)
+3. Type your note
+4. Toggle **Priority** if it's urgent
+5. Tap **Save Note**
+
+Notes appear in reverse chronological order. Safety Alert notes display in red. Priority notes show a flag icon.
+
+### Viewing Pre-Plans
+
+If the incident has a linked pre-plan, you can access it from the Incident Detail screen:
+- **Building info** — occupancy type, construction type, stories, square footage
+- **Fire protection badges** — Sprinkler (green), Alarm (blue), FDC (orange), Standpipe (purple), Basement (red)
+- **FDC location** — highlighted in orange for quick identification
+- **Tactical notes** — recommended strategies (red header = high priority)
+- **Access notes** — Knox box, gates, keys, access roads
+- **Known hazards** — NFPA 704 ratings (H:Health, F:Fire, R:Reactivity, S:Special)
+- **Emergency contact** — tap the phone number to call
+
+### For EMS Providers: Patient Triage
+
+If you have the EMS Provider role, you'll see a **Patients** tab in the bottom navigation bar.
+
+**Adding a patient:**
+1. Tap **+ Patient**
+2. Select triage category using the color-coded buttons (RED/YEL/GRN/BLK/WHT)
+3. Fill in patient information (name, age, chief complaint, assessment, treatment)
+4. If transporting, toggle **Transported** and select the destination hospital
+5. Tap **Save Patient**
+
+The triage summary bar at the top shows counts by category — critical for MCI management.
+
+**Important:** When you create a patient record, the system automatically updates the incident's patient count. If the count reaches the MCI threshold (default: 5), the incident is automatically flagged as an MCI and dispatch supervisors are notified.
+
+### Settings
+
+- **GPS toggle** — turn GPS tracking on/off. When on, your location is captured on every status change and updated periodically.
+- **Sync status** — shows whether you're online or offline and explains the sync behavior
+- **Profile** — your name, rank, badge number, unit assignment, and role
+
+### Working Offline
+
+The app works offline. When you lose connectivity:
+- You can still change status, add notes, and create patient records
+- Changes are cached on your device
+- When connectivity returns, everything syncs automatically
+- If dispatch made changes while you were offline, their changes take priority (Server Wins)
+
+The orange warning icon in the header tells you you're offline. The Settings screen provides more detail about sync status.
 
 ---
 

@@ -1,0 +1,337 @@
+{
+  "screenId": "scrSettings",
+  "displayName": "Settings",
+  "description": "User profile display, GPS tracking toggle, offline sync status, connectivity indicator, and app info. Allows the user to control GPS behavior and view sync state.",
+  "roleAccess": [],
+
+  "onVisible": "UpdateContext({\n  locSyncStatus: If(gblIsOnline, \"Connected\", \"Offline — changes will sync when connected\")\n});",
+
+  "dataSources": ["seo_Personnel", "seo_Unit"],
+
+  "contextVariables": [
+    {
+      "name": "locSyncStatus",
+      "type": "Text",
+      "purpose": "Current sync status message"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntSettingsHeader",
+      "controlType": "Container",
+      "purpose": "Header",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 60,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "lblSettingsTitle",
+          "controlType": "Label",
+          "purpose": "Screen title",
+          "properties": {
+            "X": 16,
+            "Y": 16,
+            "Width": "Parent.Width - 32",
+            "Height": 28,
+            "Text": "\"Settings\"",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntSettingsBody",
+      "controlType": "VerticalContainer",
+      "purpose": "Settings content",
+      "properties": {
+        "X": 0,
+        "Y": 60,
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - 60 - 70",
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 16,
+        "LayoutGap": 20,
+        "VerticalOverflow": "Scroll"
+      },
+      "children": [
+        {
+          "name": "cntProfileSection",
+          "controlType": "VerticalContainer",
+          "purpose": "User profile display",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionProfile",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"PROFILE\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblProfileName",
+              "controlType": "Label",
+              "purpose": "User's full name",
+              "properties": {
+                "Text": "gblCurrentPersonnel.seo_fullName",
+                "Size": 18,
+                "FontWeight": "Bold",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "lblProfileRank",
+              "controlType": "Label",
+              "purpose": "Rank",
+              "properties": {
+                "Text": "Text(gblCurrentPersonnel.seo_rank)",
+                "Size": 14,
+                "Color": "RGBA(203, 213, 225, 1)"
+              }
+            },
+            {
+              "name": "lblProfileBadge",
+              "controlType": "Label",
+              "purpose": "Badge number",
+              "properties": {
+                "Text": "\"Badge: \" & Coalesce(gblCurrentPersonnel.seo_badgeNumber, \"—\")",
+                "Size": 13,
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblProfileUnit",
+              "controlType": "Label",
+              "purpose": "Current unit assignment",
+              "properties": {
+                "Text": "\"Unit: \" & Coalesce(gblCurrentUnit.seo_name, \"Not assigned\")",
+                "Size": 13,
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblProfileRole",
+              "controlType": "Label",
+              "purpose": "EMS Provider indicator",
+              "properties": {
+                "Text": "If(gblIsEMSProvider, \"Role: EMS Provider\", \"Role: Responder\")",
+                "Size": 13,
+                "Color": "If(gblIsEMSProvider, RGBA(139, 92, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntGPSSection",
+          "controlType": "VerticalContainer",
+          "purpose": "GPS tracking settings",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "LayoutGap": 8
+          },
+          "children": [
+            {
+              "name": "lblSectionGPS",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"GPS TRACKING\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "tglGPSEnabled",
+              "controlType": "Toggle",
+              "purpose": "Enable/disable GPS tracking",
+              "properties": {
+                "Width": 200,
+                "Height": 44,
+                "Default": "gblGPSEnabled",
+                "TrueText": "\"GPS On\"",
+                "FalseText": "\"GPS Off\"",
+                "OnCheck": "Set(gblGPSEnabled, true); SaveData(true, \"gpsEnabled\")",
+                "OnUncheck": "Set(gblGPSEnabled, false); SaveData(false, \"gpsEnabled\")"
+              }
+            },
+            {
+              "name": "lblGPSNote",
+              "controlType": "Label",
+              "purpose": "GPS behavior explanation",
+              "properties": {
+                "Text": "\"When enabled, GPS coordinates are captured on every status change and updated periodically while active. GPS data helps dispatch track unit locations.\"",
+                "Size": 12,
+                "Color": "RGBA(107, 114, 128, 1)",
+                "AutoHeight": true
+              }
+            },
+            {
+              "name": "lblCurrentGPS",
+              "controlType": "Label",
+              "purpose": "Current GPS coordinates (for debugging/verification)",
+              "properties": {
+                "Text": "\"Current: \" & Text(Location.Latitude, \"#.######\") & \", \" & Text(Location.Longitude, \"#.######\")",
+                "Size": 12,
+                "Color": "RGBA(107, 114, 128, 1)",
+                "Visible": "gblGPSEnabled"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntSyncSection",
+          "controlType": "VerticalContainer",
+          "purpose": "Offline sync status",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "LayoutGap": 8
+          },
+          "children": [
+            {
+              "name": "lblSectionSync",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"SYNC STATUS\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "cntConnectivityBadge",
+              "controlType": "HorizontalContainer",
+              "purpose": "Connectivity status with icon",
+              "properties": {
+                "Width": "Parent.Width",
+                "Height": 32,
+                "LayoutGap": 8,
+                "LayoutAlignItems": "Center"
+              },
+              "children": [
+                {
+                  "name": "icoSyncStatus",
+                  "controlType": "Icon",
+                  "purpose": "Online/offline icon",
+                  "properties": {
+                    "Icon": "If(gblIsOnline, \"CheckBadge\", \"Warning\")",
+                    "Width": 24,
+                    "Height": 24,
+                    "Color": "If(gblIsOnline, RGBA(16, 185, 129, 1), RGBA(245, 158, 11, 1))"
+                  }
+                },
+                {
+                  "name": "lblSyncStatusText",
+                  "controlType": "Label",
+                  "purpose": "Status text",
+                  "properties": {
+                    "Text": "locSyncStatus",
+                    "Size": 14,
+                    "Color": "If(gblIsOnline, RGBA(16, 185, 129, 1), RGBA(245, 158, 11, 1))"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "lblSyncNote",
+              "controlType": "Label",
+              "purpose": "Sync behavior explanation",
+              "properties": {
+                "Text": "\"The app works offline. Status changes, notes, and patient records are cached locally and sync automatically when connectivity returns. Server data takes priority on conflicts.\"",
+                "Size": 12,
+                "Color": "RGBA(107, 114, 128, 1)",
+                "AutoHeight": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntAppInfo",
+          "controlType": "VerticalContainer",
+          "purpose": "App version and solution info",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionAppInfo",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"APP INFO\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblAppName",
+              "controlType": "Label",
+              "purpose": "App name",
+              "properties": {
+                "Text": "\"Responder Mobile\"",
+                "Size": 14,
+                "Color": "RGBA(203, 213, 225, 1)"
+              }
+            },
+            {
+              "name": "lblSolutionName",
+              "controlType": "Label",
+              "purpose": "Solution name",
+              "properties": {
+                "Text": "\"EmergencyResponseCoordination\"",
+                "Size": 12,
+                "Color": "RGBA(107, 114, 128, 1)"
+              }
+            },
+            {
+              "name": "lblPublisher",
+              "controlType": "Label",
+              "purpose": "Publisher",
+              "properties": {
+                "Text": "\"Publisher: StateEmergencyOps\"",
+                "Size": 12,
+                "Color": "RGBA(107, 114, 128, 1)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cmpNavBarSettings",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrSettings\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBarSettings.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Settings screen only accesses seo_Personnel (own profile) and seo_Unit (own unit). No PatientRecord columns."
+  },
+
+  "flowInteractions": [],
+
+  "designerNotes": "1. GPS toggle persists via SaveData/LoadData — preference survives app restarts.\n2. Current GPS coordinates shown when GPS is enabled — useful for the responder to verify location services are working.\n3. Sync status section helps responders understand their offline state — critical in rural areas with poor connectivity.\n4. Conflict resolution is 'Server Wins' — explained in plain language so users understand that dispatch changes take priority.\n5. Role display shows either 'EMS Provider' (purple) or 'Responder' (gray) — helps the user understand why they may or may not see the Patients tab.\n6. No edit functionality for profile — personnel data is managed by station officers in the model-driven app (Phase 5)."
+}

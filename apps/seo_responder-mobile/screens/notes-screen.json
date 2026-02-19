@@ -1,0 +1,328 @@
+{
+  "screenId": "scrNotes",
+  "displayName": "Notes",
+  "description": "Incident note timeline with create-new-note form. Shows all notes for the active incident sorted by time. Supports offline note creation.",
+  "roleAccess": [],
+
+  "onVisible": "UpdateContext({\n  locNotesIncident: Coalesce(gblActiveIncident, Blank()),\n  locNotes: SortByColumns(Filter(seo_IncidentNote, _seo_incidentid_value = gblActiveIncident.seo_IncidentId), \"seo_createdOnOverride\", SortOrder.Descending),\n  locIsCreating: false,\n  locNewNoteType: Blank(),\n  locNewNoteBody: \"\",\n  locNewNotePriority: false\n});",
+
+  "dataSources": ["seo_IncidentNote", "seo_Incident", "seo_Personnel"],
+
+  "contextVariables": [
+    {
+      "name": "locNotesIncident",
+      "type": "Record (seo_Incident)",
+      "purpose": "The incident whose notes are displayed"
+    },
+    {
+      "name": "locNotes",
+      "type": "Table (seo_IncidentNote)",
+      "purpose": "All notes for this incident, sorted newest first"
+    },
+    {
+      "name": "locIsCreating",
+      "type": "Boolean",
+      "purpose": "Whether the create-note form is visible"
+    },
+    {
+      "name": "locNewNoteType",
+      "type": "Choice (seo_NoteType)",
+      "purpose": "Selected note type for new note"
+    },
+    {
+      "name": "locNewNoteBody",
+      "type": "Text",
+      "purpose": "Note body text"
+    },
+    {
+      "name": "locNewNotePriority",
+      "type": "Boolean",
+      "purpose": "Priority flag for new note"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntNotesHeader",
+      "controlType": "Container",
+      "purpose": "Header with incident number and create button",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 60,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "lblNotesTitle",
+          "controlType": "Label",
+          "purpose": "Screen title",
+          "properties": {
+            "X": 16,
+            "Y": 16,
+            "Width": "Parent.Width - 120",
+            "Height": 28,
+            "Text": "\"Notes — \" & If(!IsBlank(locNotesIncident), locNotesIncident.seo_incidentNumber, \"No Incident\")",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "btnCreateNote",
+          "controlType": "Button",
+          "purpose": "Toggle create-note form",
+          "properties": {
+            "X": "Parent.Width - 100",
+            "Y": 12,
+            "Width": 84,
+            "Height": 36,
+            "Text": "If(locIsCreating, \"Cancel\", \"+ Note\")",
+            "Fill": "If(locIsCreating, RGBA(107, 114, 128, 1), RGBA(59, 130, 246, 1))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 13,
+            "BorderRadius": 6,
+            "OnSelect": "UpdateContext({locIsCreating: !locIsCreating})",
+            "Visible": "!IsBlank(locNotesIncident)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntCreateNoteForm",
+      "controlType": "VerticalContainer",
+      "purpose": "Create new note form — slides in from top when locIsCreating is true",
+      "properties": {
+        "X": 0,
+        "Y": 60,
+        "Width": "Parent.Width",
+        "Height": "If(locIsCreating, 320, 0)",
+        "Visible": "locIsCreating",
+        "Fill": "RGBA(30, 41, 59, 1)",
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 12,
+        "PaddingBottom": 12,
+        "LayoutGap": 10
+      },
+      "children": [
+        {
+          "name": "drpNoteType",
+          "controlType": "Dropdown",
+          "purpose": "Note type selector",
+          "properties": {
+            "Items": "Choices(seo_IncidentNote.seo_noteType)",
+            "Width": "Parent.Width - 32",
+            "Height": 44,
+            "Default": "LookUp(Choices(seo_IncidentNote.seo_noteType), Value = \"On-Scene Report\")",
+            "OnChange": "UpdateContext({locNewNoteType: Self.Selected})"
+          },
+          "accessibilityNotes": "Dropdown: Select note type (On-Scene Report, Safety Alert, etc.)"
+        },
+        {
+          "name": "txtNoteBody",
+          "controlType": "TextInput",
+          "purpose": "Note body text — large multi-line input",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 140,
+            "Mode": "MultiLine",
+            "HintText": "\"Type your note here...\"",
+            "Default": "locNewNoteBody",
+            "OnChange": "UpdateContext({locNewNoteBody: Self.Text})",
+            "Size": 14,
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Fill": "RGBA(15, 23, 42, 1)"
+          }
+        },
+        {
+          "name": "cntNoteActions",
+          "controlType": "HorizontalContainer",
+          "purpose": "Priority toggle and submit button",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 48,
+            "LayoutJustifyContent": "SpaceBetween",
+            "LayoutAlignItems": "Center"
+          },
+          "children": [
+            {
+              "name": "tglPriority",
+              "controlType": "Toggle",
+              "purpose": "Mark note as priority",
+              "properties": {
+                "Width": 120,
+                "Height": 36,
+                "Default": "locNewNotePriority",
+                "OnCheck": "UpdateContext({locNewNotePriority: true})",
+                "OnUncheck": "UpdateContext({locNewNotePriority: false})",
+                "TrueText": "\"Priority\"",
+                "FalseText": "\"Normal\""
+              }
+            },
+            {
+              "name": "btnSubmitNote",
+              "controlType": "Button",
+              "purpose": "Submit the new note",
+              "properties": {
+                "Text": "\"Save Note\"",
+                "Width": 120,
+                "Height": 44,
+                "Fill": "RGBA(16, 185, 129, 1)",
+                "Color": "RGBA(255, 255, 255, 1)",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "BorderRadius": 8,
+                "OnSelect": "Patch(seo_IncidentNote, Defaults(seo_IncidentNote), {\n  seo_name: Left(locNewNoteBody, 200),\n  seo_incidentId: LookUp(seo_Incident, seo_IncidentId = locNotesIncident.seo_IncidentId),\n  seo_noteType: locNewNoteType.Value,\n  seo_noteBody: locNewNoteBody,\n  seo_authorId: LookUp(seo_Personnel, seo_PersonnelId = gblCurrentPersonnel.seo_PersonnelId),\n  seo_createdOnOverride: Now(),\n  seo_isPriority: locNewNotePriority\n});\nUpdateContext({\n  locIsCreating: false,\n  locNewNoteBody: \"\",\n  locNewNotePriority: false,\n  locNotes: SortByColumns(Filter(seo_IncidentNote, _seo_incidentid_value = locNotesIncident.seo_IncidentId), \"seo_createdOnOverride\", SortOrder.Descending)\n});\nReset(txtNoteBody)",
+                "DisplayMode": "If(IsBlank(locNewNoteBody), DisplayMode.Disabled, DisplayMode.Edit)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "galNotes",
+      "controlType": "Gallery",
+      "purpose": "Note timeline — newest first",
+      "properties": {
+        "X": 0,
+        "Y": "cntCreateNoteForm.Y + cntCreateNoteForm.Height + 8",
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - Self.Y - 70",
+        "Items": "locNotes",
+        "TemplateSize": 100,
+        "TemplatePadding": 4
+      },
+      "children": [
+        {
+          "name": "cntNoteItem",
+          "controlType": "Container",
+          "purpose": "Individual note card",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 92,
+            "X": 16,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "BorderRadius": 8,
+            "PaddingLeft": 12,
+            "PaddingRight": 12,
+            "PaddingTop": 8,
+            "PaddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "cntNoteHeader",
+              "controlType": "HorizontalContainer",
+              "purpose": "Note type badge + timestamp + priority flag",
+              "properties": {
+                "Width": "Parent.Width - 24",
+                "Height": 22,
+                "LayoutJustifyContent": "SpaceBetween"
+              },
+              "children": [
+                {
+                  "name": "lblNoteType",
+                  "controlType": "Label",
+                  "purpose": "Note type",
+                  "properties": {
+                    "Text": "Text(ThisItem.seo_noteType)",
+                    "Size": 11,
+                    "FontWeight": "Semibold",
+                    "Color": "Switch(ThisItem.seo_noteType, 'seo_NoteType'.'Safety Alert', RGBA(220, 38, 38, 1), 'seo_NoteType'.'Command Decision', RGBA(245, 158, 11, 1), RGBA(59, 130, 246, 1))"
+                  }
+                },
+                {
+                  "name": "lblNoteTime",
+                  "controlType": "Label",
+                  "purpose": "Note timestamp",
+                  "properties": {
+                    "Text": "Text(ThisItem.seo_createdOnOverride, \"HH:mm\")",
+                    "Size": 11,
+                    "Color": "RGBA(148, 163, 184, 1)",
+                    "Align": "End"
+                  }
+                },
+                {
+                  "name": "icoPriority",
+                  "controlType": "Icon",
+                  "purpose": "Priority flag indicator",
+                  "properties": {
+                    "Icon": "Flag",
+                    "Visible": "ThisItem.seo_isPriority",
+                    "Width": 16,
+                    "Height": 16,
+                    "Color": "RGBA(220, 38, 38, 1)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "lblNoteBody",
+              "controlType": "Label",
+              "purpose": "Note text content (truncated to 2 lines in gallery)",
+              "properties": {
+                "Y": 26,
+                "Width": "Parent.Width - 24",
+                "Height": 40,
+                "Text": "ThisItem.seo_noteBody",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)",
+                "Overflow": "Hidden"
+              }
+            },
+            {
+              "name": "lblNoteAuthor",
+              "controlType": "Label",
+              "purpose": "Note author name",
+              "properties": {
+                "Y": 68,
+                "Width": "Parent.Width - 24",
+                "Height": 18,
+                "Text": "\"— \" & LookUp(seo_Personnel, seo_PersonnelId = ThisItem._seo_authorid_value).seo_fullName",
+                "Size": 11,
+                "Color": "RGBA(107, 114, 128, 1)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "lblNoNotes",
+      "controlType": "Label",
+      "purpose": "Empty state when no notes exist",
+      "properties": {
+        "X": 0,
+        "Y": "Parent.Height / 2 - 20",
+        "Width": "Parent.Width",
+        "Height": 40,
+        "Visible": "CountRows(locNotes) = 0 && !locIsCreating",
+        "Text": "If(IsBlank(locNotesIncident), \"No active incident\", \"No notes yet — tap + Note to add one\")",
+        "Size": 14,
+        "Align": "Center",
+        "Color": "RGBA(107, 114, 128, 1)"
+      }
+    },
+    {
+      "name": "cmpNavBarNotes",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrNotes\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBarNotes.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Notes screen only accesses seo_IncidentNote and seo_Personnel (for author lookup). No PatientRecord columns."
+  },
+
+  "flowInteractions": [],
+
+  "designerNotes": "1. Note creation uses Patch() with Defaults() for offline compatibility — EditForm would also work but Patch is more explicit.\n2. seo_name is set to the first 200 chars of the note body. The auto-name flow (IncidentAssignmentAutoName) does NOT apply to notes — only to assignments.\n3. seo_createdOnOverride is set to Now() — this allows the note's logical time to be preserved even if it syncs later from offline.\n4. Note type color coding: Safety Alerts in red, Command Decisions in orange, all others in blue.\n5. Save button is disabled when note body is empty (DisplayMode.Disabled).\n6. After saving, the form resets and the notes gallery refreshes.\n7. Priority notes show a red flag icon in the timeline.\n8. Author name is resolved via LookUp on seo_Personnel by the _seo_authorid_value GUID."
+}

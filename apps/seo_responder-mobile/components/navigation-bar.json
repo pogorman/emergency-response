@@ -1,0 +1,243 @@
+{
+  "componentId": "cmpNavigationBar",
+  "displayName": "Navigation Bar",
+  "description": "Bottom tab bar for primary app navigation. Shows 4-5 tabs depending on role: Home, Map, Notes, Patients (EMS only), Settings. Active tab is highlighted. Designed for one-hand thumb reach.",
+
+  "customProperties": [
+    {
+      "name": "ActiveScreen",
+      "type": "Text",
+      "direction": "input",
+      "description": "The screenId of the currently active screen (e.g., 'scrHome'). Used to highlight the active tab.",
+      "defaultValue": "scrHome"
+    },
+    {
+      "name": "IsEMSProvider",
+      "type": "Boolean",
+      "direction": "input",
+      "description": "Whether to show the Patients tab. Set from gblIsEMSProvider.",
+      "defaultValue": false
+    },
+    {
+      "name": "OnNavigate",
+      "type": "Action",
+      "direction": "input",
+      "description": "Action property — parent screen handles the Navigate() call. The component passes the target screenId."
+    },
+    {
+      "name": "SelectedScreen",
+      "type": "Text",
+      "direction": "output",
+      "description": "The screenId the user tapped. Parent reads this to call Navigate()."
+    },
+    {
+      "name": "BarHeight",
+      "type": "Number",
+      "direction": "input",
+      "description": "Height of the navigation bar in pixels.",
+      "defaultValue": 70
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntNavBar",
+      "controlType": "HorizontalContainer",
+      "purpose": "Main container for the bottom tab bar",
+      "properties": {
+        "X": 0,
+        "Y": "Parent.Height - Self.Height",
+        "Width": "Parent.Width",
+        "Height": "cmpNavigationBar.BarHeight",
+        "Fill": "RGBA(15, 23, 42, 1)",
+        "LayoutAlignItems": "Center",
+        "LayoutJustifyContent": "SpaceEvenly"
+      },
+      "children": [
+        {
+          "name": "cntNavHome",
+          "controlType": "VerticalContainer",
+          "purpose": "Home tab button",
+          "properties": {
+            "Width": "Parent.Width / If(cmpNavigationBar.IsEMSProvider, 5, 4)",
+            "Height": "Parent.Height",
+            "OnSelect": "Set(cmpNavigationBar.SelectedScreen, \"scrHome\"); cmpNavigationBar.OnNavigate()",
+            "PaddingTop": 8,
+            "PaddingBottom": 4
+          },
+          "children": [
+            {
+              "name": "icoNavHome",
+              "controlType": "Icon",
+              "purpose": "Home icon",
+              "properties": {
+                "Icon": "Home",
+                "Width": 28,
+                "Height": 28,
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrHome\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            },
+            {
+              "name": "lblNavHome",
+              "controlType": "Label",
+              "purpose": "Home label",
+              "properties": {
+                "Text": "\"Home\"",
+                "Size": 10,
+                "Align": "Center",
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrHome\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntNavMap",
+          "controlType": "VerticalContainer",
+          "purpose": "Map tab button",
+          "properties": {
+            "Width": "Parent.Width / If(cmpNavigationBar.IsEMSProvider, 5, 4)",
+            "Height": "Parent.Height",
+            "OnSelect": "Set(cmpNavigationBar.SelectedScreen, \"scrMap\"); cmpNavigationBar.OnNavigate()",
+            "PaddingTop": 8,
+            "PaddingBottom": 4
+          },
+          "children": [
+            {
+              "name": "icoNavMap",
+              "controlType": "Icon",
+              "purpose": "Map icon",
+              "properties": {
+                "Icon": "Nav",
+                "Width": 28,
+                "Height": 28,
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrMap\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            },
+            {
+              "name": "lblNavMap",
+              "controlType": "Label",
+              "purpose": "Map label",
+              "properties": {
+                "Text": "\"Map\"",
+                "Size": 10,
+                "Align": "Center",
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrMap\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntNavNotes",
+          "controlType": "VerticalContainer",
+          "purpose": "Notes tab button",
+          "properties": {
+            "Width": "Parent.Width / If(cmpNavigationBar.IsEMSProvider, 5, 4)",
+            "Height": "Parent.Height",
+            "OnSelect": "Set(cmpNavigationBar.SelectedScreen, \"scrNotes\"); cmpNavigationBar.OnNavigate()",
+            "PaddingTop": 8,
+            "PaddingBottom": 4
+          },
+          "children": [
+            {
+              "name": "icoNavNotes",
+              "controlType": "Icon",
+              "purpose": "Notes icon",
+              "properties": {
+                "Icon": "Edit",
+                "Width": 28,
+                "Height": 28,
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrNotes\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            },
+            {
+              "name": "lblNavNotes",
+              "controlType": "Label",
+              "purpose": "Notes label",
+              "properties": {
+                "Text": "\"Notes\"",
+                "Size": 10,
+                "Align": "Center",
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrNotes\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntNavPatients",
+          "controlType": "VerticalContainer",
+          "purpose": "Patients tab button — EMS Provider only",
+          "properties": {
+            "Visible": "cmpNavigationBar.IsEMSProvider",
+            "Width": "Parent.Width / 5",
+            "Height": "Parent.Height",
+            "OnSelect": "Set(cmpNavigationBar.SelectedScreen, \"scrPatientTriage\"); cmpNavigationBar.OnNavigate()",
+            "PaddingTop": 8,
+            "PaddingBottom": 4
+          },
+          "children": [
+            {
+              "name": "icoNavPatients",
+              "controlType": "Icon",
+              "purpose": "Patients icon",
+              "properties": {
+                "Icon": "People",
+                "Width": 28,
+                "Height": 28,
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrPatientTriage\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            },
+            {
+              "name": "lblNavPatients",
+              "controlType": "Label",
+              "purpose": "Patients label",
+              "properties": {
+                "Text": "\"Patients\"",
+                "Size": 10,
+                "Align": "Center",
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrPatientTriage\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntNavSettings",
+          "controlType": "VerticalContainer",
+          "purpose": "Settings tab button",
+          "properties": {
+            "Width": "Parent.Width / If(cmpNavigationBar.IsEMSProvider, 5, 4)",
+            "Height": "Parent.Height",
+            "OnSelect": "Set(cmpNavigationBar.SelectedScreen, \"scrSettings\"); cmpNavigationBar.OnNavigate()",
+            "PaddingTop": 8,
+            "PaddingBottom": 4
+          },
+          "children": [
+            {
+              "name": "icoNavSettings",
+              "controlType": "Icon",
+              "purpose": "Settings icon",
+              "properties": {
+                "Icon": "Settings",
+                "Width": 28,
+                "Height": 28,
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrSettings\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            },
+            {
+              "name": "lblNavSettings",
+              "controlType": "Label",
+              "purpose": "Settings label",
+              "properties": {
+                "Text": "\"Settings\"",
+                "Size": 10,
+                "Align": "Center",
+                "Color": "If(cmpNavigationBar.ActiveScreen = \"scrSettings\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "designerNotes": "1. The tab bar uses a HorizontalContainer with SpaceEvenly to auto-distribute tabs.\n2. Tab count adjusts: 5 tabs for EMSProvider (includes Patients), 4 tabs for Responder.\n3. Active tab detection: pass the current screen's screenId to ActiveScreen input property.\n4. OnNavigate is an Action property — the parent screen implements Navigate(). This decouples the component from screen references.\n5. Icon + label pair per tab. Active state = blue highlight, inactive = slate gray.\n6. Bar sits at the bottom of the screen (Y = Parent.Height - Self.Height). Default height 70px provides adequate touch targets.\n7. Safe area inset: on iPhones with home indicator, add bottom padding at the screen level (not inside the component)."
+}

@@ -1,0 +1,289 @@
+{
+  "screenId": "scrHome",
+  "displayName": "Home",
+  "description": "Dashboard screen showing the user's current unit status, active incident card, and quick action buttons. The primary landing screen for the app.",
+  "roleAccess": [],
+
+  "onVisible": "Set(gblCurrentUnit, LookUp(seo_Unit, seo_UnitId = gblCurrentPersonnel.seo_currentUnitId));\nSet(gblActiveIncident, If(!IsBlank(gblCurrentUnit.seo_currentIncidentId), LookUp(seo_Incident, seo_IncidentId = gblCurrentUnit.seo_currentIncidentId)));",
+
+  "dataSources": ["seo_Unit", "seo_Incident", "seo_IncidentAssignment", "seo_Personnel"],
+
+  "contextVariables": [],
+
+  "controls": [
+    {
+      "name": "cntHomeHeader",
+      "controlType": "Container",
+      "purpose": "Top header bar with unit designator and connectivity indicator",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 80,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "lblUnitDesignator",
+          "controlType": "Label",
+          "purpose": "Large unit name display (e.g., E1, M7)",
+          "properties": {
+            "X": 16,
+            "Y": 30,
+            "Width": "Parent.Width / 2",
+            "Height": 40,
+            "Text": "gblCurrentUnit.seo_name",
+            "Size": 24,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "icoConnectivity",
+          "controlType": "Icon",
+          "purpose": "Online/offline status indicator",
+          "properties": {
+            "X": "Parent.Width - 44",
+            "Y": 38,
+            "Width": 24,
+            "Height": 24,
+            "Icon": "If(gblIsOnline, \"Globe\", \"Warning\")",
+            "Color": "If(gblIsOnline, RGBA(16, 185, 129, 1), RGBA(245, 158, 11, 1))"
+          },
+          "accessibilityNotes": "Icon: Shows online (globe) or offline (warning) status"
+        },
+        {
+          "name": "lblPersonnelName",
+          "controlType": "Label",
+          "purpose": "Current user's name and rank",
+          "properties": {
+            "X": 16,
+            "Y": 10,
+            "Width": "Parent.Width - 60",
+            "Height": 20,
+            "Text": "gblCurrentPersonnel.seo_fullName",
+            "Size": 12,
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntStatusBanner",
+      "controlType": "Container",
+      "purpose": "Current unit status banner — large colored banner showing status. Tappable to go to status screen.",
+      "properties": {
+        "X": 16,
+        "Y": 96,
+        "Width": "Parent.Width - 32",
+        "Height": 80,
+        "Fill": "Switch(gblCurrentUnit.seo_currentStatus, 'seo_UnitStatus'.Available, RGBA(16, 185, 129, 1), 'seo_UnitStatus'.'En Route', RGBA(234, 179, 8, 1), 'seo_UnitStatus'.'On Scene', RGBA(220, 38, 38, 1), 'seo_UnitStatus'.Transporting, RGBA(139, 92, 246, 1), 'seo_UnitStatus'.'At Hospital', RGBA(59, 130, 246, 1), 'seo_UnitStatus'.Returning, RGBA(20, 184, 166, 1), 'seo_UnitStatus'.'Out of Service', RGBA(107, 114, 128, 1), 'seo_UnitStatus'.Staging, RGBA(251, 191, 36, 1), RGBA(107, 114, 128, 1))",
+        "BorderRadius": 12,
+        "OnSelect": "Navigate(scrUnitStatus, ScreenTransition.None)"
+      },
+      "children": [
+        {
+          "name": "lblCurrentStatus",
+          "controlType": "Label",
+          "purpose": "Large status text",
+          "properties": {
+            "Width": "Parent.Width",
+            "Height": "Parent.Height",
+            "Text": "Upper(Text(gblCurrentUnit.seo_currentStatus))",
+            "Size": 28,
+            "FontWeight": "Bold",
+            "Align": "Center",
+            "VerticalAlign": "Middle",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "lblStatusTapHint",
+          "controlType": "Label",
+          "purpose": "Hint text to change status",
+          "properties": {
+            "X": 0,
+            "Y": "Parent.Height - 20",
+            "Width": "Parent.Width",
+            "Height": 18,
+            "Text": "\"Tap to change status\"",
+            "Size": 10,
+            "Align": "Center",
+            "Color": "RGBA(255, 255, 255, 0.7)"
+          }
+        }
+      ],
+      "accessibilityNotes": "Button: Current unit status. Tap to open status change screen."
+    },
+    {
+      "name": "cntActiveIncident",
+      "controlType": "Container",
+      "purpose": "Active incident card — shows current incident or 'No active incident' message",
+      "properties": {
+        "X": 16,
+        "Y": 192,
+        "Width": "Parent.Width - 32",
+        "Height": 140,
+        "Visible": "true"
+      },
+      "children": [
+        {
+          "name": "lblActiveIncidentHeader",
+          "controlType": "Label",
+          "purpose": "Section header",
+          "properties": {
+            "X": 0,
+            "Y": 0,
+            "Width": "Parent.Width",
+            "Height": 24,
+            "Text": "\"ACTIVE INCIDENT\"",
+            "Size": 11,
+            "FontWeight": "Semibold",
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        },
+        {
+          "name": "cmpActiveIncidentCard",
+          "controlType": "Component",
+          "purpose": "Incident card component showing active incident details",
+          "properties": {
+            "X": 0,
+            "Y": 28,
+            "Visible": "!IsBlank(gblActiveIncident)",
+            "IncidentRecord": "gblActiveIncident",
+            "CardWidth": "Parent.Width",
+            "OnCardSelect": "Navigate(scrIncidentDetail, ScreenTransition.None)"
+          }
+        },
+        {
+          "name": "lblNoActiveIncident",
+          "controlType": "Label",
+          "purpose": "Placeholder when no active incident",
+          "properties": {
+            "X": 0,
+            "Y": 28,
+            "Width": "Parent.Width",
+            "Height": 100,
+            "Visible": "IsBlank(gblActiveIncident)",
+            "Text": "\"No active incident\"",
+            "Size": 16,
+            "Align": "Center",
+            "VerticalAlign": "Middle",
+            "Color": "RGBA(107, 114, 128, 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntQuickActions",
+      "controlType": "HorizontalContainer",
+      "purpose": "Quick action buttons row: Notes, Pre-Plan, Map",
+      "properties": {
+        "X": 16,
+        "Y": 348,
+        "Width": "Parent.Width - 32",
+        "Height": 80,
+        "LayoutGap": 12,
+        "LayoutJustifyContent": "SpaceEvenly"
+      },
+      "children": [
+        {
+          "name": "btnQuickNotes",
+          "controlType": "Button",
+          "purpose": "Quick navigate to Notes screen",
+          "properties": {
+            "Text": "\"Notes\"",
+            "Width": "(Parent.Width - 24) / 3",
+            "Height": 70,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 14,
+            "BorderRadius": 8,
+            "OnSelect": "Navigate(scrNotes, ScreenTransition.None)",
+            "Visible": "!IsBlank(gblActiveIncident)"
+          }
+        },
+        {
+          "name": "btnQuickPrePlan",
+          "controlType": "Button",
+          "purpose": "Quick navigate to Pre-Plan screen (if incident has a linked pre-plan)",
+          "properties": {
+            "Text": "\"Pre-Plan\"",
+            "Width": "(Parent.Width - 24) / 3",
+            "Height": 70,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 14,
+            "BorderRadius": 8,
+            "OnSelect": "Navigate(scrPrePlan, ScreenTransition.None)",
+            "Visible": "!IsBlank(gblActiveIncident) && !IsBlank(gblActiveIncident.seo_prePlanId)"
+          }
+        },
+        {
+          "name": "btnQuickMap",
+          "controlType": "Button",
+          "purpose": "Quick navigate to Map screen",
+          "properties": {
+            "Text": "\"Map\"",
+            "Width": "(Parent.Width - 24) / 3",
+            "Height": 70,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 14,
+            "BorderRadius": 8,
+            "OnSelect": "Navigate(scrMap, ScreenTransition.None)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tmrGPSUpdate",
+      "controlType": "Timer",
+      "purpose": "Periodic GPS update timer — patches unit GPS at configured interval",
+      "properties": {
+        "Duration": "gblGPSUpdateInterval",
+        "Repeat": true,
+        "AutoStart": true,
+        "Visible": false,
+        "OnTimerEnd": "If(gblGPSEnabled && !IsBlank(gblCurrentUnit) && gblCurrentUnit.seo_currentStatus <> 'seo_UnitStatus'.Available,\n  Patch(seo_Unit, gblCurrentUnit, {\n    seo_latitude: Location.Latitude,\n    seo_longitude: Location.Longitude\n  })\n)"
+      }
+    },
+    {
+      "name": "tmrConnectivityCheck",
+      "controlType": "Timer",
+      "purpose": "Periodic connectivity check — updates gblIsOnline",
+      "properties": {
+        "Duration": 10000,
+        "Repeat": true,
+        "AutoStart": true,
+        "Visible": false,
+        "OnTimerEnd": "Set(gblIsOnline, Connection.Connected)"
+      }
+    },
+    {
+      "name": "cmpNavBar",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrHome\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBar.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Home screen displays unit status and incident summary only. No PatientRecord columns are referenced."
+  },
+
+  "flowInteractions": [
+    {
+      "flowId": "seo_UnitStatusChangeLog",
+      "trigger": "GPS timer patches seo_Unit.seo_latitude/longitude (only — no status change). This does NOT trigger the flow because the flow's filterColumns only watches seo_currentStatus.",
+      "mechanism": "No flow triggered from this screen's GPS timer. Status changes happen on scrUnitStatus."
+    }
+  ],
+
+  "designerNotes": "1. The home screen is optimized for a single glance: What's my status? What's my incident? Where do I go?\n2. Status banner is the largest tappable element (80px) — primary action path.\n3. GPS timer runs continuously when not Available. Interval is configurable via seo_GPSUpdateIntervalSeconds env var.\n4. GPS timer only fires when NOT Available — no point tracking GPS at the station.\n5. Connectivity check runs every 10 seconds to update the online/offline indicator.\n6. Quick action buttons are contextual: Notes only visible with active incident, Pre-Plan only if incident has linked pre-plan.\n7. The bottom nav bar component is reused across all screens."
+}

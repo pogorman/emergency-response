@@ -1,0 +1,321 @@
+{
+  "screenId": "scrMap",
+  "displayName": "Map",
+  "description": "Map view showing incident location, hydrant pins (NFPA 291 color-coded), pre-plan pins, and the user's GPS position. Primary map uses Power Apps Map PCF control with Bing Maps fallback for GCC.",
+  "roleAccess": [],
+
+  "onVisible": "UpdateContext({\n  locMapIncident: Coalesce(gblActiveIncident, Blank()),\n  locMapLat: Coalesce(gblActiveIncident.seo_latitude, Value(LookUp('Environment Variable Values', 'Environment Variable Definition'.'Schema Name' = \"seo_MapDefaultLatitude\").'Current Value')),\n  locMapLon: Coalesce(gblActiveIncident.seo_longitude, Value(LookUp('Environment Variable Values', 'Environment Variable Definition'.'Schema Name' = \"seo_MapDefaultLongitude\").'Current Value')),\n  locMapZoom: Value(LookUp('Environment Variable Values', 'Environment Variable Definition'.'Schema Name' = \"seo_MapDefaultZoom\").'Current Value'),\n  locNearbyHydrants: Filter(seo_Hydrant, seo_latitude >= locMapLat - 0.02 && seo_latitude <= locMapLat + 0.02 && seo_longitude >= locMapLon - 0.02 && seo_longitude <= locMapLon + 0.02),\n  locNearbyPrePlans: Filter(seo_PrePlan, !IsBlank(seo_latitude) && seo_latitude >= locMapLat - 0.02 && seo_latitude <= locMapLat + 0.02 && seo_longitude >= locMapLon - 0.02 && seo_longitude <= locMapLon + 0.02),\n  locShowHydrants: true,\n  locShowPrePlans: true,\n  locSelectedHydrant: Blank()\n});",
+
+  "dataSources": ["seo_Incident", "seo_Hydrant", "seo_PrePlan"],
+
+  "contextVariables": [
+    {
+      "name": "locMapIncident",
+      "type": "Record (seo_Incident)",
+      "purpose": "The incident to center the map on"
+    },
+    {
+      "name": "locMapLat",
+      "type": "Number",
+      "purpose": "Map center latitude"
+    },
+    {
+      "name": "locMapLon",
+      "type": "Number",
+      "purpose": "Map center longitude"
+    },
+    {
+      "name": "locMapZoom",
+      "type": "Number",
+      "purpose": "Map zoom level"
+    },
+    {
+      "name": "locNearbyHydrants",
+      "type": "Table (seo_Hydrant)",
+      "purpose": "Hydrants within ~2km of map center"
+    },
+    {
+      "name": "locNearbyPrePlans",
+      "type": "Table (seo_PrePlan)",
+      "purpose": "Pre-plans with GPS within ~2km of map center"
+    },
+    {
+      "name": "locShowHydrants",
+      "type": "Boolean",
+      "purpose": "Toggle hydrant pin visibility"
+    },
+    {
+      "name": "locShowPrePlans",
+      "type": "Boolean",
+      "purpose": "Toggle pre-plan pin visibility"
+    },
+    {
+      "name": "locSelectedHydrant",
+      "type": "Record (seo_Hydrant)",
+      "purpose": "The hydrant the user tapped for detail popup"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntMapHeader",
+      "controlType": "Container",
+      "purpose": "Header with layer toggles",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 50,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "lblMapTitle",
+          "controlType": "Label",
+          "purpose": "Screen title",
+          "properties": {
+            "X": 16,
+            "Y": 12,
+            "Width": 80,
+            "Height": 28,
+            "Text": "\"Map\"",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "tglHydrants",
+          "controlType": "Toggle",
+          "purpose": "Toggle hydrant pin visibility",
+          "properties": {
+            "X": "Parent.Width - 200",
+            "Y": 12,
+            "Width": 80,
+            "Height": 28,
+            "Default": "locShowHydrants",
+            "OnCheck": "UpdateContext({locShowHydrants: true})",
+            "OnUncheck": "UpdateContext({locShowHydrants: false})",
+            "TrueText": "\"Hydrants\"",
+            "FalseText": "\"Hydrants\""
+          }
+        },
+        {
+          "name": "tglPrePlans",
+          "controlType": "Toggle",
+          "purpose": "Toggle pre-plan pin visibility",
+          "properties": {
+            "X": "Parent.Width - 100",
+            "Y": 12,
+            "Width": 80,
+            "Height": 28,
+            "Default": "locShowPrePlans",
+            "OnCheck": "UpdateContext({locShowPrePlans: true})",
+            "OnUncheck": "UpdateContext({locShowPrePlans: false})",
+            "TrueText": "\"Plans\"",
+            "FalseText": "\"Plans\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "mapIncident",
+      "controlType": "Map",
+      "purpose": "Primary map control showing incident, hydrants, pre-plans, and user location",
+      "properties": {
+        "X": 0,
+        "Y": 50,
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - 50 - 70",
+        "DefaultLatitude": "locMapLat",
+        "DefaultLongitude": "locMapLon",
+        "DefaultZoomLevel": "locMapZoom",
+        "ShowCurrentLocation": true,
+        "SatelliteView": false,
+        "Pins": "Table(\n  If(!IsBlank(locMapIncident), {Latitude: locMapIncident.seo_latitude, Longitude: locMapIncident.seo_longitude, Label: locMapIncident.seo_incidentNumber, Color: RGBA(220, 38, 38, 1), Icon: \"Warning\"}),\n  ForAll(If(locShowHydrants, locNearbyHydrants, Blank()), {Latitude: seo_latitude, Longitude: seo_longitude, Label: seo_hydrantId, Color: Switch(seo_hydrantColor, \"Red\", RGBA(220, 38, 38, 1), \"Orange\", RGBA(245, 158, 11, 1), \"Green\", RGBA(16, 185, 129, 1), \"Blue\", RGBA(59, 130, 246, 1), RGBA(107, 114, 128, 1))}),\n  ForAll(If(locShowPrePlans, locNearbyPrePlans, Blank()), {Latitude: seo_latitude, Longitude: seo_longitude, Label: seo_name, Color: RGBA(139, 92, 246, 1), Icon: \"DocumentWithContent\"})\n)",
+        "OnPinSelect": "If(Self.SelectedPin.Icon = \"Warning\", Navigate(scrIncidentDetail, ScreenTransition.None), UpdateContext({locSelectedHydrant: LookUp(seo_Hydrant, seo_hydrantId = Self.SelectedPin.Label)}))"
+      },
+      "accessibilityNotes": "Map: Shows incident location (red pin), hydrants (NFPA 291 color-coded), pre-plans (purple pins), and your GPS position (blue dot)"
+    },
+    {
+      "name": "cntHydrantPopup",
+      "controlType": "Container",
+      "purpose": "Hydrant detail popup — appears when a hydrant pin is tapped",
+      "properties": {
+        "X": 16,
+        "Y": "Parent.Height - 70 - 160",
+        "Width": "Parent.Width - 32",
+        "Height": 140,
+        "Visible": "!IsBlank(locSelectedHydrant)",
+        "Fill": "RGBA(30, 41, 59, 0.95)",
+        "BorderRadius": 12
+      },
+      "children": [
+        {
+          "name": "lblHydrantId",
+          "controlType": "Label",
+          "purpose": "Hydrant identifier",
+          "properties": {
+            "X": 12,
+            "Y": 8,
+            "Text": "\"Hydrant: \" & locSelectedHydrant.seo_hydrantId",
+            "Size": 14,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "lblHydrantFlow",
+          "controlType": "Label",
+          "purpose": "Flow rate in GPM",
+          "properties": {
+            "X": 12,
+            "Y": 32,
+            "Text": "\"Flow: \" & If(!IsBlank(locSelectedHydrant.seo_flowRateGPM), Text(locSelectedHydrant.seo_flowRateGPM) & \" GPM\", \"Unknown\")",
+            "Size": 13,
+            "Color": "RGBA(203, 213, 225, 1)"
+          }
+        },
+        {
+          "name": "lblHydrantStatus",
+          "controlType": "Label",
+          "purpose": "Hydrant status",
+          "properties": {
+            "X": 12,
+            "Y": 52,
+            "Text": "\"Status: \" & Text(locSelectedHydrant.seo_status)",
+            "Size": 13,
+            "Color": "If(locSelectedHydrant.seo_status = 'seo_HydrantStatus'.'In Service', RGBA(16, 185, 129, 1), RGBA(220, 38, 38, 1))"
+          }
+        },
+        {
+          "name": "lblHydrantOutlet",
+          "controlType": "Label",
+          "purpose": "Outlet configuration",
+          "properties": {
+            "X": 12,
+            "Y": 72,
+            "Text": "If(!IsBlank(locSelectedHydrant.seo_outletConfiguration), \"Outlets: \" & locSelectedHydrant.seo_outletConfiguration, \"\")",
+            "Size": 12,
+            "Color": "RGBA(148, 163, 184, 1)",
+            "Visible": "!IsBlank(locSelectedHydrant.seo_outletConfiguration)"
+          }
+        },
+        {
+          "name": "lblHydrantNotes",
+          "controlType": "Label",
+          "purpose": "Hydrant notes (access issues, etc.)",
+          "properties": {
+            "X": 12,
+            "Y": 92,
+            "Width": "Parent.Width - 24",
+            "Text": "locSelectedHydrant.seo_notes",
+            "Size": 11,
+            "Color": "RGBA(148, 163, 184, 1)",
+            "Visible": "!IsBlank(locSelectedHydrant.seo_notes)"
+          }
+        },
+        {
+          "name": "icoClosePopup",
+          "controlType": "Icon",
+          "purpose": "Close hydrant popup",
+          "properties": {
+            "Icon": "Cancel",
+            "X": "Parent.Width - 36",
+            "Y": 8,
+            "Width": 24,
+            "Height": 24,
+            "Color": "RGBA(148, 163, 184, 1)",
+            "OnSelect": "UpdateContext({locSelectedHydrant: Blank()})"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntMapFallback",
+      "controlType": "VerticalContainer",
+      "purpose": "Fallback gallery-based list when Map PCF control is unavailable in GCC",
+      "properties": {
+        "X": 0,
+        "Y": 50,
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - 50 - 70",
+        "Visible": false,
+        "LayoutGap": 8,
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 8
+      },
+      "children": [
+        {
+          "name": "lblFallbackNote",
+          "controlType": "Label",
+          "purpose": "Explanation that map control is unavailable",
+          "properties": {
+            "Text": "\"Map control unavailable. Tap an address to open in device maps.\"",
+            "Size": 13,
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        },
+        {
+          "name": "btnFallbackIncident",
+          "controlType": "Button",
+          "purpose": "Open incident address in native maps",
+          "properties": {
+            "Text": "locMapIncident.seo_address",
+            "Width": "Parent.Width - 32",
+            "Height": 48,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "Color": "RGBA(59, 130, 246, 1)",
+            "Size": 14,
+            "Visible": "!IsBlank(locMapIncident)",
+            "OnSelect": "Launch(\"https://maps.apple.com/?q=\" & EncodeUrl(locMapIncident.seo_address))"
+          }
+        },
+        {
+          "name": "galFallbackHydrants",
+          "controlType": "Gallery",
+          "purpose": "Hydrant list fallback",
+          "properties": {
+            "Items": "locNearbyHydrants",
+            "Visible": "locShowHydrants",
+            "TemplateSize": 44,
+            "Width": "Parent.Width - 32",
+            "Height": 200
+          },
+          "children": [
+            {
+              "name": "lblFallbackHydrantId",
+              "controlType": "Label",
+              "purpose": "Hydrant ID and flow rate",
+              "properties": {
+                "Text": "ThisItem.seo_hydrantId & \" — \" & If(!IsBlank(ThisItem.seo_flowRateGPM), Text(ThisItem.seo_flowRateGPM) & \" GPM\", \"\")",
+                "Size": 13,
+                "Color": "Switch(ThisItem.seo_hydrantColor, \"Red\", RGBA(220, 38, 38, 1), \"Orange\", RGBA(245, 158, 11, 1), \"Green\", RGBA(16, 185, 129, 1), \"Blue\", RGBA(59, 130, 246, 1), RGBA(148, 163, 184, 1))"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cmpNavBarMap",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrMap\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBarMap.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Map screen only accesses seo_Incident (location fields), seo_Hydrant, and seo_PrePlan. No PatientRecord columns."
+  },
+
+  "flowInteractions": [],
+
+  "designerNotes": "1. Hydrant pins use NFPA 291 color coding: Red (<500 GPM), Orange (500-999), Green (1000-1499), Blue (1500+). This is stored in seo_hydrantColor local choice.\n2. The ~2km bounding box filter (±0.02 degrees lat/lon) limits hydrant queries to nearby hydrants. Adjust the bounding box size based on performance testing with actual hydrant data volume.\n3. GCC map fallback (ADR-014): The cntMapFallback container is set Visible=false by default. If the Map PCF control is unavailable at build time, swap visibility: hide mapIncident, show cntMapFallback.\n4. Tapping an incident pin navigates to scrIncidentDetail. Tapping a hydrant pin shows the popup overlay with flow rate, status, and outlet info.\n5. ShowCurrentLocation=true displays the device's GPS position as a blue dot. Requires Location permission.\n6. Pre-plan pins are purple to distinguish them from hydrants (NFPA colors) and incidents (red).\n7. SatelliteView defaults to false (street map) for faster loading. Users could toggle in a future enhancement."
+}

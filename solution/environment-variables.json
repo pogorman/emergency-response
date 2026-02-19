@@ -84,6 +84,20 @@
       "type": "String",
       "description": "GUID of the Dataverse system user (service account) that owns elevated flows. Must have seo_SystemAdmin role. Used for flows that manage BUs, teams, and cross-BU sharing.",
       "defaultValue": ""
+    },
+    {
+      "schemaName": "seo_GPSUpdateIntervalSeconds",
+      "displayName": "GPS Update Interval (Seconds)",
+      "type": "String",
+      "description": "How often the Responder Mobile app updates the unit's GPS coordinates in Dataverse (in seconds). Lower values increase location accuracy but consume more battery and API calls.",
+      "defaultValue": "30"
+    },
+    {
+      "schemaName": "seo_OfflineSyncIntervalMinutes",
+      "displayName": "Offline Sync Interval (Minutes)",
+      "type": "String",
+      "description": "How often the Responder Mobile app syncs its offline cache with Dataverse (in minutes). Lower values provide fresher data but increase network usage.",
+      "defaultValue": "5"
     }
   ]
 }

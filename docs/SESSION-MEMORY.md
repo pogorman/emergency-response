@@ -5,7 +5,7 @@
 
 ---
 
-## Last Updated: 2026-02-18 (Session 3)
+## Last Updated: 2026-02-18 (Session 4)
 
 ## Session Log
 
@@ -14,6 +14,7 @@
 | 1 | 2026-02-18 | ~45 min | Project bootstrap, Phase 1 data model (20+ tables, choices, ERD, data dictionary) |
 | 2 | 2026-02-18 | ~30 min | Phase 2 security model (8 roles, PHI profile, BU structure, teams, privilege matrix) |
 | 3 | 2026-02-18 | ~40 min | Phase 3 Power Automate flows (10 flow specs, schema, 5 env vars, full docs update) |
+| 4 | 2026-02-18 | ~50 min | Phase 4 Canvas app (8 screens, 3 components, schema, 2 env vars, full docs update) |
 
 ## Current Project State
 
@@ -39,9 +40,17 @@
   - 5 Tier 2 flows in `/flows/tier-2/` (high-value automations, 3 sub-flows)
   - 5 new environment variables added to `/solution/environment-variables.json`
   - ADR-011 (flow security context) and ADR-012 (notification architecture) in TECHNICAL.md
+- **Phase 4 COMPLETE:** Canvas app (mobile responder)
+  - Canvas app definition JSON Schema in `/apps/_schema/`
+  - Apps README with translation guide in `/apps/README.md`
+  - App-level definition in `/apps/seo_responder-mobile/app-definition.json`
+  - 3 reusable components in `/apps/seo_responder-mobile/components/`
+  - 8 screen definitions in `/apps/seo_responder-mobile/screens/`
+  - 2 new environment variables (GPS interval, offline sync interval)
+  - ADR-013 (offline-first), ADR-014 (GCC map fallback), ADR-015 (phone layout)
+  - USER-GUIDE.md "For Responders" section populated
 
 ### What's Pending
-- Phase 4: Canvas app (mobile responder)
 - Phase 5: Model-driven app (dispatch/supervisor)
 - Phase 6: Reporting / Power BI
 - Phase 7: Deployment + GCC auth scripts
@@ -59,14 +68,19 @@
 10. **8 security roles** with granular per-table privileges: SystemAdmin, DispatchSupervisor, Dispatcher, IC, Responder, EMSProvider, StationOfficer, ReadOnlyAnalyst
 11. **User-scope + team sharing** for Responder and EMSProvider — least privilege, incident access via owner teams
 12. **Cross-BU mutual aid** via access teams + Mutual Aid Partners org-scoped team, with PHI never leaking across BUs
-13. **Flow security context split:** TriggeringUser for simple flows (status log, status progression, auto-name); FlowOwner (service account) for BU/team management, cross-BU sharing, and notifications
-14. **Circular trigger prevention:** filterColumns on all Dataverse triggers scoped to specific columns. Only one intentional cascade: PatientCountSync → NotifyMCIAlarm (terminates at email)
-15. **Notification architecture:** 3 sub-flows for dispatch supervisor alerts (MCI/alarm, mutual aid, command transfer) because Power Automate doesn't support multiple triggers per flow
-16. **No PHI in flows:** All 10 flows verified — none read or write PHI columns. PatientCountSync only reads primary key + incident lookup on PatientRecord
+13. **Flow security context split:** TriggeringUser for simple flows; FlowOwner for BU/team management, cross-BU sharing, and notifications
+14. **Circular trigger prevention:** filterColumns on all Dataverse triggers. Only one intentional cascade: PatientCountSync → NotifyMCIAlarm (terminates at email)
+15. **Notification architecture:** 3 sub-flows for dispatch supervisor alerts (MCI/alarm, mutual aid, command transfer)
+16. **No PHI in flows:** All 10 flows verified — none read or write PHI columns
+17. **Single app for Responder + EMSProvider** — Patient Triage screen visible only for EMSProvider role. Avoids maintaining two apps.
+18. **Phone layout, offline-first** — optimized for one-hand use in turnout gear. Dark high-contrast theme. Minimum 44px touch targets. Dataverse offline with Server Wins conflict resolution.
+19. **GCC map fallback** — primary Map PCF control + fallback gallery list with Launch() to native device maps. PCF availability varies by GCC tenant.
+20. **PHI contained to single screen** — Patient Triage is the only screen accessing PHI columns, with UI gate + field security profile double protection.
+21. **GPS on every status change** — the app patches seo_Unit.seo_latitude/longitude on each status button tap, plus periodic updates via timer.
 
 ## Open Questions / Blockers
-- None currently — ready for Phase 4 (Canvas app)
+- None currently — ready for Phase 5 (Model-driven app)
 
 ## Next Steps
-1. O'G reviews Phase 3 flow definitions
-2. Begin Phase 4: Canvas app (mobile responder) — incident view, unit status buttons, GPS tracking
+1. O'G reviews Phase 4 canvas app specifications
+2. Begin Phase 5: Model-driven app (dispatch console / supervisor dashboard)

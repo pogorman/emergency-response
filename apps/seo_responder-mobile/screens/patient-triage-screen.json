@@ -1,0 +1,750 @@
+{
+  "screenId": "scrPatientTriage",
+  "displayName": "Patient Triage",
+  "description": "EMS Provider only — patient list for the active incident, triage form, transport tracking. This is the ONLY screen that accesses PHI columns. Gated by role check (gblIsEMSProvider).",
+  "roleAccess": ["seo_EMSProvider"],
+
+  "roleGateFormula": "If(!gblIsEMSProvider, Navigate(scrHome, ScreenTransition.None))",
+
+  "onVisible": "If(!gblIsEMSProvider, Navigate(scrHome, ScreenTransition.None));\nUpdateContext({\n  locTriageIncident: gblActiveIncident,\n  locPatients: SortByColumns(Filter(seo_PatientRecord, _seo_incidentid_value = gblActiveIncident.seo_IncidentId), \"createdon\", SortOrder.Descending),\n  locIsAddingPatient: false,\n  locEditingPatient: Blank(),\n  locSelectedTriage: Blank(),\n  locPatientFirstName: \"\",\n  locPatientLastName: \"\",\n  locPatientAge: Blank(),\n  locPatientGender: Blank(),\n  locChiefComplaint: \"\",\n  locAssessmentNotes: \"\",\n  locTreatmentNotes: \"\",\n  locIsTransported: false,\n  locRefusedCare: false,\n  locDestinationFacility: Blank(),\n  locTransportUnit: Blank()\n});",
+
+  "dataSources": ["seo_PatientRecord", "seo_Incident", "seo_Facility", "seo_Unit", "seo_Personnel"],
+
+  "contextVariables": [
+    {
+      "name": "locTriageIncident",
+      "type": "Record (seo_Incident)",
+      "purpose": "The incident for patient records"
+    },
+    {
+      "name": "locPatients",
+      "type": "Table (seo_PatientRecord)",
+      "purpose": "All patients for this incident"
+    },
+    {
+      "name": "locIsAddingPatient",
+      "type": "Boolean",
+      "purpose": "Whether the patient form is visible"
+    },
+    {
+      "name": "locEditingPatient",
+      "type": "Record (seo_PatientRecord)",
+      "purpose": "The patient being edited (blank for new patient)"
+    },
+    {
+      "name": "locSelectedTriage",
+      "type": "Choice (seo_TriageCategory)",
+      "purpose": "Selected triage category for patient form"
+    },
+    {
+      "name": "locPatientFirstName",
+      "type": "Text",
+      "purpose": "PHI — Patient first name input"
+    },
+    {
+      "name": "locPatientLastName",
+      "type": "Text",
+      "purpose": "PHI — Patient last name input"
+    },
+    {
+      "name": "locPatientAge",
+      "type": "Number",
+      "purpose": "PHI — Patient age input"
+    },
+    {
+      "name": "locPatientGender",
+      "type": "Choice",
+      "purpose": "PHI — Patient gender input"
+    },
+    {
+      "name": "locChiefComplaint",
+      "type": "Text",
+      "purpose": "PHI — Chief complaint input"
+    },
+    {
+      "name": "locAssessmentNotes",
+      "type": "Text",
+      "purpose": "PHI — Assessment notes input"
+    },
+    {
+      "name": "locTreatmentNotes",
+      "type": "Text",
+      "purpose": "PHI — Treatment notes input"
+    },
+    {
+      "name": "locIsTransported",
+      "type": "Boolean",
+      "purpose": "Transport flag"
+    },
+    {
+      "name": "locRefusedCare",
+      "type": "Boolean",
+      "purpose": "Refused care (AMA) flag"
+    },
+    {
+      "name": "locDestinationFacility",
+      "type": "Record (seo_Facility)",
+      "purpose": "Transport destination hospital"
+    },
+    {
+      "name": "locTransportUnit",
+      "type": "Record (seo_Unit)",
+      "purpose": "Unit performing transport"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntTriageHeader",
+      "controlType": "Container",
+      "purpose": "Header with patient count and add button",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 60,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "lblTriageTitle",
+          "controlType": "Label",
+          "purpose": "Screen title with patient count",
+          "properties": {
+            "X": 16,
+            "Y": 16,
+            "Width": "Parent.Width - 120",
+            "Height": 28,
+            "Text": "\"Patients (\" & CountRows(locPatients) & \")\"",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "btnAddPatient",
+          "controlType": "Button",
+          "purpose": "Open patient creation form",
+          "properties": {
+            "X": "Parent.Width - 110",
+            "Y": 12,
+            "Width": 94,
+            "Height": 36,
+            "Text": "If(locIsAddingPatient, \"Cancel\", \"+ Patient\")",
+            "Fill": "If(locIsAddingPatient, RGBA(107, 114, 128, 1), RGBA(16, 185, 129, 1))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 13,
+            "BorderRadius": 6,
+            "OnSelect": "UpdateContext({locIsAddingPatient: !locIsAddingPatient, locEditingPatient: Blank()})"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntTriageSummary",
+      "controlType": "HorizontalContainer",
+      "purpose": "Triage category summary counts — Red/Yellow/Green/Black/White",
+      "properties": {
+        "X": 0,
+        "Y": 60,
+        "Width": "Parent.Width",
+        "Height": 50,
+        "Fill": "RGBA(15, 23, 42, 1)",
+        "LayoutJustifyContent": "SpaceEvenly",
+        "LayoutAlignItems": "Center",
+        "PaddingLeft": 8,
+        "PaddingRight": 8
+      },
+      "children": [
+        {
+          "name": "cntTriageRed",
+          "controlType": "Container",
+          "purpose": "Red (Immediate) count",
+          "properties": {
+            "Width": 60,
+            "Height": 40,
+            "Fill": "RGBA(220, 38, 38, 0.3)",
+            "BorderRadius": 6
+          },
+          "children": [
+            {
+              "name": "lblTriageRedCount",
+              "controlType": "Label",
+              "purpose": "Count of Red patients",
+              "properties": {
+                "Text": "Text(CountRows(Filter(locPatients, seo_triageCategory = 'seo_TriageCategory'.'Red — Immediate')))",
+                "Size": 18,
+                "FontWeight": "Bold",
+                "Color": "RGBA(220, 38, 38, 1)",
+                "Align": "Center",
+                "VerticalAlign": "Middle",
+                "Width": "Parent.Width",
+                "Height": "Parent.Height"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntTriageYellow",
+          "controlType": "Container",
+          "purpose": "Yellow (Delayed) count",
+          "properties": {
+            "Width": 60,
+            "Height": 40,
+            "Fill": "RGBA(234, 179, 8, 0.3)",
+            "BorderRadius": 6
+          },
+          "children": [
+            {
+              "name": "lblTriageYellowCount",
+              "controlType": "Label",
+              "purpose": "Count of Yellow patients",
+              "properties": {
+                "Text": "Text(CountRows(Filter(locPatients, seo_triageCategory = 'seo_TriageCategory'.'Yellow — Delayed')))",
+                "Size": 18,
+                "FontWeight": "Bold",
+                "Color": "RGBA(234, 179, 8, 1)",
+                "Align": "Center",
+                "VerticalAlign": "Middle",
+                "Width": "Parent.Width",
+                "Height": "Parent.Height"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntTriageGreen",
+          "controlType": "Container",
+          "purpose": "Green (Minor) count",
+          "properties": {
+            "Width": 60,
+            "Height": 40,
+            "Fill": "RGBA(16, 185, 129, 0.3)",
+            "BorderRadius": 6
+          },
+          "children": [
+            {
+              "name": "lblTriageGreenCount",
+              "controlType": "Label",
+              "purpose": "Count of Green patients",
+              "properties": {
+                "Text": "Text(CountRows(Filter(locPatients, seo_triageCategory = 'seo_TriageCategory'.'Green — Minor')))",
+                "Size": 18,
+                "FontWeight": "Bold",
+                "Color": "RGBA(16, 185, 129, 1)",
+                "Align": "Center",
+                "VerticalAlign": "Middle",
+                "Width": "Parent.Width",
+                "Height": "Parent.Height"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntTriageBlack",
+          "controlType": "Container",
+          "purpose": "Black (Deceased) count",
+          "properties": {
+            "Width": 60,
+            "Height": 40,
+            "Fill": "RGBA(31, 41, 55, 0.5)",
+            "BorderRadius": 6
+          },
+          "children": [
+            {
+              "name": "lblTriageBlackCount",
+              "controlType": "Label",
+              "purpose": "Count of Black patients",
+              "properties": {
+                "Text": "Text(CountRows(Filter(locPatients, seo_triageCategory = 'seo_TriageCategory'.'Black — Deceased')))",
+                "Size": 18,
+                "FontWeight": "Bold",
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Align": "Center",
+                "VerticalAlign": "Middle",
+                "Width": "Parent.Width",
+                "Height": "Parent.Height"
+              }
+            }
+          ]
+        },
+        {
+          "name": "lblTriageTotal",
+          "controlType": "Label",
+          "purpose": "Total patient count",
+          "properties": {
+            "Width": 60,
+            "Height": 40,
+            "Text": "Text(CountRows(locPatients)) & \" total\"",
+            "Size": 12,
+            "Color": "RGBA(148, 163, 184, 1)",
+            "Align": "Center",
+            "VerticalAlign": "Middle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntPatientForm",
+      "controlType": "VerticalContainer",
+      "purpose": "Patient creation/edit form — contains PHI fields",
+      "properties": {
+        "X": 0,
+        "Y": 110,
+        "Width": "Parent.Width",
+        "Height": "If(locIsAddingPatient, Parent.Height - 110 - 70, 0)",
+        "Visible": "locIsAddingPatient",
+        "Fill": "RGBA(30, 41, 59, 1)",
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 12,
+        "LayoutGap": 10,
+        "VerticalOverflow": "Scroll"
+      },
+      "children": [
+        {
+          "name": "lblFormSectionTriage",
+          "controlType": "Label",
+          "purpose": "Triage category section header",
+          "properties": {
+            "Text": "\"TRIAGE CATEGORY\"",
+            "Size": 11,
+            "FontWeight": "Semibold",
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        },
+        {
+          "name": "cntTriageSelector",
+          "controlType": "HorizontalContainer",
+          "purpose": "Large color-coded triage category buttons (START triage)",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "LayoutGap": 6,
+            "LayoutJustifyContent": "SpaceEvenly"
+          },
+          "children": [
+            {
+              "name": "btnTriageRed",
+              "controlType": "Button",
+              "purpose": "Select Red — Immediate",
+              "properties": {
+                "Text": "\"RED\"",
+                "Width": "(Parent.Width - 24) / 5",
+                "Height": 56,
+                "Fill": "If(locSelectedTriage = 'seo_TriageCategory'.'Red — Immediate', RGBA(220, 38, 38, 1), RGBA(220, 38, 38, 0.3))",
+                "Color": "RGBA(255, 255, 255, 1)",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "OnSelect": "UpdateContext({locSelectedTriage: 'seo_TriageCategory'.'Red — Immediate'})"
+              }
+            },
+            {
+              "name": "btnTriageYellow",
+              "controlType": "Button",
+              "purpose": "Select Yellow — Delayed",
+              "properties": {
+                "Text": "\"YEL\"",
+                "Width": "(Parent.Width - 24) / 5",
+                "Height": 56,
+                "Fill": "If(locSelectedTriage = 'seo_TriageCategory'.'Yellow — Delayed', RGBA(234, 179, 8, 1), RGBA(234, 179, 8, 0.3))",
+                "Color": "RGBA(255, 255, 255, 1)",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "OnSelect": "UpdateContext({locSelectedTriage: 'seo_TriageCategory'.'Yellow — Delayed'})"
+              }
+            },
+            {
+              "name": "btnTriageGreen",
+              "controlType": "Button",
+              "purpose": "Select Green — Minor",
+              "properties": {
+                "Text": "\"GRN\"",
+                "Width": "(Parent.Width - 24) / 5",
+                "Height": 56,
+                "Fill": "If(locSelectedTriage = 'seo_TriageCategory'.'Green — Minor', RGBA(16, 185, 129, 1), RGBA(16, 185, 129, 0.3))",
+                "Color": "RGBA(255, 255, 255, 1)",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "OnSelect": "UpdateContext({locSelectedTriage: 'seo_TriageCategory'.'Green — Minor'})"
+              }
+            },
+            {
+              "name": "btnTriageBlack",
+              "controlType": "Button",
+              "purpose": "Select Black — Deceased",
+              "properties": {
+                "Text": "\"BLK\"",
+                "Width": "(Parent.Width - 24) / 5",
+                "Height": 56,
+                "Fill": "If(locSelectedTriage = 'seo_TriageCategory'.'Black — Deceased', RGBA(31, 41, 55, 1), RGBA(31, 41, 55, 0.5))",
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "BorderColor": "RGBA(148, 163, 184, 0.5)",
+                "BorderThickness": 1,
+                "OnSelect": "UpdateContext({locSelectedTriage: 'seo_TriageCategory'.'Black — Deceased'})"
+              }
+            },
+            {
+              "name": "btnTriageWhite",
+              "controlType": "Button",
+              "purpose": "Select White — Non-Patient",
+              "properties": {
+                "Text": "\"WHT\"",
+                "Width": "(Parent.Width - 24) / 5",
+                "Height": 56,
+                "Fill": "If(locSelectedTriage = 'seo_TriageCategory'.'White — Non-Patient', RGBA(229, 231, 235, 1), RGBA(229, 231, 235, 0.3))",
+                "Color": "If(locSelectedTriage = 'seo_TriageCategory'.'White — Non-Patient', RGBA(31, 41, 55, 1), RGBA(229, 231, 235, 1))",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "OnSelect": "UpdateContext({locSelectedTriage: 'seo_TriageCategory'.'White — Non-Patient'})"
+              }
+            }
+          ]
+        },
+        {
+          "name": "lblFormSectionPHI",
+          "controlType": "Label",
+          "purpose": "PHI section header",
+          "properties": {
+            "Text": "\"PATIENT INFO (PHI)\"",
+            "Size": 11,
+            "FontWeight": "Semibold",
+            "Color": "RGBA(245, 158, 11, 1)"
+          }
+        },
+        {
+          "name": "cntNameRow",
+          "controlType": "HorizontalContainer",
+          "purpose": "First name + Last name side by side",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 48,
+            "LayoutGap": 8
+          },
+          "children": [
+            {
+              "name": "txtPatientFirstName",
+              "controlType": "TextInput",
+              "purpose": "PHI — Patient first name",
+              "properties": {
+                "Width": "(Parent.Width - 8) / 2",
+                "Height": 44,
+                "HintText": "\"First Name\"",
+                "Default": "locPatientFirstName",
+                "OnChange": "UpdateContext({locPatientFirstName: Self.Text})",
+                "Fill": "RGBA(15, 23, 42, 1)",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "txtPatientLastName",
+              "controlType": "TextInput",
+              "purpose": "PHI — Patient last name",
+              "properties": {
+                "Width": "(Parent.Width - 8) / 2",
+                "Height": 44,
+                "HintText": "\"Last Name\"",
+                "Default": "locPatientLastName",
+                "OnChange": "UpdateContext({locPatientLastName: Self.Text})",
+                "Fill": "RGBA(15, 23, 42, 1)",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntAgeGenderRow",
+          "controlType": "HorizontalContainer",
+          "purpose": "Age + Gender side by side",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 48,
+            "LayoutGap": 8
+          },
+          "children": [
+            {
+              "name": "txtPatientAge",
+              "controlType": "TextInput",
+              "purpose": "PHI — Patient age",
+              "properties": {
+                "Width": 100,
+                "Height": 44,
+                "HintText": "\"Age\"",
+                "Format": "Number",
+                "Default": "Text(locPatientAge)",
+                "OnChange": "UpdateContext({locPatientAge: Value(Self.Text)})",
+                "Fill": "RGBA(15, 23, 42, 1)",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "drpPatientGender",
+              "controlType": "Dropdown",
+              "purpose": "PHI — Patient gender",
+              "properties": {
+                "Width": "Parent.Width - 108",
+                "Height": 44,
+                "Items": "[\"Male\", \"Female\", \"Other\", \"Unknown\"]",
+                "OnChange": "UpdateContext({locPatientGender: Self.Selected.Value})"
+              }
+            }
+          ]
+        },
+        {
+          "name": "txtChiefComplaint",
+          "controlType": "TextInput",
+          "purpose": "PHI — Chief complaint",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 44,
+            "HintText": "\"Chief Complaint\"",
+            "Default": "locChiefComplaint",
+            "OnChange": "UpdateContext({locChiefComplaint: Self.Text})",
+            "Fill": "RGBA(15, 23, 42, 1)",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "txtAssessmentNotes",
+          "controlType": "TextInput",
+          "purpose": "PHI — Assessment notes",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 80,
+            "Mode": "MultiLine",
+            "HintText": "\"Assessment notes...\"",
+            "Default": "locAssessmentNotes",
+            "OnChange": "UpdateContext({locAssessmentNotes: Self.Text})",
+            "Fill": "RGBA(15, 23, 42, 1)",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "txtTreatmentNotes",
+          "controlType": "TextInput",
+          "purpose": "PHI — Treatment notes",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 80,
+            "Mode": "MultiLine",
+            "HintText": "\"Treatment / interventions...\"",
+            "Default": "locTreatmentNotes",
+            "OnChange": "UpdateContext({locTreatmentNotes: Self.Text})",
+            "Fill": "RGBA(15, 23, 42, 1)",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "lblFormSectionTransport",
+          "controlType": "Label",
+          "purpose": "Transport section header",
+          "properties": {
+            "Text": "\"TRANSPORT\"",
+            "Size": 11,
+            "FontWeight": "Semibold",
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        },
+        {
+          "name": "cntTransportToggles",
+          "controlType": "HorizontalContainer",
+          "purpose": "Transport and Refused Care toggles",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 44,
+            "LayoutGap": 16
+          },
+          "children": [
+            {
+              "name": "tglTransported",
+              "controlType": "Toggle",
+              "purpose": "Transport flag",
+              "properties": {
+                "Width": 140,
+                "Height": 36,
+                "Default": "locIsTransported",
+                "OnCheck": "UpdateContext({locIsTransported: true, locRefusedCare: false})",
+                "OnUncheck": "UpdateContext({locIsTransported: false})",
+                "TrueText": "\"Transported\"",
+                "FalseText": "\"Not Transported\""
+              }
+            },
+            {
+              "name": "tglRefused",
+              "controlType": "Toggle",
+              "purpose": "Refused care (AMA) flag",
+              "properties": {
+                "Width": 140,
+                "Height": 36,
+                "Default": "locRefusedCare",
+                "OnCheck": "UpdateContext({locRefusedCare: true, locIsTransported: false})",
+                "OnUncheck": "UpdateContext({locRefusedCare: false})",
+                "TrueText": "\"Refused (AMA)\"",
+                "FalseText": "\"Accepted Care\""
+              }
+            }
+          ]
+        },
+        {
+          "name": "drpDestinationFacility",
+          "controlType": "ComboBox",
+          "purpose": "Hospital / destination facility picker",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 44,
+            "Visible": "locIsTransported",
+            "Items": "Filter(seo_Facility, seo_isActive = true)",
+            "DisplayFields": "[\"seo_name\"]",
+            "SearchFields": "[\"seo_name\"]",
+            "OnChange": "UpdateContext({locDestinationFacility: Self.Selected})"
+          }
+        },
+        {
+          "name": "btnSavePatient",
+          "controlType": "Button",
+          "purpose": "Save patient record",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 48,
+            "Text": "If(IsBlank(locEditingPatient), \"Save Patient\", \"Update Patient\")",
+            "Fill": "RGBA(16, 185, 129, 1)",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 16,
+            "FontWeight": "Bold",
+            "BorderRadius": 8,
+            "DisplayMode": "If(IsBlank(locSelectedTriage), DisplayMode.Disabled, DisplayMode.Edit)",
+            "OnSelect": "If(IsBlank(locEditingPatient),\n  Patch(seo_PatientRecord, Defaults(seo_PatientRecord), {\n    seo_incidentId: LookUp(seo_Incident, seo_IncidentId = locTriageIncident.seo_IncidentId),\n    seo_triageCategory: locSelectedTriage,\n    seo_patientFirstName: locPatientFirstName,\n    seo_patientLastName: locPatientLastName,\n    seo_patientAge: locPatientAge,\n    seo_patientGender: locPatientGender,\n    seo_chiefComplaint: locChiefComplaint,\n    seo_assessmentNotes: locAssessmentNotes,\n    seo_treatmentNotes: locTreatmentNotes,\n    seo_isTransported: locIsTransported,\n    seo_refusedCare: locRefusedCare,\n    seo_destinationFacilityId: locDestinationFacility,\n    seo_transportUnitId: If(locIsTransported, gblCurrentUnit, Blank()),\n    seo_transportStartedOn: If(locIsTransported, Now(), Blank()),\n    seo_attendingPersonnelId: LookUp(seo_Personnel, seo_PersonnelId = gblCurrentPersonnel.seo_PersonnelId)\n  }),\n  Patch(seo_PatientRecord, locEditingPatient, {\n    seo_triageCategory: locSelectedTriage,\n    seo_patientFirstName: locPatientFirstName,\n    seo_patientLastName: locPatientLastName,\n    seo_patientAge: locPatientAge,\n    seo_patientGender: locPatientGender,\n    seo_chiefComplaint: locChiefComplaint,\n    seo_assessmentNotes: locAssessmentNotes,\n    seo_treatmentNotes: locTreatmentNotes,\n    seo_isTransported: locIsTransported,\n    seo_refusedCare: locRefusedCare,\n    seo_destinationFacilityId: locDestinationFacility,\n    seo_transportUnitId: If(locIsTransported, gblCurrentUnit, Blank()),\n    seo_transportStartedOn: If(locIsTransported, Now(), Blank())\n  })\n);\nUpdateContext({\n  locIsAddingPatient: false,\n  locPatients: SortByColumns(Filter(seo_PatientRecord, _seo_incidentid_value = locTriageIncident.seo_IncidentId), \"createdon\", SortOrder.Descending)\n})"
+          }
+        }
+      ]
+    },
+    {
+      "name": "galPatients",
+      "controlType": "Gallery",
+      "purpose": "Patient list with triage color coding",
+      "properties": {
+        "X": 0,
+        "Y": 114,
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - 114 - 70",
+        "Visible": "!locIsAddingPatient",
+        "Items": "locPatients",
+        "TemplateSize": 80,
+        "TemplatePadding": 4
+      },
+      "children": [
+        {
+          "name": "cntPatientCard",
+          "controlType": "Container",
+          "purpose": "Patient card in gallery",
+          "properties": {
+            "X": 16,
+            "Width": "Parent.Width - 32",
+            "Height": 72,
+            "Fill": "RGBA(30, 41, 59, 1)",
+            "BorderRadius": 8,
+            "OnSelect": "UpdateContext({\n  locIsAddingPatient: true,\n  locEditingPatient: ThisItem,\n  locSelectedTriage: ThisItem.seo_triageCategory,\n  locPatientFirstName: ThisItem.seo_patientFirstName,\n  locPatientLastName: ThisItem.seo_patientLastName,\n  locPatientAge: ThisItem.seo_patientAge,\n  locPatientGender: ThisItem.seo_patientGender,\n  locChiefComplaint: ThisItem.seo_chiefComplaint,\n  locAssessmentNotes: ThisItem.seo_assessmentNotes,\n  locTreatmentNotes: ThisItem.seo_treatmentNotes,\n  locIsTransported: ThisItem.seo_isTransported,\n  locRefusedCare: ThisItem.seo_refusedCare\n})"
+          },
+          "children": [
+            {
+              "name": "shpTriageBand",
+              "controlType": "Rectangle",
+              "purpose": "Left triage color band",
+              "properties": {
+                "X": 0,
+                "Y": 0,
+                "Width": 6,
+                "Height": "Parent.Height",
+                "Fill": "Switch(ThisItem.seo_triageCategory, 'seo_TriageCategory'.'Red — Immediate', RGBA(220, 38, 38, 1), 'seo_TriageCategory'.'Yellow — Delayed', RGBA(234, 179, 8, 1), 'seo_TriageCategory'.'Green — Minor', RGBA(16, 185, 129, 1), 'seo_TriageCategory'.'Black — Deceased', RGBA(31, 41, 55, 1), RGBA(229, 231, 235, 1))"
+              }
+            },
+            {
+              "name": "lblPatientId",
+              "controlType": "Label",
+              "purpose": "Patient identifier",
+              "properties": {
+                "X": 16,
+                "Y": 8,
+                "Text": "ThisItem.seo_patientIdentifier",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "lblPatientName",
+              "controlType": "Label",
+              "purpose": "Patient name (PHI)",
+              "properties": {
+                "X": 16,
+                "Y": 28,
+                "Text": "Coalesce(ThisItem.seo_patientFirstName & \" \" & ThisItem.seo_patientLastName, \"Unidentified\")",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)"
+              }
+            },
+            {
+              "name": "lblPatientComplaint",
+              "controlType": "Label",
+              "purpose": "Chief complaint (PHI)",
+              "properties": {
+                "X": 16,
+                "Y": 48,
+                "Width": "Parent.Width - 100",
+                "Text": "ThisItem.seo_chiefComplaint",
+                "Size": 12,
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblPatientTransport",
+              "controlType": "Label",
+              "purpose": "Transport status badge",
+              "properties": {
+                "X": "Parent.Width - 90",
+                "Y": 28,
+                "Width": 80,
+                "Text": "If(ThisItem.seo_isTransported, \"Transported\", If(ThisItem.seo_refusedCare, \"AMA\", \"\"))",
+                "Size": 11,
+                "Color": "If(ThisItem.seo_isTransported, RGBA(139, 92, 246, 1), RGBA(245, 158, 11, 1))",
+                "Align": "End"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cmpNavBarTriage",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrPatientTriage\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBarTriage.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": true,
+    "justification": "Patient Triage screen reads and writes all 7 PHI columns on seo_PatientRecord: seo_patientFirstName, seo_patientLastName, seo_patientAge, seo_patientGender, seo_chiefComplaint, seo_assessmentNotes, seo_treatmentNotes. Access is restricted to users with seo_EMSProvider role AND the seo_PHIAccess field security profile. Screen is gated by gblIsEMSProvider check on OnVisible."
+  },
+
+  "flowInteractions": [
+    {
+      "flowId": "seo_PatientCountSync",
+      "trigger": "EMSProvider creates a new seo_PatientRecord via Patch()",
+      "mechanism": "The Patch to seo_PatientRecord (create) triggers the PatientCountSync flow. The flow counts patients for the incident, updates seo_Incident.seo_patientCount, and if threshold is met, sets seo_Incident.seo_isMCI = true."
+    },
+    {
+      "flowId": "seo_NotifyMCIAlarm",
+      "trigger": "Indirect — PatientCountSync sets seo_isMCI, which triggers NotifyMCIAlarm",
+      "mechanism": "Cascade: PatientCountSync → updates Incident.isMCI → NotifyMCIAlarm sends email to dispatch supervisor. The app does not directly trigger this flow."
+    }
+  ],
+
+  "designerNotes": "1. This is the ONLY screen in the app that accesses PHI columns. All PHI access is contained here.\n2. Role gate: OnVisible checks gblIsEMSProvider and redirects non-EMS users to Home. The Dataverse field security profile (seo_PHIAccess) provides a second layer of protection at the data layer — even if someone bypasses the UI gate, the columns return blank.\n3. Triage selector uses large color-coded buttons matching START triage colors. Abbreviations (RED/YEL/GRN/BLK/WHT) for quick identification.\n4. Triage summary bar at top shows counts by category — critical for MCI scene management.\n5. Transport toggle and Refused Care toggle are mutually exclusive.\n6. When Transport is toggled on, the facility picker appears. The app auto-sets seo_transportUnitId to the user's current unit and seo_transportStartedOn to Now().\n7. seo_attendingPersonnelId is auto-set to gblCurrentPersonnel — the EMS provider creating the record.\n8. Patient cards are tappable to edit. Tapping loads all values into the form context variables.\n9. Save button is disabled until a triage category is selected.\n10. The PHI section header is orange to visually remind the EMSProvider they're handling protected data."
+}

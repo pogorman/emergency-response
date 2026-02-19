@@ -940,6 +940,109 @@ All 10 flows have been verified to NOT access PHI columns. The PatientCountSync 
 
 ---
 
+## Canvas App — Responder Mobile
+
+### App Overview
+
+**seo_ResponderMobile** is a phone-layout canvas app for field responders and EMS providers. It provides unit status management, incident details, map view with hydrant pins, incident notes, patient triage (EMS only), and pre-plan access.
+
+- **Form factor:** Phone (portrait)
+- **Target roles:** seo_Responder, seo_EMSProvider
+- **Spec location:** `/apps/seo_responder-mobile/`
+
+### Screen Inventory
+
+| # | Screen | Primary Actions | Role Access |
+|---|--------|----------------|-------------|
+| 1 | Home (scrHome) | Unit status badge, active incident card, quick actions, GPS timer | All |
+| 2 | Unit Status (scrUnitStatus) | Full-screen status buttons with GPS capture, status history | All |
+| 3 | Incident Detail (scrIncidentDetail) | Incident info, assigned units, hazards, ICS command, pre-plan link | All |
+| 4 | Map (scrMap) | Incident pin, hydrant pins (NFPA 291), pre-plan pins, GPS dot | All |
+| 5 | Notes (scrNotes) | Incident note timeline, create new note | All |
+| 6 | Patient Triage (scrPatientTriage) | Patient list, triage form, transport tracking | **EMS only** |
+| 7 | Pre-Plan (scrPrePlan) | Building info, NFPA 704 hazards, tactical/access notes | All |
+| 8 | Settings (scrSettings) | Profile, GPS toggle, sync status, connectivity indicator | All |
+
+### Reusable Components
+
+| Component | Purpose |
+|-----------|---------|
+| cmpNavigationBar | Bottom tab bar (4-5 tabs depending on role) |
+| cmpStatusButtonGroup | Large status buttons with GPS capture on every status change |
+| cmpIncidentCard | Incident summary card for galleries |
+
+### Data Sources
+
+The app connects to 12 Dataverse tables:
+
+| Table | Access | Offline | Notes |
+|-------|--------|---------|-------|
+| seo_Incident | Read | Yes (active only) | Scoped by team sharing |
+| seo_Unit | Read/Write | Yes (own agency) | Status + GPS patch |
+| seo_IncidentAssignment | Read/Write | Yes | Own timestamps |
+| seo_IncidentNote | Create/Read | Yes | Create + timeline view |
+| seo_UnitStatusLog | Read | Yes (24h) | Flow-created audit trail |
+| seo_IncidentCommand | Read | Yes | ICS structure |
+| seo_PatientRecord | Create/Read/Write | Yes | **EMS only — PHI** |
+| seo_PrePlan | Read | Yes | Org-wide reference |
+| seo_Hazard | Read | Yes | Pre-plan + on-scene |
+| seo_Hydrant | Read | Yes (up to 50K) | Map pins |
+| seo_Facility | Read | Yes | Transport destinations |
+| seo_Personnel | Read | Yes (own agency) | Name/rank lookups |
+
+### Offline-First Architecture
+
+- **Dataverse offline mode** enabled with "Server Wins" conflict resolution
+- All 12 data sources cached locally with sync filters to limit data volume
+- Sync interval configurable via `seo_OfflineSyncIntervalMinutes` environment variable
+- Status changes, notes, and patient records work offline and sync when connectivity returns
+- Flows (UnitStatusChangeLog, PatientCountSync) execute server-side after sync completes
+
+### PHI Containment
+
+Patient Triage (scrPatientTriage) is the **only** screen accessing PHI columns. Protection layers:
+
+1. **UI gate:** `gblIsEMSProvider` check on OnVisible redirects non-EMS users
+2. **Navigation gate:** Patients tab in cmpNavigationBar hidden for non-EMS users
+3. **Dataverse layer:** seo_PHIAccess field security profile blocks PHI columns for non-EMS roles
+4. **Table-level security:** seo_Responder role has zero access to seo_PatientRecord
+
+### Flow Interactions
+
+| App Action | Triggers Flow | Effect |
+|------------|---------------|--------|
+| Patch seo_Unit.seo_currentStatus | seo_UnitStatusChangeLog | Creates immutable UnitStatusLog row |
+| Patch seo_IncidentAssignment timestamps | seo_IncidentStatusProgression | Auto-advances Incident.status |
+| Create seo_PatientRecord (EMS) | seo_PatientCountSync | Updates patient count, may flag MCI |
+| PatientCountSync cascade | seo_NotifyMCIAlarm | Emails dispatch supervisor |
+
+### GCC Constraints
+
+| Constraint | Mitigation |
+|------------|------------|
+| PCF Map control availability | Fallback gallery list with Launch() to native device maps (ADR-014) |
+| Dataverse connector type | Uses shared_commondataserviceforapps (GCC-compatible) |
+| No non-FedRAMP connectors | Map uses Bing Maps (FedRAMP authorized) |
+| Offline data residency | Power Apps encrypted local storage + MDM requirement |
+
+---
+
+## Architecture Decisions (continued)
+
+### ADR-013: Offline-First Mobile Architecture
+**Decision:** The Responder Mobile app uses Dataverse's built-in offline mode with "Server Wins" conflict resolution rather than a custom SaveData/LoadData pattern.
+**Rationale:** Field responders frequently operate in environments with poor connectivity (basements, rural areas, inside structures). Dataverse offline mode provides transparent caching and sync with minimal custom code. "Server Wins" was chosen because dispatch/supervisor changes should always take precedence — if dispatch updates an incident status while a responder is offline, the dispatch change wins on sync. The alternative "Client Wins" could overwrite critical dispatch decisions. Status changes, notes, and patient records queue locally and sync automatically. The UnitStatusChangeLog and PatientCountSync flows execute server-side after sync, maintaining the audit trail even for offline-originated changes.
+
+### ADR-014: GCC Map Fallback
+**Decision:** The map screen includes both a Power Apps Map PCF control (primary) and a gallery-based fallback list with Launch() to native device maps.
+**Rationale:** The Power Apps Map control uses Bing Maps, which is FedRAMP authorized and available in most GCC environments. However, PCF control availability in GCC varies by environment and may not be enabled in all tenants. The fallback ensures responders always have access to location information even if the map control is unavailable. At build time, the implementer sets visibility: if the Map PCF works, hide the fallback; if not, hide the Map control and show the fallback. The Launch() approach opens the device's native maps app (Apple Maps on iOS, Google Maps on Android) which provides superior mapping functionality including turn-by-turn navigation.
+
+### ADR-015: Phone Layout for Mobile Responder
+**Decision:** Phone layout (portrait) rather than tablet layout.
+**Rationale:** Field responders carry phones, not tablets, on their person during incidents. The app is designed for one-hand use in turnout gear with gloves — all interactive controls have a minimum 44px touch target. The high-contrast dark theme improves visibility in both bright daylight and nighttime conditions. A phone layout also encourages focused, single-task interactions (check status, change status, add note) rather than multi-pane views that require more attention. The model-driven app (Phase 5) will serve the tablet/desktop use case for dispatch and supervision.
+
+---
+
 ## ALM & Deployment
 
 ### Solution Layering
@@ -962,6 +1065,8 @@ All 10 flows have been verified to NOT access PHI columns. The PatientCountSync 
 | seo_DispatchSupervisorEmail | String | "" | Distribution list for supervisor alerts (Phase 3) |
 | seo_FlowErrorNotificationEmail | String | "" | Recipient for flow failure notifications (Phase 3) |
 | seo_ServiceAccountUserId | String | "" | GUID of the service account for elevated flows (Phase 3) |
+| seo_GPSUpdateIntervalSeconds | String | "30" | How often the mobile app updates unit GPS (Phase 4) |
+| seo_OfflineSyncIntervalMinutes | String | "5" | Offline cache sync interval for mobile app (Phase 4) |
 
 ### Connection References
 | Reference | Connector | Description |

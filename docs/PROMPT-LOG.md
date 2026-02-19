@@ -78,3 +78,38 @@ Running log of all prompts and actions taken. Append-only — never overwrite pr
 - Updated `docs/RELEASE-NOTES.md` — added v0.3.0 entry
 - Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
 - Updated `CLAUDE.md` — Phase 3 → COMPLETE
+
+## 2026-02-18 — Session 4: Phase 4 — Canvas App (Mobile Responder)
+
+**Prompt Summary:** Implement Phase 4 — create canvas app specification files (JSON blueprints) for the Responder Mobile app. Single app for both Responder + EMSProvider roles. Phone layout. 8 screens, 3 reusable components, 2 new environment variables, canvas app definition schema, and full documentation updates.
+
+**Actions Taken:**
+- Created `apps/_schema/canvas-app-definition-schema.json` — JSON Schema for canvas app, screen, and component definitions
+- Created `apps/README.md` — explains spec format, control naming, variable conventions, translation guide
+- Created `apps/seo_responder-mobile/app-definition.json` — app-level config: 12 data sources, offline profile (Server Wins), dark high-contrast theme, 9 global variables, 8-screen navigation model, GCC constraints
+- Created 3 reusable component definitions in `apps/seo_responder-mobile/components/`:
+  - `navigation-bar.json` — bottom tab bar (4-5 tabs, role-conditional Patients tab)
+  - `status-button-group.json` — 8 large status buttons with GPS capture on every change
+  - `incident-card.json` — incident summary card with priority color band and MCI badge
+- Created 8 screen definitions in `apps/seo_responder-mobile/screens/`:
+  - `home-screen.json` — dashboard with status banner, active incident, GPS timer, connectivity indicator
+  - `unit-status-screen.json` — full-screen status change with history timeline
+  - `incident-detail-screen.json` — incident info, hazard banner, assigned units, ICS command, NFPA 704 hazards
+  - `map-screen.json` — Map PCF control with hydrant pins (NFPA 291 colors), pre-plan pins, GCC fallback gallery
+  - `notes-screen.json` — note timeline + create form with note type, priority flag, offline support
+  - `patient-triage-screen.json` — EMS only: triage category buttons (START), PHI form, transport tracking, facility picker
+  - `pre-plan-screen.json` — building info, fire protection badges, FDC location, NFPA 704 diamonds, emergency contact dialer
+  - `settings-screen.json` — profile, GPS toggle with SaveData persistence, sync status, app info
+- Added 2 new environment variables to `solution/environment-variables.json`:
+  - `seo_GPSUpdateIntervalSeconds` (default: "30")
+  - `seo_OfflineSyncIntervalMinutes` (default: "5")
+- Updated `docs/TECHNICAL.md`:
+  - Added Canvas App section (overview, screen inventory, components, data sources, offline architecture, PHI containment, flow interactions, GCC constraints)
+  - Added ADR-013 (offline-first mobile architecture — Server Wins)
+  - Added ADR-014 (GCC map fallback — PCF + Launch() to native maps)
+  - Added ADR-015 (phone layout — one-hand use, 44px min touch targets, dark theme)
+  - Updated environment variables table with 2 new variables
+- Updated `docs/USER-GUIDE.md` — populated "For Responders" section with complete app walkthrough
+- Updated `docs/RELEASE-NOTES.md` — added v0.4.0 entry
+- Updated `docs/SESSION-MEMORY.md` — updated project state, session log, key decisions
+- Updated `CLAUDE.md` — Phase 4 → COMPLETE

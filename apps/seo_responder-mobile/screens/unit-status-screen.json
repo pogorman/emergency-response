@@ -1,0 +1,159 @@
+{
+  "screenId": "scrUnitStatus",
+  "displayName": "Unit Status",
+  "description": "Full-screen status change panel. Displays all available unit statuses as large color-coded buttons. Captures GPS on every status change. Includes status history timeline.",
+  "roleAccess": [],
+
+  "onVisible": "Set(gblCurrentUnit, LookUp(seo_Unit, seo_UnitId = gblCurrentPersonnel.seo_currentUnitId));\nUpdateContext({locStatusHistory: SortByColumns(Filter(seo_UnitStatusLog, _seo_unitid_value = gblCurrentUnit.seo_UnitId), \"seo_changedOn\", SortOrder.Descending)});",
+
+  "dataSources": ["seo_Unit", "seo_UnitStatusLog"],
+
+  "contextVariables": [
+    {
+      "name": "locStatusHistory",
+      "type": "Table (seo_UnitStatusLog)",
+      "purpose": "Recent status changes for the current unit, sorted newest first"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntStatusHeader",
+      "controlType": "Container",
+      "purpose": "Header with back button and unit designator",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 60,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "icoBack",
+          "controlType": "Icon",
+          "purpose": "Back navigation to Home",
+          "properties": {
+            "Icon": "ChevronLeft",
+            "X": 8,
+            "Y": 16,
+            "Width": 32,
+            "Height": 32,
+            "Color": "RGBA(255, 255, 255, 1)",
+            "OnSelect": "Navigate(scrHome, ScreenTransition.None)"
+          },
+          "accessibilityNotes": "Button: Navigate back to Home screen"
+        },
+        {
+          "name": "lblStatusScreenTitle",
+          "controlType": "Label",
+          "purpose": "Screen title with unit name",
+          "properties": {
+            "X": 48,
+            "Y": 16,
+            "Width": "Parent.Width - 96",
+            "Height": 32,
+            "Text": "gblCurrentUnit.seo_name & \" — Change Status\"",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cmpStatusButtons",
+      "controlType": "Component",
+      "purpose": "Status button group component — handles all status changes with GPS capture",
+      "properties": {
+        "X": 0,
+        "Y": 68,
+        "Width": "Parent.Width",
+        "Height": 560,
+        "CurrentStatus": "Text(gblCurrentUnit.seo_currentStatus)",
+        "UnitRecord": "gblCurrentUnit",
+        "PersonnelRecord": "gblCurrentPersonnel",
+        "GPSEnabled": "gblGPSEnabled",
+        "OnStatusChanged": "Set(gblCurrentUnit, LookUp(seo_Unit, seo_UnitId = gblCurrentPersonnel.seo_currentUnitId));\nSet(gblActiveIncident, If(!IsBlank(gblCurrentUnit.seo_currentIncidentId), LookUp(seo_Incident, seo_IncidentId = gblCurrentUnit.seo_currentIncidentId)));\nNavigate(scrHome, ScreenTransition.None)"
+      }
+    },
+    {
+      "name": "lblRecentHistory",
+      "controlType": "Label",
+      "purpose": "Section header for status history",
+      "properties": {
+        "X": 16,
+        "Y": 640,
+        "Width": "Parent.Width - 32",
+        "Height": 24,
+        "Text": "\"RECENT STATUS CHANGES\"",
+        "Size": 11,
+        "FontWeight": "Semibold",
+        "Color": "RGBA(148, 163, 184, 1)"
+      }
+    },
+    {
+      "name": "galStatusHistory",
+      "controlType": "Gallery",
+      "purpose": "Timeline of recent status changes from UnitStatusLog",
+      "properties": {
+        "X": 16,
+        "Y": 668,
+        "Width": "Parent.Width - 32",
+        "Height": "Parent.Height - 668 - 70",
+        "Items": "FirstN(locStatusHistory, 10)",
+        "TemplateSize": 48,
+        "TemplatePadding": 4
+      },
+      "children": [
+        {
+          "name": "lblHistoryStatus",
+          "controlType": "Label",
+          "purpose": "Status value in the log entry",
+          "properties": {
+            "Text": "Text(ThisItem.seo_status)",
+            "Size": 13,
+            "FontWeight": "Semibold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        },
+        {
+          "name": "lblHistoryTime",
+          "controlType": "Label",
+          "purpose": "Timestamp of the status change",
+          "properties": {
+            "Text": "Text(ThisItem.seo_changedOn, \"MM/dd HH:mm\")",
+            "Size": 11,
+            "Color": "RGBA(148, 163, 184, 1)",
+            "Align": "End"
+          }
+        },
+        {
+          "name": "lblHistoryPrevious",
+          "controlType": "Label",
+          "purpose": "Previous status for context",
+          "properties": {
+            "Text": "\"from \" & Text(ThisItem.seo_previousStatus)",
+            "Size": 11,
+            "Color": "RGBA(107, 114, 128, 1)"
+          }
+        }
+      ]
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Unit Status screen only accesses seo_Unit and seo_UnitStatusLog. No PatientRecord columns."
+  },
+
+  "flowInteractions": [
+    {
+      "flowId": "seo_UnitStatusChangeLog",
+      "trigger": "User taps a status button → Patch(seo_Unit, {seo_currentStatus: ...})",
+      "mechanism": "The Patch to seo_Unit.seo_currentStatus triggers the Dataverse 'When a row is modified' trigger with filterColumns = seo_currentStatus. The flow creates a new seo_UnitStatusLog row and updates seo_Unit.seo_lastStatusChangeOn."
+    }
+  ],
+
+  "designerNotes": "1. After a successful status change, the OnStatusChanged callback refreshes gblCurrentUnit and navigates back to Home.\n2. Status history shows the last 10 changes — enough for a shift without excessive scrolling.\n3. The status history is read from seo_UnitStatusLog which is populated by the UnitStatusChangeLog flow, not by the app.\n4. Scrollable area: status buttons are fixed at top, history scrolls below.\n5. On slow connections, the cmpStatusButtons.IsPatching output can be used to show a loading overlay."
+}

@@ -1,0 +1,568 @@
+{
+  "screenId": "scrPrePlan",
+  "displayName": "Pre-Plan",
+  "description": "Building pre-plan viewer showing occupancy info, fire protection systems, NFPA 704 hazard diamonds, tactical notes, emergency contacts, and access notes. Read-only reference screen.",
+  "roleAccess": [],
+
+  "onVisible": "UpdateContext({\n  locPrePlan: Coalesce(\n    If(!IsBlank(gblActiveIncident.seo_prePlanId), LookUp(seo_PrePlan, seo_PrePlanId = gblActiveIncident._seo_preplanid_value)),\n    Blank()\n  ),\n  locPrePlanHazards: Filter(seo_Hazard, _seo_preplanid_value = locPrePlan.seo_PrePlanId)\n});",
+
+  "dataSources": ["seo_PrePlan", "seo_Hazard", "seo_Incident"],
+
+  "contextVariables": [
+    {
+      "name": "locPrePlan",
+      "type": "Record (seo_PrePlan)",
+      "purpose": "The pre-plan record being viewed"
+    },
+    {
+      "name": "locPrePlanHazards",
+      "type": "Table (seo_Hazard)",
+      "purpose": "Hazards linked to this pre-plan"
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntPrePlanHeader",
+      "controlType": "Container",
+      "purpose": "Header with back button and building name",
+      "properties": {
+        "X": 0,
+        "Y": 0,
+        "Width": "Parent.Width",
+        "Height": 60,
+        "Fill": "RGBA(0, 51, 102, 1)"
+      },
+      "children": [
+        {
+          "name": "icoPrePlanBack",
+          "controlType": "Icon",
+          "purpose": "Back navigation",
+          "properties": {
+            "Icon": "ChevronLeft",
+            "X": 8,
+            "Y": 16,
+            "Width": 32,
+            "Height": 32,
+            "Color": "RGBA(255, 255, 255, 1)",
+            "OnSelect": "Navigate(scrIncidentDetail, ScreenTransition.None)"
+          }
+        },
+        {
+          "name": "lblPrePlanTitle",
+          "controlType": "Label",
+          "purpose": "Building name",
+          "properties": {
+            "X": 48,
+            "Y": 16,
+            "Width": "Parent.Width - 64",
+            "Height": 28,
+            "Text": "Coalesce(locPrePlan.seo_name, \"Pre-Plan\")",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "Color": "RGBA(255, 255, 255, 1)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "cntPrePlanBody",
+      "controlType": "VerticalContainer",
+      "purpose": "Scrollable pre-plan content",
+      "properties": {
+        "X": 0,
+        "Y": 60,
+        "Width": "Parent.Width",
+        "Height": "Parent.Height - 60 - 70",
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 12,
+        "LayoutGap": 16,
+        "VerticalOverflow": "Scroll"
+      },
+      "children": [
+        {
+          "name": "lblNoPrePlan",
+          "controlType": "Label",
+          "purpose": "Empty state when no pre-plan is linked",
+          "properties": {
+            "Visible": "IsBlank(locPrePlan)",
+            "Text": "\"No pre-plan linked to this incident\"",
+            "Size": 14,
+            "Color": "RGBA(107, 114, 128, 1)",
+            "Align": "Center"
+          }
+        },
+        {
+          "name": "cntBuildingInfo",
+          "controlType": "VerticalContainer",
+          "purpose": "Building identification section",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan)",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionBuilding",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"BUILDING INFO\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblPrePlanAddress",
+              "controlType": "Label",
+              "purpose": "Building address",
+              "properties": {
+                "Text": "locPrePlan.seo_address",
+                "Size": 14,
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "lblOccupancy",
+              "controlType": "Label",
+              "purpose": "Occupancy type",
+              "properties": {
+                "Text": "\"Occupancy: \" & Text(locPrePlan.seo_occupancyType)",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)"
+              }
+            },
+            {
+              "name": "lblConstruction",
+              "controlType": "Label",
+              "purpose": "Construction type",
+              "properties": {
+                "Text": "\"Construction: \" & Coalesce(Text(locPrePlan.seo_constructionType), \"Unknown\")",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)",
+                "Visible": "!IsBlank(locPrePlan.seo_constructionType)"
+              }
+            },
+            {
+              "name": "lblStories",
+              "controlType": "Label",
+              "purpose": "Stories + square footage",
+              "properties": {
+                "Text": "If(!IsBlank(locPrePlan.seo_stories), Text(locPrePlan.seo_stories) & \" stories\", \"\") & If(!IsBlank(locPrePlan.seo_squareFootage), \" | \" & Text(locPrePlan.seo_squareFootage) & \" sq ft\", \"\")",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)",
+                "Visible": "!IsBlank(locPrePlan.seo_stories) || !IsBlank(locPrePlan.seo_squareFootage)"
+              }
+            },
+            {
+              "name": "lblOccupantCount",
+              "controlType": "Label",
+              "purpose": "Typical occupant count",
+              "properties": {
+                "Text": "\"Typical occupants: \" & Text(locPrePlan.seo_occupantCount)",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)",
+                "Visible": "!IsBlank(locPrePlan.seo_occupantCount)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntFireProtection",
+          "controlType": "HorizontalContainer",
+          "purpose": "Fire protection system badges (Sprinklers, Alarm, Standpipe, FDC, Basement)",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Height": 44,
+            "Visible": "!IsBlank(locPrePlan)",
+            "LayoutGap": 8,
+            "LayoutWrap": true
+          },
+          "children": [
+            {
+              "name": "shpSprinklerBadge",
+              "controlType": "Container",
+              "purpose": "Sprinkler system badge",
+              "properties": {
+                "Width": 90,
+                "Height": 32,
+                "Fill": "If(locPrePlan.seo_hasSprinklers, RGBA(16, 185, 129, 0.3), RGBA(107, 114, 128, 0.2))",
+                "BorderRadius": 6
+              },
+              "children": [
+                {
+                  "name": "lblSprinkler",
+                  "controlType": "Label",
+                  "purpose": "Sprinkler status",
+                  "properties": {
+                    "Text": "If(locPrePlan.seo_hasSprinklers, \"SPRINKLER\", \"NO SPRK\")",
+                    "Size": 10,
+                    "FontWeight": "Bold",
+                    "Color": "If(locPrePlan.seo_hasSprinklers, RGBA(16, 185, 129, 1), RGBA(107, 114, 128, 1))",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "shpAlarmBadge",
+              "controlType": "Container",
+              "purpose": "Fire alarm badge",
+              "properties": {
+                "Width": 70,
+                "Height": 32,
+                "Fill": "If(locPrePlan.seo_hasFireAlarm, RGBA(59, 130, 246, 0.3), RGBA(107, 114, 128, 0.2))",
+                "BorderRadius": 6
+              },
+              "children": [
+                {
+                  "name": "lblAlarm",
+                  "controlType": "Label",
+                  "purpose": "Alarm status",
+                  "properties": {
+                    "Text": "If(locPrePlan.seo_hasFireAlarm, \"ALARM\", \"NO ALM\")",
+                    "Size": 10,
+                    "FontWeight": "Bold",
+                    "Color": "If(locPrePlan.seo_hasFireAlarm, RGBA(59, 130, 246, 1), RGBA(107, 114, 128, 1))",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "shpFDCBadge",
+              "controlType": "Container",
+              "purpose": "Fire Department Connection badge",
+              "properties": {
+                "Width": 50,
+                "Height": 32,
+                "Fill": "If(locPrePlan.seo_hasFDC, RGBA(245, 158, 11, 0.3), RGBA(107, 114, 128, 0.2))",
+                "BorderRadius": 6
+              },
+              "children": [
+                {
+                  "name": "lblFDC",
+                  "controlType": "Label",
+                  "purpose": "FDC status",
+                  "properties": {
+                    "Text": "If(locPrePlan.seo_hasFDC, \"FDC\", \"—\")",
+                    "Size": 10,
+                    "FontWeight": "Bold",
+                    "Color": "If(locPrePlan.seo_hasFDC, RGBA(245, 158, 11, 1), RGBA(107, 114, 128, 1))",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "shpStandpipeBadge",
+              "controlType": "Container",
+              "purpose": "Standpipe badge",
+              "properties": {
+                "Width": 80,
+                "Height": 32,
+                "Visible": "locPrePlan.seo_hasStandpipe",
+                "Fill": "RGBA(139, 92, 246, 0.3)",
+                "BorderRadius": 6
+              },
+              "children": [
+                {
+                  "name": "lblStandpipe",
+                  "controlType": "Label",
+                  "purpose": "Standpipe label",
+                  "properties": {
+                    "Text": "\"STANDPIPE\"",
+                    "Size": 10,
+                    "FontWeight": "Bold",
+                    "Color": "RGBA(139, 92, 246, 1)",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "shpBasementBadge",
+              "controlType": "Container",
+              "purpose": "Basement indicator badge",
+              "properties": {
+                "Width": 80,
+                "Height": 32,
+                "Visible": "locPrePlan.seo_hasBasement",
+                "Fill": "RGBA(220, 38, 38, 0.2)",
+                "BorderRadius": 6
+              },
+              "children": [
+                {
+                  "name": "lblBasement",
+                  "controlType": "Label",
+                  "purpose": "Basement label",
+                  "properties": {
+                    "Text": "\"BASEMENT\"",
+                    "Size": 10,
+                    "FontWeight": "Bold",
+                    "Color": "RGBA(220, 38, 38, 1)",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "lblFDCLocation",
+          "controlType": "Label",
+          "purpose": "FDC location description",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan.seo_fdcLocation)",
+            "Text": "\"FDC Location: \" & locPrePlan.seo_fdcLocation",
+            "Size": 13,
+            "FontWeight": "Bold",
+            "Color": "RGBA(245, 158, 11, 1)"
+          }
+        },
+        {
+          "name": "cntTacticalNotes",
+          "controlType": "VerticalContainer",
+          "purpose": "Tactical notes section",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan.seo_tacticalNotes)",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionTactical",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"TACTICAL NOTES\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(220, 38, 38, 1)"
+              }
+            },
+            {
+              "name": "lblTacticalNotes",
+              "controlType": "Label",
+              "purpose": "Tactical notes text",
+              "properties": {
+                "Text": "locPrePlan.seo_tacticalNotes",
+                "Size": 13,
+                "Color": "RGBA(255, 255, 255, 1)",
+                "AutoHeight": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntAccessNotes",
+          "controlType": "VerticalContainer",
+          "purpose": "Access notes section",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan.seo_accessNotes)",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionAccess",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"ACCESS NOTES\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblAccessNotes",
+              "controlType": "Label",
+              "purpose": "Access notes text (Knox box, gates, keys, etc.)",
+              "properties": {
+                "Text": "locPrePlan.seo_accessNotes",
+                "Size": 13,
+                "Color": "RGBA(203, 213, 225, 1)",
+                "AutoHeight": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "cntKnownHazards",
+          "controlType": "VerticalContainer",
+          "purpose": "Known hazards section",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan.seo_knownHazards) || CountRows(locPrePlanHazards) > 0",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionKnownHazards",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"KNOWN HAZARDS\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(220, 38, 38, 1)"
+              }
+            },
+            {
+              "name": "lblKnownHazardsText",
+              "controlType": "Label",
+              "purpose": "Free-text known hazards",
+              "properties": {
+                "Text": "locPrePlan.seo_knownHazards",
+                "Visible": "!IsBlank(locPrePlan.seo_knownHazards)",
+                "Size": 13,
+                "Color": "RGBA(220, 38, 38, 1)",
+                "AutoHeight": true
+              }
+            },
+            {
+              "name": "galPrePlanHazards",
+              "controlType": "Gallery",
+              "purpose": "Linked hazard records with NFPA 704 diamonds",
+              "properties": {
+                "Items": "locPrePlanHazards",
+                "Visible": "CountRows(locPrePlanHazards) > 0",
+                "TemplateSize": 64,
+                "TemplatePadding": 4,
+                "Width": "Parent.Width",
+                "Height": "Min(CountRows(locPrePlanHazards) * 68, 300)"
+              },
+              "children": [
+                {
+                  "name": "lblHazName",
+                  "controlType": "Label",
+                  "purpose": "Hazard name",
+                  "properties": {
+                    "Text": "ThisItem.seo_name",
+                    "Size": 13,
+                    "FontWeight": "Semibold",
+                    "Color": "RGBA(255, 255, 255, 1)"
+                  }
+                },
+                {
+                  "name": "lblHazNFPA",
+                  "controlType": "Label",
+                  "purpose": "NFPA 704 diamond values",
+                  "properties": {
+                    "Text": "\"H:\" & ThisItem.seo_nfpa704Health & \" F:\" & ThisItem.seo_nfpa704Fire & \" R:\" & ThisItem.seo_nfpa704Reactivity & If(!IsBlank(ThisItem.seo_nfpa704Special), \" S:\" & ThisItem.seo_nfpa704Special, \"\")",
+                    "Size": 12,
+                    "FontWeight": "Bold",
+                    "Color": "RGBA(245, 158, 11, 1)"
+                  }
+                },
+                {
+                  "name": "lblHazLocation",
+                  "controlType": "Label",
+                  "purpose": "Hazard location within building",
+                  "properties": {
+                    "Text": "Coalesce(ThisItem.seo_location, \"\")",
+                    "Size": 11,
+                    "Color": "RGBA(148, 163, 184, 1)"
+                  }
+                },
+                {
+                  "name": "lblHazMitigation",
+                  "controlType": "Label",
+                  "purpose": "Mitigation notes",
+                  "properties": {
+                    "Text": "Coalesce(ThisItem.seo_mitigationNotes, \"\")",
+                    "Size": 11,
+                    "Color": "RGBA(203, 213, 225, 1)",
+                    "Visible": "!IsBlank(ThisItem.seo_mitigationNotes)"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "cntEmergencyContact",
+          "controlType": "VerticalContainer",
+          "purpose": "Emergency contact section",
+          "properties": {
+            "Width": "Parent.Width - 32",
+            "Visible": "!IsBlank(locPrePlan.seo_emergencyContactName)",
+            "LayoutGap": 4
+          },
+          "children": [
+            {
+              "name": "lblSectionContact",
+              "controlType": "Label",
+              "purpose": "Section header",
+              "properties": {
+                "Text": "\"EMERGENCY CONTACT\"",
+                "Size": 11,
+                "FontWeight": "Semibold",
+                "Color": "RGBA(148, 163, 184, 1)"
+              }
+            },
+            {
+              "name": "lblContactName",
+              "controlType": "Label",
+              "purpose": "Contact name",
+              "properties": {
+                "Text": "locPrePlan.seo_emergencyContactName",
+                "Size": 14,
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "btnCallContact",
+              "controlType": "Button",
+              "purpose": "Call emergency contact phone number",
+              "properties": {
+                "Text": "locPrePlan.seo_emergencyContactPhone",
+                "Width": 200,
+                "Height": 40,
+                "Fill": "RGBA(30, 41, 59, 1)",
+                "Color": "RGBA(59, 130, 246, 1)",
+                "Size": 14,
+                "BorderRadius": 6,
+                "Visible": "!IsBlank(locPrePlan.seo_emergencyContactPhone)",
+                "OnSelect": "Launch(\"tel:\" & locPrePlan.seo_emergencyContactPhone)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cmpNavBarPrePlan",
+      "controlType": "Component",
+      "purpose": "Bottom navigation bar",
+      "properties": {
+        "ActiveScreen": "\"scrPrePlan\"",
+        "IsEMSProvider": "gblIsEMSProvider",
+        "OnNavigate": "Navigate(LookUp([{id:\"scrHome\",scr:scrHome},{id:\"scrMap\",scr:scrMap},{id:\"scrNotes\",scr:scrNotes},{id:\"scrPatientTriage\",scr:scrPatientTriage},{id:\"scrSettings\",scr:scrSettings}], id = cmpNavBarPrePlan.SelectedScreen).scr, ScreenTransition.None)"
+      }
+    }
+  ],
+
+  "phiCompliance": {
+    "accessesPHI": false,
+    "justification": "Pre-Plan screen only accesses seo_PrePlan and seo_Hazard. No PatientRecord columns."
+  },
+
+  "flowInteractions": [],
+
+  "designerNotes": "1. Fire protection badges use color coding: green = present (good), gray = absent, orange = FDC, red = basement (hazard). This follows common pre-plan visual conventions.\n2. FDC location is displayed prominently in orange — finding the FDC is critical on arrival.\n3. Tactical notes section header is red — these are high-priority operational guidance.\n4. NFPA 704 values display as H:x F:x R:x S:x shorthand. A future enhancement could render the actual diamond shape using HTML or SVG.\n5. Emergency contact phone is a tappable button that launches the device's phone dialer.\n6. All sections conditionally visible — empty/blank data doesn't show empty sections.\n7. Pre-plan data is read-only in the mobile app. Updates happen in the model-driven app (Phase 5)."
+}

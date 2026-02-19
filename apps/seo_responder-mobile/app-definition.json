@@ -1,0 +1,333 @@
+{
+  "appId": "seo_ResponderMobile",
+  "displayName": "Responder Mobile",
+  "description": "Mobile canvas app for field responders and EMS providers. Provides unit status management, incident details, map view, notes, patient triage (EMS only), and pre-plan access. Optimized for one-hand use in turnout gear with offline-first architecture.",
+  "appType": "Canvas",
+  "formFactor": "Phone",
+  "orientation": "Portrait",
+  "targetRoles": ["seo_Responder", "seo_EMSProvider"],
+
+  "dataSources": [
+    {
+      "table": "seo_Incident",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "seo_status ne 'Closed' and seo_status ne 'Cancelled'",
+      "securityNotes": "Scoped by team sharing — user only sees incidents their unit is assigned to via IncidentSharing flow"
+    },
+    {
+      "table": "seo_Unit",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "readWrite",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "_seo_agencyid_value eq gblCurrentPersonnel.seo_agencyId",
+      "securityNotes": "User-scope write — can only update own unit's status and GPS"
+    },
+    {
+      "table": "seo_IncidentAssignment",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "readWrite",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "User-scope — can update own assignment timestamps (enRouteOn, onSceneOn, clearedOn)"
+    },
+    {
+      "table": "seo_IncidentNote",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "createReadWrite",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "User-scope — can create and read own notes"
+    },
+    {
+      "table": "seo_UnitStatusLog",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "seo_changedOn ge @{addDays(utcNow(), -1)}",
+      "securityNotes": "Read-only — rows created by UnitStatusChangeLog flow, not by the app"
+    },
+    {
+      "table": "seo_IncidentCommand",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "Read-only — ICS command structure display"
+    },
+    {
+      "table": "seo_PatientRecord",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "createReadWrite",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "EMS Provider only — PHI columns gated by seo_PHIAccess field security profile. Responder role has NO table-level access."
+    },
+    {
+      "table": "seo_PrePlan",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "Org-wide read — all roles can view pre-plans"
+    },
+    {
+      "table": "seo_Hazard",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "Org-wide read — pre-plan and on-scene hazards"
+    },
+    {
+      "table": "seo_Hydrant",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "Org-wide read — map layer. May have up to 50K rows; sync filter by geo-bounding box recommended at build time."
+    },
+    {
+      "table": "seo_Facility",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "",
+      "securityNotes": "Org-wide read — hospital/transport destination list for EMS"
+    },
+    {
+      "table": "seo_Personnel",
+      "connectionReference": "seo_DataverseConnection",
+      "accessLevel": "read",
+      "offlineEnabled": true,
+      "offlineSyncFilter": "_seo_agencyid_value eq gblCurrentPersonnel.seo_agencyId",
+      "securityNotes": "BU-scope read — name/rank lookups for own agency"
+    }
+  ],
+
+  "offlineProfile": {
+    "enabled": true,
+    "conflictResolution": "ServerWins",
+    "syncInterval": "seo_OfflineSyncIntervalMinutes",
+    "offlineTables": [
+      { "table": "seo_Incident", "syncFilter": "seo_status ne 'Closed' and seo_status ne 'Cancelled'" },
+      { "table": "seo_Unit", "syncFilter": "_seo_agencyid_value eq @{gblCurrentAgencyId}", "maxRows": 200 },
+      { "table": "seo_IncidentAssignment", "syncFilter": "" },
+      { "table": "seo_IncidentNote", "syncFilter": "" },
+      { "table": "seo_UnitStatusLog", "syncFilter": "seo_changedOn ge @{addDays(utcNow(), -1)}", "maxRows": 5000 },
+      { "table": "seo_IncidentCommand", "syncFilter": "" },
+      { "table": "seo_PatientRecord", "syncFilter": "" },
+      { "table": "seo_PrePlan", "syncFilter": "", "maxRows": 10000 },
+      { "table": "seo_Hazard", "syncFilter": "", "maxRows": 5000 },
+      { "table": "seo_Hydrant", "syncFilter": "", "maxRows": 50000 },
+      { "table": "seo_Facility", "syncFilter": "", "maxRows": 1000 },
+      { "table": "seo_Personnel", "syncFilter": "_seo_agencyid_value eq @{gblCurrentAgencyId}", "maxRows": 2000 }
+    ]
+  },
+
+  "theme": {
+    "primaryColor": "RGBA(0, 51, 102, 1)",
+    "backgroundColor": "RGBA(18, 18, 18, 1)",
+    "headerColor": "RGBA(0, 51, 102, 1)",
+    "textColor": "RGBA(255, 255, 255, 1)",
+    "errorColor": "RGBA(220, 38, 38, 1)",
+    "warningColor": "RGBA(245, 158, 11, 1)",
+    "successColor": "RGBA(16, 185, 129, 1)",
+    "fontFamily": "Segoe UI",
+    "minTouchTarget": 44,
+    "statusColors": {
+      "Available": "RGBA(16, 185, 129, 1)",
+      "Dispatched": "RGBA(245, 158, 11, 1)",
+      "En Route": "RGBA(234, 179, 8, 1)",
+      "On Scene": "RGBA(220, 38, 38, 1)",
+      "Transporting": "RGBA(139, 92, 246, 1)",
+      "At Hospital": "RGBA(59, 130, 246, 1)",
+      "Returning": "RGBA(20, 184, 166, 1)",
+      "Out of Service": "RGBA(107, 114, 128, 1)",
+      "Staging": "RGBA(251, 191, 36, 1)",
+      "Priority 1": "RGBA(220, 38, 38, 1)",
+      "Priority 2": "RGBA(245, 158, 11, 1)",
+      "Priority 3": "RGBA(234, 179, 8, 1)",
+      "Priority 4": "RGBA(107, 114, 128, 1)",
+      "Red — Immediate": "RGBA(220, 38, 38, 1)",
+      "Yellow — Delayed": "RGBA(234, 179, 8, 1)",
+      "Green — Minor": "RGBA(16, 185, 129, 1)",
+      "Black — Deceased": "RGBA(31, 41, 55, 1)",
+      "White — Non-Patient": "RGBA(229, 231, 235, 1)",
+      "Hydrant Red": "RGBA(220, 38, 38, 1)",
+      "Hydrant Orange": "RGBA(245, 158, 11, 1)",
+      "Hydrant Green": "RGBA(16, 185, 129, 1)",
+      "Hydrant Blue": "RGBA(59, 130, 246, 1)"
+    }
+  },
+
+  "globalVariables": [
+    {
+      "name": "gblCurrentUser",
+      "type": "Record (Office365Users.UserProfileV2)",
+      "purpose": "Current logged-in user profile from Office 365 Users connector",
+      "setOn": "App.OnStart",
+      "formula": "Office365Users.MyProfileV2()"
+    },
+    {
+      "name": "gblCurrentPersonnel",
+      "type": "Record (seo_Personnel)",
+      "purpose": "Current user's Personnel record — drives unit lookup and author fields",
+      "setOn": "App.OnStart",
+      "formula": "LookUp(seo_Personnel, seo_systemUserId = gblCurrentUser.Id && seo_isActive = true)"
+    },
+    {
+      "name": "gblCurrentUnit",
+      "type": "Record (seo_Unit)",
+      "purpose": "Current user's assigned unit — drives status panel and GPS updates",
+      "setOn": "App.OnStart",
+      "formula": "LookUp(seo_Unit, seo_UnitId = gblCurrentPersonnel.seo_currentUnitId)"
+    },
+    {
+      "name": "gblCurrentAgencyId",
+      "type": "GUID",
+      "purpose": "Agency ID for filtering tables to own agency",
+      "setOn": "App.OnStart",
+      "formula": "gblCurrentPersonnel.seo_agencyId"
+    },
+    {
+      "name": "gblActiveIncident",
+      "type": "Record (seo_Incident)",
+      "purpose": "The incident the user's unit is currently assigned to (if any)",
+      "setOn": "App.OnStart, refreshed on status change",
+      "formula": "If(!IsBlank(gblCurrentUnit.seo_currentIncidentId), LookUp(seo_Incident, seo_IncidentId = gblCurrentUnit.seo_currentIncidentId))"
+    },
+    {
+      "name": "gblIsEMSProvider",
+      "type": "Boolean",
+      "purpose": "Whether current user has EMSProvider role — gates Patient Triage screen",
+      "setOn": "App.OnStart",
+      "formula": "CountRows(Filter(seo_PatientRecord, false)) >= 0"
+    },
+    {
+      "name": "gblIsOnline",
+      "type": "Boolean",
+      "purpose": "Network connectivity status — drives sync indicator",
+      "setOn": "App.OnStart, Timer refresh",
+      "formula": "Connection.Connected"
+    },
+    {
+      "name": "gblGPSEnabled",
+      "type": "Boolean",
+      "purpose": "User preference for GPS tracking — toggled in Settings",
+      "setOn": "App.OnStart (from SaveData/LoadData)",
+      "formula": "true"
+    },
+    {
+      "name": "gblGPSUpdateInterval",
+      "type": "Number",
+      "purpose": "GPS update interval in milliseconds (from environment variable)",
+      "setOn": "App.OnStart",
+      "formula": "Value(LookUp('Environment Variable Values', 'Environment Variable Definition'.'Schema Name' = \"seo_GPSUpdateIntervalSeconds\").'Current Value') * 1000"
+    }
+  ],
+
+  "navigation": {
+    "model": "BottomTabBar",
+    "screens": [
+      {
+        "screenId": "scrHome",
+        "label": "Home",
+        "icon": "Home",
+        "showInNav": true,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrUnitStatus",
+        "label": "Status",
+        "icon": "Waypoint",
+        "showInNav": false,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrIncidentDetail",
+        "label": "Incident",
+        "icon": "Warning",
+        "showInNav": false,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrMap",
+        "label": "Map",
+        "icon": "Nav",
+        "showInNav": true,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrNotes",
+        "label": "Notes",
+        "icon": "Edit",
+        "showInNav": true,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrPatientTriage",
+        "label": "Patients",
+        "icon": "People",
+        "showInNav": true,
+        "roleGated": true
+      },
+      {
+        "screenId": "scrPrePlan",
+        "label": "Pre-Plan",
+        "icon": "DocumentWithContent",
+        "showInNav": false,
+        "roleGated": false
+      },
+      {
+        "screenId": "scrSettings",
+        "label": "Settings",
+        "icon": "Settings",
+        "showInNav": true,
+        "roleGated": false
+      }
+    ]
+  },
+
+  "connectionReferences": [
+    "seo_DataverseConnection",
+    "seo_Office365UsersConnection"
+  ],
+
+  "environmentVariables": [
+    "seo_MapDefaultLatitude",
+    "seo_MapDefaultLongitude",
+    "seo_MapDefaultZoom",
+    "seo_GPSUpdateIntervalSeconds",
+    "seo_OfflineSyncIntervalMinutes",
+    "seo_MCIPatientThreshold"
+  ],
+
+  "gccConstraints": [
+    {
+      "constraint": "PCF Map control availability in GCC",
+      "impact": "The Power Apps Map control (PCF) may not be available in all GCC environments",
+      "mitigation": "Fallback gallery-based list with Launch() to native device maps. See ADR-014."
+    },
+    {
+      "constraint": "Dataverse connector must be shared_commondataserviceforapps",
+      "impact": "Must use the GCC-compatible Dataverse connector, not shared_commondataservice",
+      "mitigation": "Connection reference seo_DataverseConnection already configured with correct connector ID"
+    },
+    {
+      "constraint": "No Google Maps or non-FedRAMP connectors",
+      "impact": "Map tile provider is limited to Bing Maps (FedRAMP authorized)",
+      "mitigation": "Power Apps Map control uses Bing Maps by default — compliant"
+    },
+    {
+      "constraint": "Offline data must respect data residency",
+      "impact": "Offline cache stored on device must comply with agency mobile device management (MDM) policies",
+      "mitigation": "Document MDM requirement in deployment guide (Phase 7). Power Apps offline uses encrypted local storage."
+    }
+  ],
+
+  "onStart": "Concurrent(\n  Set(gblCurrentUser, Office365Users.MyProfileV2()),\n  Set(gblIsOnline, Connection.Connected)\n);\nSet(gblCurrentPersonnel, LookUp(seo_Personnel, seo_systemUserId = gblCurrentUser.Id && seo_isActive = true));\nSet(gblCurrentUnit, LookUp(seo_Unit, seo_UnitId = gblCurrentPersonnel.seo_currentUnitId));\nSet(gblCurrentAgencyId, gblCurrentPersonnel.seo_agencyId);\nSet(gblActiveIncident, If(!IsBlank(gblCurrentUnit.seo_currentIncidentId), LookUp(seo_Incident, seo_IncidentId = gblCurrentUnit.seo_currentIncidentId)));\nSet(gblIsEMSProvider, !IsError(CountRows(Filter(seo_PatientRecord, false))));\nSet(gblGPSEnabled, Coalesce(LoadData(\"gpsEnabled\", true), true));\nSet(gblGPSUpdateInterval, Value(LookUp('Environment Variable Values', 'Environment Variable Definition'.'Schema Name' = \"seo_GPSUpdateIntervalSeconds\").'Current Value') * 1000);",
+
+  "designerNotes": "1. App.OnStart uses Concurrent() for the first two lookups (user profile + connectivity) to parallelize. The remaining Set() calls depend on gblCurrentUser so they run sequentially.\n2. gblIsEMSProvider detection uses an IsError(CountRows(...)) trick: if the user has NO access to seo_PatientRecord, the CountRows call errors. This avoids a separate role-check API call.\n3. GPS preference is persisted locally via SaveData/LoadData so it survives app restarts.\n4. The Map control's initial position reads seo_MapDefaultLatitude/Longitude/Zoom environment variables — set these per deployment region.\n5. All Patch() calls to seo_Unit include Location.Latitude and Location.Longitude for GPS capture. The Power Apps Location signal requires device location permission.\n6. Test on iOS and Android with turnout gloves — all interactive controls must be ≥ 44px touch target.\n7. High-contrast dark theme is designed for outdoor/nighttime visibility. Colors pass WCAG AA contrast ratio against the dark background."
+}

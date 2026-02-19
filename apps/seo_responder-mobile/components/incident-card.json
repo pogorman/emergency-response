@@ -1,0 +1,204 @@
+{
+  "componentId": "cmpIncidentCard",
+  "displayName": "Incident Card",
+  "description": "Compact incident summary card for use in galleries. Shows incident number, type, priority color band, address, status, and MCI badge. Tappable — navigates to incident detail.",
+
+  "customProperties": [
+    {
+      "name": "IncidentRecord",
+      "type": "Record",
+      "direction": "input",
+      "description": "The seo_Incident record to display. Pass ThisItem from a gallery."
+    },
+    {
+      "name": "OnCardSelect",
+      "type": "Action",
+      "direction": "input",
+      "description": "Action callback when the card is tapped. Parent handles Navigate() to scrIncidentDetail."
+    },
+    {
+      "name": "CardWidth",
+      "type": "Number",
+      "direction": "input",
+      "description": "Width of the card in pixels.",
+      "defaultValue": 360
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntCard",
+      "controlType": "Container",
+      "purpose": "Card container with priority color left border",
+      "properties": {
+        "Width": "cmpIncidentCard.CardWidth",
+        "Height": 120,
+        "Fill": "RGBA(30, 41, 59, 1)",
+        "BorderRadius": 8,
+        "OnSelect": "cmpIncidentCard.OnCardSelect()",
+        "PaddingLeft": 12,
+        "PaddingRight": 12,
+        "PaddingTop": 10,
+        "PaddingBottom": 10
+      },
+      "children": [
+        {
+          "name": "shpPriorityBand",
+          "controlType": "Rectangle",
+          "purpose": "Left color band indicating incident priority",
+          "properties": {
+            "X": 0,
+            "Y": 0,
+            "Width": 6,
+            "Height": "Parent.Height",
+            "Fill": "Switch(cmpIncidentCard.IncidentRecord.seo_priority, 'seo_IncidentPriority'.'Priority 1 — Immediate Life Threat', RGBA(220, 38, 38, 1), 'seo_IncidentPriority'.'Priority 2 — Urgent', RGBA(245, 158, 11, 1), 'seo_IncidentPriority'.'Priority 3 — Non-Urgent', RGBA(234, 179, 8, 1), 'seo_IncidentPriority'.'Priority 4 — Scheduled/Low', RGBA(107, 114, 128, 1), RGBA(107, 114, 128, 1))",
+            "BorderRadius": "8, 0, 0, 8"
+          }
+        },
+        {
+          "name": "cntCardHeader",
+          "controlType": "HorizontalContainer",
+          "purpose": "Top row: incident number + status + MCI badge",
+          "properties": {
+            "X": 12,
+            "Y": 10,
+            "Width": "Parent.Width - 24",
+            "Height": 28,
+            "LayoutJustifyContent": "SpaceBetween",
+            "LayoutAlignItems": "Center"
+          },
+          "children": [
+            {
+              "name": "lblCardIncidentNumber",
+              "controlType": "Label",
+              "purpose": "Incident number (e.g., INC-20260218-00042)",
+              "properties": {
+                "Text": "cmpIncidentCard.IncidentRecord.seo_incidentNumber",
+                "Size": 14,
+                "FontWeight": "Bold",
+                "Color": "RGBA(255, 255, 255, 1)"
+              }
+            },
+            {
+              "name": "shpMCIBadge",
+              "controlType": "Container",
+              "purpose": "MCI badge — visible only when incident is flagged as MCI",
+              "properties": {
+                "Visible": "cmpIncidentCard.IncidentRecord.seo_isMCI",
+                "Width": 44,
+                "Height": 22,
+                "Fill": "RGBA(220, 38, 38, 1)",
+                "BorderRadius": 4
+              },
+              "children": [
+                {
+                  "name": "lblMCIBadge",
+                  "controlType": "Label",
+                  "purpose": "MCI text",
+                  "properties": {
+                    "Text": "\"MCI\"",
+                    "Size": 11,
+                    "FontWeight": "Bold",
+                    "Color": "RGBA(255, 255, 255, 1)",
+                    "Align": "Center",
+                    "Width": "Parent.Width",
+                    "Height": "Parent.Height"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "lblCardStatus",
+              "controlType": "Label",
+              "purpose": "Current incident status badge",
+              "properties": {
+                "Text": "Text(cmpIncidentCard.IncidentRecord.seo_status)",
+                "Size": 11,
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Align": "End"
+              }
+            }
+          ]
+        },
+        {
+          "name": "lblCardIncidentType",
+          "controlType": "Label",
+          "purpose": "Incident type (e.g., Structure Fire, Medical Emergency)",
+          "properties": {
+            "X": 12,
+            "Y": 40,
+            "Width": "Parent.Width - 24",
+            "Height": 22,
+            "Text": "Text(cmpIncidentCard.IncidentRecord.seo_incidentType)",
+            "Size": 13,
+            "Color": "RGBA(203, 213, 225, 1)"
+          }
+        },
+        {
+          "name": "lblCardAddress",
+          "controlType": "Label",
+          "purpose": "Incident address + apartment/cross street",
+          "properties": {
+            "X": 12,
+            "Y": 62,
+            "Width": "Parent.Width - 24",
+            "Height": 22,
+            "Text": "cmpIncidentCard.IncidentRecord.seo_address & If(!IsBlank(cmpIncidentCard.IncidentRecord.seo_apartment), \" Apt \" & cmpIncidentCard.IncidentRecord.seo_apartment, \"\")",
+            "Size": 12,
+            "Color": "RGBA(148, 163, 184, 1)"
+          }
+        },
+        {
+          "name": "cntCardFooter",
+          "controlType": "HorizontalContainer",
+          "purpose": "Bottom row: alarm level + patient count + dispatched time",
+          "properties": {
+            "X": 12,
+            "Y": 88,
+            "Width": "Parent.Width - 24",
+            "Height": 22,
+            "LayoutJustifyContent": "SpaceBetween",
+            "LayoutAlignItems": "Center"
+          },
+          "children": [
+            {
+              "name": "lblCardAlarm",
+              "controlType": "Label",
+              "purpose": "Alarm level display",
+              "properties": {
+                "Text": "\"Alarm \" & Text(cmpIncidentCard.IncidentRecord.seo_alarmLevel)",
+                "Size": 11,
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Visible": "cmpIncidentCard.IncidentRecord.seo_alarmLevel > 1"
+              }
+            },
+            {
+              "name": "lblCardPatients",
+              "controlType": "Label",
+              "purpose": "Patient count",
+              "properties": {
+                "Text": "cmpIncidentCard.IncidentRecord.seo_patientCount & \" pts\"",
+                "Size": 11,
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Visible": "cmpIncidentCard.IncidentRecord.seo_patientCount > 0"
+              }
+            },
+            {
+              "name": "lblCardTime",
+              "controlType": "Label",
+              "purpose": "Dispatched timestamp",
+              "properties": {
+                "Text": "If(!IsBlank(cmpIncidentCard.IncidentRecord.seo_dispatchedOn), Text(cmpIncidentCard.IncidentRecord.seo_dispatchedOn, \"HH:mm\"), \"\")",
+                "Size": 11,
+                "Color": "RGBA(148, 163, 184, 1)",
+                "Align": "End"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "designerNotes": "1. Card is 120px tall — enough for 4 lines of info without scrolling.\n2. Left priority color band (6px wide) provides instant visual priority indication.\n3. MCI badge only appears when seo_isMCI = true. Red background with white 'MCI' text.\n4. Card is tappable — entire container's OnSelect fires OnCardSelect action.\n5. Footer shows alarm level only if > 1 (default), patient count only if > 0.\n6. Dispatched time in 24-hour format (HH:mm) — standard in fire/EMS.\n7. Dark card background (slate 800) sits on the screen's dark background (slate 900) for subtle elevation effect."
+}

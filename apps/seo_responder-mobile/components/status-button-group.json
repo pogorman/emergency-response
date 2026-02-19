@@ -1,0 +1,218 @@
+{
+  "componentId": "cmpStatusButtonGroup",
+  "displayName": "Status Button Group",
+  "description": "Large-button status selector for unit status changes. Displays all seo_UnitStatus options as color-coded buttons. On tap, patches seo_Unit.seo_currentStatus and captures GPS. Designed for use with gloves — minimum 60px button height.",
+
+  "customProperties": [
+    {
+      "name": "CurrentStatus",
+      "type": "Text",
+      "direction": "input",
+      "description": "The current seo_UnitStatus value of the user's unit. Used to highlight the active status.",
+      "defaultValue": "Available"
+    },
+    {
+      "name": "UnitRecord",
+      "type": "Record",
+      "direction": "input",
+      "description": "The full seo_Unit record to patch on status change. Pass gblCurrentUnit."
+    },
+    {
+      "name": "PersonnelRecord",
+      "type": "Record",
+      "direction": "input",
+      "description": "The current seo_Personnel record. Used as seo_changedById context."
+    },
+    {
+      "name": "GPSEnabled",
+      "type": "Boolean",
+      "direction": "input",
+      "description": "Whether to capture GPS on status change. From gblGPSEnabled.",
+      "defaultValue": true
+    },
+    {
+      "name": "OnStatusChanged",
+      "type": "Action",
+      "direction": "input",
+      "description": "Action callback after status patch completes. Parent can refresh gblCurrentUnit."
+    },
+    {
+      "name": "NewStatus",
+      "type": "Text",
+      "direction": "output",
+      "description": "The status value that was just selected. Available after OnStatusChanged fires."
+    },
+    {
+      "name": "IsPatching",
+      "type": "Boolean",
+      "direction": "output",
+      "description": "True while the Patch() call is in progress. Parent can show a spinner.",
+      "defaultValue": false
+    }
+  ],
+
+  "controls": [
+    {
+      "name": "cntStatusGroup",
+      "controlType": "VerticalContainer",
+      "purpose": "Vertical stack of status buttons",
+      "properties": {
+        "Width": "Parent.Width",
+        "Height": "Parent.Height",
+        "LayoutGap": 8,
+        "PaddingLeft": 16,
+        "PaddingRight": 16,
+        "PaddingTop": 8,
+        "PaddingBottom": 8
+      },
+      "children": [
+        {
+          "name": "btnStatusAvailable",
+          "controlType": "Button",
+          "purpose": "Set status to Available",
+          "properties": {
+            "Text": "\"AVAILABLE\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"Available\", RGBA(16, 185, 129, 1), RGBA(16, 185, 129, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"Available\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"Available\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.Available,\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"Available\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to Available"
+        },
+        {
+          "name": "btnStatusEnRoute",
+          "controlType": "Button",
+          "purpose": "Set status to En Route",
+          "properties": {
+            "Text": "\"EN ROUTE\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"En Route\", RGBA(234, 179, 8, 1), RGBA(234, 179, 8, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"En Route\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"En Route\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.'En Route',\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"En Route\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to En Route"
+        },
+        {
+          "name": "btnStatusOnScene",
+          "controlType": "Button",
+          "purpose": "Set status to On Scene",
+          "properties": {
+            "Text": "\"ON SCENE\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"On Scene\", RGBA(220, 38, 38, 1), RGBA(220, 38, 38, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"On Scene\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"On Scene\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.'On Scene',\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"On Scene\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to On Scene"
+        },
+        {
+          "name": "btnStatusTransporting",
+          "controlType": "Button",
+          "purpose": "Set status to Transporting (primarily EMS)",
+          "properties": {
+            "Text": "\"TRANSPORTING\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"Transporting\", RGBA(139, 92, 246, 1), RGBA(139, 92, 246, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"Transporting\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"Transporting\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.Transporting,\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"Transporting\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to Transporting"
+        },
+        {
+          "name": "btnStatusAtHospital",
+          "controlType": "Button",
+          "purpose": "Set status to At Hospital",
+          "properties": {
+            "Text": "\"AT HOSPITAL\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"At Hospital\", RGBA(59, 130, 246, 1), RGBA(59, 130, 246, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"At Hospital\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"At Hospital\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.'At Hospital',\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"At Hospital\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to At Hospital"
+        },
+        {
+          "name": "btnStatusReturning",
+          "controlType": "Button",
+          "purpose": "Set status to Returning",
+          "properties": {
+            "Text": "\"RETURNING\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"Returning\", RGBA(20, 184, 166, 1), RGBA(20, 184, 166, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"Returning\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"Returning\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.Returning,\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"Returning\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to Returning"
+        },
+        {
+          "name": "btnStatusOutOfService",
+          "controlType": "Button",
+          "purpose": "Set status to Out of Service",
+          "properties": {
+            "Text": "\"OUT OF SERVICE\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"Out of Service\", RGBA(107, 114, 128, 1), RGBA(107, 114, 128, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"Out of Service\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"Out of Service\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.'Out of Service',\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"Out of Service\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to Out of Service"
+        },
+        {
+          "name": "btnStatusStaging",
+          "controlType": "Button",
+          "purpose": "Set status to Staging",
+          "properties": {
+            "Text": "\"STAGING\"",
+            "Width": "Parent.Width - 32",
+            "Height": 60,
+            "Fill": "If(cmpStatusButtonGroup.CurrentStatus = \"Staging\", RGBA(251, 191, 36, 1), RGBA(251, 191, 36, 0.3))",
+            "Color": "RGBA(255, 255, 255, 1)",
+            "Size": 18,
+            "FontWeight": "Bold",
+            "BorderColor": "If(cmpStatusButtonGroup.CurrentStatus = \"Staging\", RGBA(255, 255, 255, 1), Color.Transparent)",
+            "BorderThickness": "If(cmpStatusButtonGroup.CurrentStatus = \"Staging\", 3, 0)",
+            "OnSelect": "Set(cmpStatusButtonGroup.IsPatching, true);\nPatch(seo_Unit, cmpStatusButtonGroup.UnitRecord, {\n  seo_currentStatus: 'seo_UnitStatus'.Staging,\n  seo_latitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Latitude, Blank()),\n  seo_longitude: If(cmpStatusButtonGroup.GPSEnabled, Location.Longitude, Blank())\n});\nSet(cmpStatusButtonGroup.NewStatus, \"Staging\");\nSet(cmpStatusButtonGroup.IsPatching, false);\ncmpStatusButtonGroup.OnStatusChanged()"
+          },
+          "accessibilityNotes": "Button: Change unit status to Staging"
+        }
+      ]
+    }
+  ],
+
+  "designerNotes": "1. Each button is 60px tall — exceeds the 44px minimum touch target for gloved use.\n2. Active status has full opacity fill + white border (3px). Inactive statuses have 30% opacity fill.\n3. The Dispatched status is intentionally omitted — responders don't self-dispatch. Dispatch console (Phase 5) sets Dispatched.\n4. Every Patch() includes GPS coordinates if gblGPSEnabled is true. This means the UnitStatusChangeLog flow captures GPS at the moment of status change.\n5. IsPatching output allows the parent screen to show a loading spinner during the Patch() call.\n6. Button order follows typical status progression: Available → En Route → On Scene → Transporting → At Hospital → Returning → Out of Service / Staging.\n7. OnStatusChanged callback lets the parent refresh gblCurrentUnit after the patch completes."
+}

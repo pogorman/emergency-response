@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "seo-canvas-app-definition-v1",
+  "title": "EmergencyResponseCoordination Canvas App Definition",
+  "description": "JSON Schema for canvas app specification files. Covers app-level config, screen definitions, and reusable component definitions — blueprints to be translated into Power Apps Studio.",
+  "type": "object",
+  "$defs": {
+    "controlNamingConvention": {
+      "type": "string",
+      "description": "Power Apps control naming: lbl (Label), btn (Button), gal (Gallery), txt (TextInput), drp (Dropdown), frm (Form), ico (Icon), img (Image), cmp (Component), shp (Shape), tmr (Timer), tgl (Toggle), crd (Card), cnt (Container), map (Map), html (HtmlText)"
+    },
+    "formulaExpression": {
+      "type": "string",
+      "description": "Power Fx formula expression. Use Dataverse column schema names (seo_columnName). Reference globals with gbl prefix, context vars with loc prefix."
+    },
+    "colorValue": {
+      "type": "string",
+      "pattern": "^(RGBA\\(|ColorValue\\(|Color\\.|gbl)",
+      "description": "Power Apps color expression: RGBA(), ColorValue(), Color.Name, or global theme variable"
+    },
+    "control": {
+      "type": "object",
+      "required": ["name", "controlType", "purpose"],
+      "properties": {
+        "name": { "$ref": "#/$defs/controlNamingConvention" },
+        "controlType": {
+          "type": "string",
+          "enum": [
+            "Label", "Button", "TextInput", "Gallery", "Form", "EditForm",
+            "Dropdown", "ComboBox", "DatePicker", "Toggle", "Checkbox",
+            "Icon", "Image", "Shape", "Rectangle", "Circle",
+            "Container", "HorizontalContainer", "VerticalContainer",
+            "Timer", "HtmlText", "RichTextEditor",
+            "Map", "Component",
+            "Camera", "Barcode"
+          ]
+        },
+        "purpose": { "type": "string", "description": "What this control does in the screen" },
+        "properties": {
+          "type": "object",
+          "description": "Key Power Apps control properties. Values are Power Fx expressions.",
+          "properties": {
+            "Text": { "$ref": "#/$defs/formulaExpression" },
+            "Items": { "$ref": "#/$defs/formulaExpression" },
+            "OnSelect": { "$ref": "#/$defs/formulaExpression" },
+            "OnChange": { "$ref": "#/$defs/formulaExpression" },
+            "Visible": { "$ref": "#/$defs/formulaExpression" },
+            "Fill": { "$ref": "#/$defs/colorValue" },
+            "Color": { "$ref": "#/$defs/colorValue" },
+            "X": { "type": "number" },
+            "Y": { "type": "number" },
+            "Width": { "type": "number" },
+            "Height": { "type": "number" },
+            "Size": { "type": "number" },
+            "Padding": { "type": "number" },
+            "Default": { "$ref": "#/$defs/formulaExpression" },
+            "DataSource": { "type": "string" },
+            "Fields": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": true
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/control" },
+          "description": "Nested controls (for containers, galleries, forms)"
+        },
+        "accessibilityNotes": {
+          "type": "string",
+          "description": "Screen reader label, tab order, or accessibility hints"
+        }
+      }
+    },
+    "dataSourceBinding": {
+      "type": "object",
+      "required": ["table", "connectionReference"],
+      "properties": {
+        "table": { "type": "string", "description": "Dataverse table schema name" },
+        "connectionReference": { "type": "string", "description": "Connection reference from solution/connection-references.json" },
+        "accessLevel": {
+          "type": "string",
+          "enum": ["read", "readWrite", "create", "createReadWrite"],
+          "description": "What the app does with this table"
+        },
+        "offlineEnabled": { "type": "boolean" },
+        "offlineSyncFilter": {
+          "type": "string",
+          "description": "OData filter for offline sync (limits cached rows)"
+        },
+        "securityNotes": {
+          "type": "string",
+          "description": "Row-level security, PHI, or role-gating notes"
+        }
+      }
+    },
+    "screenDefinition": {
+      "type": "object",
+      "required": ["screenId", "displayName", "description", "controls"],
+      "properties": {
+        "screenId": {
+          "type": "string",
+          "pattern": "^scr[A-Z][A-Za-z]+$",
+          "description": "Screen name using scr prefix (e.g., scrHome, scrMap)"
+        },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "roleAccess": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security roles that can access this screen. Empty = all roles."
+        },
+        "roleGateFormula": {
+          "$ref": "#/$defs/formulaExpression",
+          "description": "Power Fx formula that controls visibility/navigation gating"
+        },
+        "onVisible": {
+          "$ref": "#/$defs/formulaExpression",
+          "description": "Screen.OnVisible formula — runs when screen loads"
+        },
+        "dataSources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Table schema names this screen reads/writes (subset of app data sources)"
+        },
+        "contextVariables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "purpose"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^loc[A-Z]" },
+              "type": { "type": "string" },
+              "purpose": { "type": "string" }
+            }
+          }
+        },
+        "controls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/control" }
+        },
+        "phiCompliance": {
+          "type": "object",
+          "properties": {
+            "accessesPHI": { "type": "boolean" },
+            "justification": { "type": "string" }
+          }
+        },
+        "flowInteractions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "flowId": { "type": "string" },
+              "trigger": { "type": "string", "description": "What app action triggers this flow" },
+              "mechanism": { "type": "string", "description": "How: direct Patch that triggers Dataverse change, or Run flow action" }
+            }
+          },
+          "description": "Power Automate flows triggered by actions on this screen"
+        },
+        "designerNotes": { "type": "string" }
+      }
+    },
+    "componentDefinition": {
+      "type": "object",
+      "required": ["componentId", "displayName", "description", "customProperties", "controls"],
+      "properties": {
+        "componentId": {
+          "type": "string",
+          "pattern": "^cmp[A-Z][A-Za-z]+$",
+          "description": "Component name using cmp prefix"
+        },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "customProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "direction"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["Text", "Number", "Boolean", "Color", "Record", "Table", "Screen", "Action"] },
+              "direction": { "type": "string", "enum": ["input", "output", "inputOutput"] },
+              "description": { "type": "string" },
+              "defaultValue": {}
+            }
+          }
+        },
+        "controls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/control" }
+        },
+        "designerNotes": { "type": "string" }
+      }
+    },
+    "appDefinition": {
+      "type": "object",
+      "required": [
+        "appId", "displayName", "description", "appType", "formFactor",
+        "dataSources", "offlineProfile", "theme", "globalVariables",
+        "navigation", "connectionReferences", "environmentVariables"
+      ],
+      "properties": {
+        "appId": {
+          "type": "string",
+          "pattern": "^seo_[A-Za-z]+$"
+        },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "appType": {
+          "type": "string",
+          "enum": ["Canvas"],
+          "description": "Canvas app (model-driven will be a separate schema in Phase 5)"
+        },
+        "formFactor": {
+          "type": "string",
+          "enum": ["Phone", "Tablet"],
+          "description": "Layout form factor"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["Portrait", "Landscape"]
+        },
+        "targetRoles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security roles this app targets"
+        },
+        "dataSources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dataSourceBinding" }
+        },
+        "offlineProfile": {
+          "type": "object",
+          "required": ["enabled", "conflictResolution"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "conflictResolution": {
+              "type": "string",
+              "enum": ["ServerWins", "ClientWins"],
+              "description": "Dataverse offline conflict resolution strategy"
+            },
+            "syncInterval": {
+              "type": "string",
+              "description": "Environment variable schema name for sync interval"
+            },
+            "offlineTables": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["table"],
+                "properties": {
+                  "table": { "type": "string" },
+                  "syncFilter": { "type": "string" },
+                  "maxRows": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "theme": {
+          "type": "object",
+          "properties": {
+            "primaryColor": { "$ref": "#/$defs/colorValue" },
+            "backgroundColor": { "$ref": "#/$defs/colorValue" },
+            "headerColor": { "$ref": "#/$defs/colorValue" },
+            "textColor": { "$ref": "#/$defs/colorValue" },
+            "errorColor": { "$ref": "#/$defs/colorValue" },
+            "warningColor": { "$ref": "#/$defs/colorValue" },
+            "successColor": { "$ref": "#/$defs/colorValue" },
+            "fontFamily": { "type": "string" },
+            "minTouchTarget": { "type": "integer", "description": "Minimum touch target size in pixels" },
+            "statusColors": {
+              "type": "object",
+              "description": "Map of status value → color for unit status, priority, triage",
+              "additionalProperties": { "$ref": "#/$defs/colorValue" }
+            }
+          }
+        },
+        "globalVariables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "purpose", "setOn"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^gbl[A-Z]" },
+              "type": { "type": "string" },
+              "purpose": { "type": "string" },
+              "setOn": { "type": "string", "description": "When this variable is set (e.g., App.OnStart, screen navigation)" },
+              "formula": { "$ref": "#/$defs/formulaExpression" }
+            }
+          }
+        },
+        "navigation": {
+          "type": "object",
+          "required": ["model", "screens"],
+          "properties": {
+            "model": {
+              "type": "string",
+              "enum": ["BottomTabBar", "HamburgerMenu", "StackNavigation"],
+              "description": "Primary navigation pattern"
+            },
+            "screens": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["screenId", "label"],
+                "properties": {
+                  "screenId": { "type": "string" },
+                  "label": { "type": "string" },
+                  "icon": { "type": "string", "description": "Power Apps icon name" },
+                  "showInNav": { "type": "boolean", "description": "Show in bottom tab bar" },
+                  "roleGated": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "connectionReferences": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Schema names from solution/connection-references.json"
+        },
+        "environmentVariables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Schema names from solution/environment-variables.json"
+        },
+        "gccConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "constraint": { "type": "string" },
+              "impact": { "type": "string" },
+              "mitigation": { "type": "string" }
+            }
+          },
+          "description": "GCC-specific constraints and their mitigations"
+        },
+        "onStart": {
+          "$ref": "#/$defs/formulaExpression",
+          "description": "App.OnStart formula"
+        },
+        "designerNotes": { "type": "string" }
+      }
+    }
+  }
+}
